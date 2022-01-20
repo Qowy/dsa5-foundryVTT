@@ -672,7 +672,7 @@ class SpellItemDSA5 extends Itemdsa5 {
                 if (target.actor) this.addCreatureTypeModifiers(target.actor.data, source, situationalModifiers)
             });
         }
-        situationalModifiers.push(...actor.getSkillModifier(source.name, source.type, source.data))
+        situationalModifiers.push(...actor.getSkillModifier(source.name, source.type))
         for (const thing of actor.data.data.skillModifiers.global) {
             situationalModifiers.push({ name: thing.source, value: thing.value })
         }

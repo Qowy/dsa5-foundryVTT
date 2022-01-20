@@ -388,7 +388,7 @@ export default class Actordsa5 extends Actor {
 
     }
 
-    getSkillModifier(name, sourceType, sourceData) {
+    getSkillModifier(name, sourceType) {
         let result = []
         const keys = ["FP", "step", "QL", "TPM", "FW"]
         for (const k of keys) {
@@ -401,20 +401,7 @@ export default class Actordsa5 extends Actor {
                 }
             }))
             if (this.data.data.skillModifiers[sourceType]) {
-                result.push(...this.data.data.skillModifiers[sourceType][k].filter((x) => {
-                        if(sourceType == "spell") {
-                            let vals = x.target.split(':')
-                            switch (vals[0]) {
-                                case "M":
-                                case "P":
-                                    return vals[1] == sourceData.feature
-                                default:
-                                    return vals[0] == name
-                            }
-                        } else {
-                            return true
-                        }                        
-                    }).map((f) => {
+                result.push(...this.data.data.skillModifiers[sourceType][k].map((f) => {
                     return {
                         name: f.source,
                         value: f.value,
