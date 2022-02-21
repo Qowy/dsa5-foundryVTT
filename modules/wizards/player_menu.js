@@ -205,6 +205,7 @@ export default class PlayerMenu extends Application {
                 type: "summonCreature",
                 payload
             })
+            ui.notifications.notify(game.i18n.localize('CONJURATION.requestSend'))
         }
     }
 
@@ -445,7 +446,7 @@ class ConjurationRequest extends DSA5Dialog {
         })
 
         if (game.dsa5.apps.playerMenu.conjurationData.postFunction[this.creationData.type]) {
-            await game.dsa5.apps.playerMenu.conjurationData.postFunction[this.creationData.type](this.conjuration)
+            await game.dsa5.apps.playerMenu.conjurationData.postFunction[this.creationData.type](this.conjuration, this.creationData.qs - this.creationData.consumedQS, this.creationData.type)
         }
 
         if (this.conjuration.type == "creature" && !(this.conjuration.data.creatureClass.value.includes(this.creationData.typeName))) {

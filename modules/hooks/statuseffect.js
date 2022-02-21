@@ -1,3 +1,5 @@
+import DPS from "../system/derepositioningsystem.js";
+
 export default function() {
     Token.prototype.drawEffects = async function() {
         this.hud.effects.removeChildren().forEach(c => c.destroy());
@@ -97,15 +99,38 @@ export default function() {
         return active;
     }
 
+    const defaulTokenLeftClick2 = Token.prototype._onClickLeft2
+    const isMerchant = (actor) => {
+        if (!actor) return false
+
+        return ["merchant", "loot"].includes(getProperty(actor.data.data, "merchant.merchantType"))
+    }
+    const inDistance = (token) => {
+        return Math.min(...game.user.character.getActiveTokens().map(x => DPS.rangeFinder(token, x).tileDistance)) <= 2
+    }
+
+    Token.prototype._onClickLeft2 = function(event) {
+        const distanceAccessible = game.user.isGM || !game.settings.get("dsa5", "enableDPS") || !isMerchant(this.actor) || inDistance(this)
+
+        if (!distanceAccessible)
+            return ui.notifications.warn(game.i18n.localize('DSAError.notInRangeToLoot'))
+
+        defaulTokenLeftClick2.call(this, event)
+    }
+
     Hooks.on("applyActiveEffect", (actor, change) => {
-        const current = getProperty(actor.data, change.key) || null
+        let current = getProperty(actor.data, change.key) || null
+        if (current == null && /^data\.(vulnerabilities|resistances)/.test(change.key)) {
+            current = []
+            setProperty(actor.data, change.key, current)
+        }
         const ct = getType(current)
         let update = null
         switch (ct) {
             case "Array":
                 let newElems = []
                 const source = change.effect.data.label
-                for (let elem of `${change.value}`.split(/(;|,)/)) {
+                for (let elem of `${change.value}`.split(/[;,]+/)) {
                     let vals = elem.split(" ")
                     const value = vals.pop()
                     const target = vals.join(" ")

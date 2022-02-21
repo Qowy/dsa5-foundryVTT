@@ -194,7 +194,9 @@ export default class DSA5ItemLibrary extends Application {
                     "skill": false,
                     "specialability": false,
                     "species": false,
-                    "application": false
+                    "application": false,
+                    "demonmark": false,
+                    "patron": false
                 },
                 filterBy: {
                     search: ""
@@ -298,9 +300,11 @@ export default class DSA5ItemLibrary extends Application {
     async getRandomItems(category, limit) {
         let filteredItems = []
         let index = this.equipmentIndex
-
         filteredItems.push(...(await index.search(category, { field: ["itemType"] })))
-        return await Promise.all(this.shuffle(filteredItems.filter(x => x.hasPermission)).slice(0, limit).map(x => x.getItem()))
+        return (await Promise.all(this.shuffle(filteredItems.filter(x => x.hasPermission)).slice(0, limit + 5).map(x => x.getItem()))).filter(x => {
+            const enchantments = x.getFlag("dsa5", "enchantments")
+            return !enchantments || !enchantments.find(x => x.talisman)
+        }).slice(0, limit)
     }
 
     shuffle(array) {

@@ -5,6 +5,7 @@ import Itemdsa5 from "../item/item-dsa5.js";
 import DiceDSA5 from "../system/dice-dsa5.js";
 import PlayerMenu from "../wizards/player_menu.js";
 import { DiceSoNiceCustomization } from "./dicesonice.js";
+import OnUseEffect from "../system/onUseEffects.js";
 
 export default function() {
     Hooks.on("ready", async() => {
@@ -44,6 +45,9 @@ export default function() {
                     case "clearCombat":
                         if (game.combat) game.combat.nextRound()
                         break
+                    case "clearOpposed":
+                        OpposedDsa5.clearOpposed(game.actors.get(data.payload.actorId))
+                        break
                     case "updateDefenseCount":
                         if (game.combat) game.combat.updateDefenseCount(data.payload.speaker)
                         break
@@ -59,6 +63,24 @@ export default function() {
                             AudioHelper.play({ src: data.payload.soundPath, volume: 0.8, loop: false }, false);
 
                         break
+                    case "socketedConditionAddActor":
+                        fromUuid(data.payload.id).then(item => {
+                            const onUse = new OnUseEffect(item)
+                            onUse.socketedConditionAddActor(payload.actors.map(x => game.actors.get(x)), payload.data)
+                        })
+                        break
+                    case "socketedConditionAdd":
+                        fromUuid(data.payload.id).then(item => {
+                            const onUse = new OnUseEffect(item)
+                            onUse.socketedConditionAdd(payload.targets, payload.data)
+                        })
+                        break
+                    case "socketedRemoveCondition":
+                        fromUuid(data.payload.id).then(item => {
+                            const onUse = new OnUseEffect(item)
+                            onUse.socketedRemoveCondition(payload.targets, payload.coreId)
+                        })
+                        break
                     case "updateHits":
                     case "hideResistButton":
                         break
@@ -67,17 +89,6 @@ export default function() {
                         break
                     default:
                         console.warn(`Unhandled socket data type ${data.type}`)
-                }
-            })
-            game.socket.on("system.dsa5.player", data => {
-                switch(data.type){
-                    case "preloadDice3d":
-                        console.log("Preloading forced DSA dice assets")
-                        DiceSoNiceCustomization.preloadDiceAssets(data.payload)
-                        break;
-                    case "getPreloadDice3d":
-                        DiceSoNiceCustomization.requestDicePreloads()
-                        break
                 }
             })
         }

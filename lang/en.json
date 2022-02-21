@@ -71,6 +71,8 @@
         "RW": "RA",
         "FtP": "FtP",
         "damage": "DP",
+         "AsPCost": "AE",
+        "KaPCost": "KP",
         "defenseMalus": "DM",
         "*": "*",
         "roll": " "
@@ -209,6 +211,8 @@
     "actionCount": "Actions",
     "atmod": "Attack modifier",
     "baseValue": "Base value",
+    "spellArmor": "Spell armor",
+    "liturgyArmor": "Holy Protection",
     "badEnvironment": "Bad surroundings",
     "BE": "Encumbrance",
     "behaviour": "Combat Behaviour",
@@ -257,6 +261,7 @@
     "level": "level",
     "levels": "levels",
     "plant": "Plant",
+    "patron": "Patron",
     "defenseCount": "# Defenses (each {malus})",
     "decreaseCastingTime": "Decrease Spell/Chant duration",
     "damageThreshold": "Damage threshold",
@@ -276,6 +281,7 @@
     "defense": "Defense",
     "defenseToggle": "Activate/Deactivate defense",
     "Delete Confirmation": "Confirm removal",
+    "demonmark": "Demon Mark",
     "dodge": "Dodge",
     "Distinguishing_mark": "Distinguishing mark",
     "damagetest": "Damage test",
@@ -504,10 +510,12 @@
     "worn": "Worn",
     "wearable": "Wearable",
     "wrongHand": "Wrong hand",
+    "volume": "Volume",
     "writing": "Writing",
     "yes": "Yes",
     "YouAlreadyHaveit": "Already owned",
     "zkModifier": "Toughness (Target)",
+    "vulnerability": "Vulnerability",
     "zoo": "Zoo",
     "Library": {
         "search": "Search",
@@ -521,6 +529,15 @@
     },
     "Aggregated": {
         "noMoreAllowed": "No more rolls allowed."
+    },
+    "PATRON": {
+        "priority": "Priority",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "0": "Animal Spirits",
+        "1": "Elemental Beings",
+        "2": "Ancestral Spirits",
+        "3": "Demonice Beings"
     },
     "CONJURATION": {
         "demon": "Demon",
@@ -544,7 +561,8 @@
         "requestDescr": "Confirm the summoning request to create the actor. Afterwards you can drag & drop the actor onto the map or delete it via right click. (Don't forget to clean up the summoning actor directory from time to time.)",
         "dragActor": "No summoner active (drag and drop)",
         "dragConjuration": "No summoning target active (drag and drop, at least observer permissions)",
-        "conjurs": "summons"
+        "conjurs": "summons",
+        "requestSend": "The request has been send to the game master."
     },
     "PLAYER": {
         "title": "Player Menu",
@@ -554,6 +572,7 @@
         "finalize": "Finalize"
     },
     "MASTER": {
+        "automation": "Automation",
         "sceneConfig": "Scene config",
         "awardXP": "Award Adventure Points",
         "awardXPText": "Award {heros} with Adventure Points.",
@@ -596,7 +615,8 @@
         "defenseMalus": "Defense malus",
         "global": "Global modifier",
         "armor": "Armor modifier",
-        "range": "Range multiplier"
+        "range": "Range multiplier",
+        "creatureBonus": "Bonus damage (creature)"
     },
     "Features": {
         "Object": "Object",
@@ -772,7 +792,8 @@
         "weightOnActor": "Being carried by the actor",
         "tempRegeneration": "Temporary, consumed on the next regeneration roll",
         "permRegeneration": "Permanent, bonus for every regeneration roll",
-        "panMapNote": "Focus map note"
+        "panMapNote": "Focus map note",
+        "onUseEffect": "Use item/use ability"
     },
     "ITEMSHEET": {
         "offHandMod": "Bonus/handicap offhand (e.g. parry weapon)"
@@ -809,7 +830,10 @@
         "improvised": "Improvised weapon",
         "magical": "Magical",
         "clerical": "Blessed",
-        "attributeWarning": "This item is <b>{domain}</b> (and possibly indestructible.)."
+        "silverPlated": "silver plated",
+        "attributeWarning": "This item is <b>{domain}</b> (and possibly indestructible.).",
+        "vulnerableTo": "Vulnerable ({name})",
+        "resistantTo": "Resistant ({name})"
     },
     "SPELL": {
         "loading": "Spell state: {status}",
@@ -842,7 +866,8 @@
         "zkModifer": "The target's soulpower/toughness has to be included as handicap (mind the sign)",
         "applyEffectCaster": "Apply effect to caster",
         "applyEffectTargets": "Apply effect to targets",
-        "foreignSpell": "Foreign spells can not be modified"
+        "foreignSpell": "Unfamiliar tradition spells can not be modified",
+        "assignCharacter": "Characters can be assigned using a right click on the player list in the bottom left corner."
     },
     "HELP": {
         "showHelp": "Show help",
@@ -893,9 +918,11 @@
     "ITEM.TypeSpell": "Spell",
     "ITEM.TypeTrait": "Trait (Animal)",
     "ITEM.TypeEffectwrapper": "Effect container",
+    "ITEM.TypeDemonmark": "Demon Mark",
     "ITEM.TypeConsumable": "Consumable",
     "ITEM.TypeSpellextension": "Spell/Liturgyextension",
     "ITEM.TypeApplication": "Application",
+    "ITEM.TypePatron": "Patron",
     "ACTOR.TypeCharacter": "Character",
     "ACTOR.TypeNpc": "Non Player Character",
     "ACTOR.TypeCreature": "Creature",
@@ -967,7 +994,9 @@
         "creature": "Actorlink (e.g. das5-core.coreenbestiary.Gotongi)",
         "placeholder": {
             "macros": "Macros have access to the following variables:\nactor - The targeted actor\ntestData - All data for the current check\nsource - The source of the macro",
-            "armorPostprocess": "Armor transformations have access to the following variables:\nactor - The targeted actor\narmor - The armor of the target\nsource - The source of the macro"
+            "armorPostprocess": "Armor transformations have access to the following variables:\nactor - The targeted actor\narmor - The armor of the target\nsource - The source of the macro",
+            "onRemove": "Macro is executed on removal of the effect in an actor.\nVariables:\nactor - The actor",
+            "onUseEffect": "Macro for on use effect of the item.\nVariables:\nactor - The actor\nitem - The item"
         },
         "advancedFunctions": {
             "none": "Nichts",
@@ -975,7 +1004,9 @@
             "macro": "Macro",
             "creature": "Conjuring/Shapeshift",
             "armorPostprocess": "Armor transformation (Macro)",
-            "damagePostprocess": "Damage transformation (Macro)"
+            "damagePostprocess": "Damage transformation (Macro)",
+            "onRemove": "Macro (End of effect)",
+            "onUseEffect": "Macro (On Use)"
         }
     },
     "LocalizedIDs": {
@@ -991,9 +1022,14 @@
         "senseOfRange": "Sense of Range",
         "ambidextrous": "Ambidextrous",
         "weaponAptitude": "Weapon Aptitude",
+        "blindFighting": "Blind Fighting",
         "wildMagic": "Wild Magic",
         "incompetent": "Incompetent",
         "exceptionalSkill": "Exceptional Skill",
+        "circumvent": "Circumvent",
+        "keepAtDistance": "Keep at Distance",
+        "drivingArcher": "Driving Archer",
+        "mightyAstralBody": "tbd",
         "exceptionalCombatTechnique": "Exceptional Combat Technique",
         "regenerationLeP": "Improved Regeneration (Life Points)",
         "regenerationAsP": "Improved Regeneration (Arcane Energy)",
@@ -1006,6 +1042,8 @@
         "advancedRegenerationKaP": "Karmic Regeneration",
         "energyControl": "Energy Control",
         "smallEnergyControl": "Small Energy Control",
+        "karmaControl": "Control of the Karmic Body",
+        "mightyKarmaControl": "Powerful Control of the Karmic Body",
         "masterfulDodge": "Masterful Dodge",
         "masterfulParry": "Master Parry",
         "improvisedWeaponMaster": "Master of Improvised Weapons",
@@ -1020,6 +1058,7 @@
         "traditionWitch": "Tradition (Witch)",
         "traditionKor": "Tradition (Kor)",
         "traditionFjarning": "Tradition (Fjarning)",
+        "traditionPhex": "Tradition (Church of Phex)",
         "inuredToEncumbrance": "Inured to Encumbrance",
         "quickload": "Quickload",
         "automaticSuccess": "Automatic Succes",
@@ -1041,7 +1080,6 @@
         "painImmunity": "Immune to pain",
         "selfControl": "Self-Control",
         "propertyKnowledge": "Property Knowledge",
-        "propertyFocus": "Property Focus",
         "obligations": "Obligations",
         "afraidOf": "Afraid of",
         "principles": "Principles",
@@ -1049,6 +1087,7 @@
         "gambling": "Gambling",
         "bodyControl": "Body Control",
         "darksight": "Darksight",
+        "witchSense": "Witch Sense",
         "nightBlind": "Night-Blind",
         "willpower": "Willpower",
         "traditionBoron": "Tradition (Church of Boron)",
@@ -1061,7 +1100,8 @@
         "invocatioMaior": "Invocatio Maior",
         "manifesto": "Manifesto",
         "elementalServant": "Elemental Servant",
-        "callDjinn": "Call Djinn"
+        "callDjinn": "Call Djinn",
+        "enemySense": "Enemy Sense"
     },
     "LocalizedCTs": {
         "Blowpipes": "Blowpipes",
@@ -1133,7 +1173,10 @@
         "nestedEffectNotSupported": "Foundry currently only supports adding of effects through the item directory.",
         "noBreakingResistance": "No Breaking Point Rating found for {item}.",
         "noBreakingStructure": "{name} has no accepted max structure value.",
-        "noConjurationActive": "No actor to summon active (drag and drop)"
+        "noConjurationActive": "No actor to summon active (drag and drop)",
+        "notInRangeToLoot": "Zu weit entfernt für eine Interaktion.",
+        "onlyGMallowed": "This function is only available to the game master.",
+        "macroNotFound": "The macro {name} could not be found...sorry."
     },
     "CEREMONYMODIFIER": {
         "holysite": "Sanctum of the god (+2)",
@@ -1182,9 +1225,9 @@
         "SHOOTERSTATIONARY": "stationary (+-0)"
     },
     "mountedRangeOptions": {
-        "STATIONARY": "standing still (+-0)",
-        "SCHRITT": "at walk (-4)",
-        "GALOPP": "at gallop (-8)"
+        "STATIONARY": "standing still",
+        "SCHRITT": "at walk",
+        "GALOPP": "at gallop"
     },
     "regnerationCampLocations": {
         "normal": "Normal",
@@ -1238,7 +1281,8 @@
         "foundryUsagedesc": "<p>You can get more informations on the usage of Foundry with TDE in the <a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\">Wiki</a>.</p><p>You can also get quick help in the Ulisses or Foundry Discord.</p><p>Using the journal browser: <ul class=\"dsalist\"><li>Right click on images to show them to your players.</li><li>Some references and text passages can point to a book location and differ from the game's location, as the modules are copies of printed books.<li>Some of the actors in the adventures might not have a token or statistics, because they only fullfill a tiny narrative role. If you need to make a check, you can use the chat command <b>/ch</b> to improvise a roll.</li><li>Important creatures and characters usually have additional information on their character sheet.</li></ul></p>",
         "fulltextsearch": "Full text search",
         "sceneReset": "Update scene",
-        "sceneResetDescription": "The scene <b>{name}</b> has already been imported. Do you like to perform a reset for this scene?<br/> All changes and tokens will be removed."
+        "sceneResetDescription": "The scene <b>{name}</b> has already been imported. Do you like to perform a reset for this scene?<br/> All changes and tokens will be removed.",
+        "playerVisibility": "Visibility for players"
     },
     "Migrakel": {
         "Migration": "Actor Migration",
@@ -1302,12 +1346,15 @@
         "armorAndWeaponDamageHint": "Activate the optional rule for weapon breaking and armor sturdiness.",
         "scrollingFontsize": "Combat Text Font Size",
         "scrollingFontsizeHint": "Font size for some of the scrolling token texts (e.g. +- LP)",
-        "enableForeignSpellModifer": "Foreign spell modifier",
-        "enableForeignSpellModiferHint": "Enable -2 modifier for foreign spell checks."
+        "enableForeignSpellModifer": "Unfamiliar tradition modifier",
+        "enableForeignSpellModiferHint": "Enable -2 modifier for unfamiliar tradition checks.",
+        "enableDPS": "Activate DPS ",
+        "enableDPSHint": "Activate the \"Dere Positioning System\".\nYou can only interact with merchants in immediate distance.\nRange modifiers for ranged attacks are applied automatically."
     },
     "WEAR": {
         "check": "Breaking Point Rating Check ({category})",
         "checkShort": "Breaking Point Rating Check",
+        "value": "Breaking Point Rating",
         "armor": {
             "0": "In good condition",
             "1": "Armor slightly damaged; subtract 1 from PRO",

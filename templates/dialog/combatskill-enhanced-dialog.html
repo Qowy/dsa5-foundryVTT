@@ -1,6 +1,6 @@
 <form class="skill-test">
     <div class="row-section">
-        <div class="col sixty">
+        <div class="col sixty" style="max-width:60%">
             {{> systems/dsa5/templates/dialog/default-combat-dialog.html}} {{#if melee}}
             <div class="form-group custom-select">
                 <label>{{localize "narrowSpace"}}</label>
@@ -50,7 +50,7 @@
             <div class="form-group custom-select">
                 <label>{{localize "distance"}}</label>
                 <select name="distance">
-                    {{#select "medium"}}
+                    {{#select rangeDistance}}
                     {{#each rangeOptions as |label val|}}
                     <option value="{{val}}">{{localize label}}</option>
                     {{/each}}
@@ -104,7 +104,7 @@
                 <select name="mountedOptions">
                     {{#select "0"}}
                     {{#each mountedOptions as |label val|}}
-                    <option value="{{val}}">{{localize label}}</option>
+                    <option value="{{val}}">{{localize label}} ({{val}})</option>
                     {{/each}}
                     {{/select}}
                 </select>

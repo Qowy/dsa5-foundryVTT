@@ -59,7 +59,7 @@ export default function() {
         hint: "migrationVersion",
         scope: "world",
         config: false,
-        default: 13,
+        default: 14,
         type: Number
     })
     game.settings.register("dsa5", "firstTimeStart", {
@@ -193,6 +193,15 @@ export default function() {
         type: Boolean
     });
 
+    game.settings.register("dsa5", "enableDPS", {
+        name: "DSASETTINGS.enableDPS",
+        hint: "DSASETTINGS.enableDPSHint",
+        scope: "world",
+        config: false,
+        default: true,
+        type: Boolean
+    });
+
     game.settings.register("dsa5", "soundConfig", {
         name: "DSASETTINGS.soundConfig",
         hint: "DSASETTINGS.soundConfigHint",
@@ -317,6 +326,15 @@ export default function() {
         default: {},
         type: Object
     });
+
+    game.settings.register("dsa5", "expansionPermissions", {
+        name: "expansionPermissions",
+        scope: "world",
+        config: false,
+        default: {},
+        type: Object
+    });
+
 }
 
 class ChangelogForm extends FormApplication {

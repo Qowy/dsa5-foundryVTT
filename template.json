@@ -336,7 +336,9 @@
             "application",
             "effectwrapper",
             "plant",
-            "magicalsign"
+            "magicalsign",
+            "demonmark",
+            "patron"
         ],
         "templates": {
             "skill": {
@@ -914,6 +916,24 @@
             "effect": {
                 "value": ""
             }
+        },
+        "demonmark": {
+            "templates": [
+                "description"
+            ],
+            "circle": 1,
+            "attribute": "",
+            "skills": "",
+            "domain": ""
+        },
+        "patron": {
+            "templates": [
+                "description"
+            ],
+            "talents": "",
+            "culture": "",
+            "category": 0,
+            "priority": 0
         },
         "disadvantage": {
             "templates": [
