@@ -446,7 +446,7 @@ export default class Actordsa5 extends Actor {
         for (let ch of Object.values(data.data.characteristics)) ch.gearmodifier = 0
     }
 
-    getSkillModifier(name, sourceType, sourceData) {
+    getSkillModifier(name, sourceType) {
         let result = []
         const keys = ["FP", "step", "QL", "TPM", "FW"]
         for (const k of keys) {
