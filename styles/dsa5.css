@@ -865,6 +865,10 @@ input[type="text"].col-Money-H {
     max-width: 50%;
 }
 
+.max20 {
+    max-width: 20%;
+}
+
 .groupbox {
     border: 1px solid var(--border-color);
     border-radius: 3px;
@@ -2084,6 +2088,11 @@ h2 .chatButton {
     border-radius: 2px;
 }
 
+.magazinContainer {
+    display: inline-block;
+    width: 3px;
+}
+
 .item-structure {
     border: 0.5px solid var(--bg-color);
     height: 100%;
@@ -2152,6 +2161,10 @@ a.inline-roll {
     color: inherit;
 }
 
+.result-image {
+    border: none;
+}
+
 .libraryImg,
 .extImg,
 .specImg {
@@ -2187,6 +2200,7 @@ a.inline-roll {
     background-image: url(../icons/categories/Spellextension.webp);
 }
 
+.rollTarget,
 .specAbs:hover {
     cursor: pointer;
 }
@@ -2261,6 +2275,7 @@ select.noAppearance {
     appearance: none;
     height: auto;
     text-align: center;
+    width: 100%;
 }
 
 .aggroButton {
@@ -2303,6 +2318,7 @@ select.noAppearance {
 }
 
 .gearDamaged,
+.resistEffect,
 .applyEffect {
     width: auto;
     padding: 4px;
@@ -2520,7 +2536,7 @@ select.noAppearance {
 .tokenQuickHot {
     position: absolute;
     top: 0;
-    height: 35px;
+    height: var(--tokenQuickhotsize);
     left: 5px;
     right: 7px;
     z-index: -2;
@@ -2529,6 +2545,7 @@ select.noAppearance {
 
 .tokenQuickHot ul {
     font-size: 0;
+    display: inline-block;
 }
 
 .tokenQuickHot.expanded {
@@ -2537,21 +2554,73 @@ select.noAppearance {
 
 .tokenQuickHot .subbuttons {
     position: absolute;
-    top: -60px;
+    z-index: 2;
+}
+
+#hotbar .macro .tooltip,
+.tokenQuickHot .tooltip {
+    z-index: 1000;
+}
+
+.tokenQuickHot .direction0 .subbuttons {
+    bottom: var(--tokenQuickhotdistance);
+}
+
+.tokenQuickHot .direction1 .subbuttons {
+    right: var(--tokenQuickhotdistance);
+}
+
+.tokenQuickHot .direction2 .subbuttons {
+    top: var(--tokenQuickhotdistance);
+}
+
+.tokenQuickHot .direction3 .subbuttons {
+    left: var(--tokenQuickhotdistance);
+}
+
+.tokenQuickHot .direction1 .dragHandler,
+.tokenQuickHot .direction3 .dragHandler {
+    height: 14px;
+    width: var(--tokenQuickhotsize);
+    line-height: 14px;
+}
+
+.tokenQuickHot .dragHandler {
+    width: 14px;
+    height: var(--tokenQuickhotsize);
+    background: rgba(0, 0, 0, 0.2);
+    text-align: center;
+    line-height: var(--tokenQuickhotsize);
+    float: right;
+}
+
+.tokenQuickHot .dragHandler:hover {
+    color: white;
+}
+
+.tokenQuickHot a {
+    box-shadow: inset 0px 0px 10px #403014;
+    color: white;
+    padding: 2px;
+    margin-bottom: 2px;
+}
+
+.tokenQuickHot .effect>div {
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
 .tokenQuickHot li {
     background-color: rgba(14, 12, 12, 0.3);
     display: inline-block;
     font-size: 14px;
-    width: 35px;
-    height: 35px;
+    width: var(--tokenQuickhotsize);
+    height: var(--tokenQuickhotsize);
     border: 1px solid black;
     border-radius: 3px;
     pointer-events: all;
     background-size: cover;
     box-shadow: inset 0px 0px 10px #403014;
-    background: url(../icons/backgrounds/macrobg.webp);
+    background-image: url(../icons/backgrounds/macrobg.webp);
     position: relative;
     box-sizing: border-box;
 }
@@ -2561,7 +2630,12 @@ select.noAppearance {
     cursor: pointer;
 }
 
-.tokenQuickHot div {
+.tokenStatusEffects .dialog-content {
+    height: 100%;
+    min-height: calc(100% - 24px);
+}
+
+.tokenQuickHot .tokenHotbarInner div {
     background-size: cover;
     height: 100%;
     width: 100%;
@@ -2589,6 +2663,32 @@ select.noAppearance {
 
 .tokenQuickHot li.skill {
     box-shadow: inset 0px 0px 10px #0d813e;
+}
+
+.window-app.tokenQuickHot .window-header {
+    display: none;
+}
+
+.window-app.tokenQuickHot {
+    padding: 0;
+}
+
+.tokenHotbarInner>ul>li.effect>div:before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f067";
+}
+
+.window-app.tokenQuickHot::after,
+.window-app.tokenQuickHot .window-content {
+    background: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+.window-app.tokenQuickHot::after {
+    content: none;
 }
 
 .ench-fw {
@@ -2843,8 +2943,18 @@ select.noAppearance {
     position: relative;
 }
 
+.multipleTarget,
+.missingTarget {
+    margin-left: 25px;
+}
+
+.missingTarget i,
 .skill-test .targets i {
     color: darkred;
+}
+
+.multipleTarget i {
+    color: #e68044;
 }
 
 .skill-test .targets .image i {
@@ -3036,7 +3146,7 @@ input[type="checkbox"].autoCheckbox {
 
 #sidebar button.fshopButton {
     background: rgb(0, 111, 61);
-    background: linear-gradient(90deg, rgba(0, 38, 13, 1) 0%, rgba(0, 111, 61, 1)100%);
+    background: linear-gradient(90deg, rgba(0, 38, 13, 1) 0%, rgba(0, 111, 61, 1) 100%);
     position: relative;
 }
 
@@ -3113,7 +3223,9 @@ input[type="checkbox"].autoCheckbox {
 }
 
 .ammo-selector {
-    max-width: calc(100% - 27px);
+    width: calc(100% - 31px);
+    padding: 0px;
+    margin: 0px 1px;
 }
 
 .window-app .condition-show {

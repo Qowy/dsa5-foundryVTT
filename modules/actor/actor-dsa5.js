@@ -13,6 +13,7 @@ import { tinyNotification } from "../system/view_helper.js"
 import EquipmentDamage from "../system/equipment-damage.js"
 import DSAActiveEffectConfig from "../status/active_effects.js"
 import OnUseEffect from "../system/onUseEffects.js"
+import DSA5SoundEffect from "../system/dsa-soundeffect.js"
 
 export default class Actordsa5 extends Actor {
     static async create(data, options) {
@@ -85,7 +86,7 @@ export default class Actordsa5 extends Actor {
                 isFamiliar ||
                 data.items.some(
                     (x) => ["ritual", "spell", "magictrick"].includes(x.type) ||
-                    (x.type == "specialability" && ["magical", "staff"].includes(x.data.data.category.value))
+                    (x.type == "specialability" && ["magical", "staff", "pact"].includes(x.data.data.category.value))
                 )
             data.isPriest = data.items.some(
                 (x) => ["ceremony", "liturgy", "blessing"].includes(x.type) ||
@@ -148,9 +149,9 @@ export default class Actordsa5 extends Actor {
                 data.data.status.karmaenergy.advances +
                 data.data.status.karmaenergy.gearmodifier
 
-            data.data.status.regeneration.LePmax = data.data.status.regeneration.LePTemp + data.data.status.regeneration.LePMod
-            data.data.status.regeneration.KaPmax = data.data.status.regeneration.KaPTemp + data.data.status.regeneration.KaPMod
-            data.data.status.regeneration.AsPmax = data.data.status.regeneration.AsPTemp + data.data.status.regeneration.AsPMod
+            data.data.status.regeneration.LePmax = data.data.status.regeneration.LePTemp + data.data.status.regeneration.LePMod + data.data.status.regeneration.LePgearmodifier
+            data.data.status.regeneration.KaPmax = data.data.status.regeneration.KaPTemp + data.data.status.regeneration.KaPMod + data.data.status.regeneration.KaPgearmodifier
+            data.data.status.regeneration.AsPmax = data.data.status.regeneration.AsPTemp + data.data.status.regeneration.AsPMod + data.data.status.regeneration.AsPgearmodifier
 
             let guide = data.data.guidevalue
             if (isFamiliar || (guide && data.type != "creature")) {
@@ -227,7 +228,7 @@ export default class Actordsa5 extends Actor {
                         AdvantageRulesDSA5.vantageStep(this, game.i18n.localize("LocalizedIDs.sensitiveToPain")) +
                         AdvantageRulesDSA5.vantageStep(this, game.i18n.localize("LocalizedIDs.fragileAnimal"))
 
-                    pain = Math.max(Math.min(4, pain), 0)
+                    pain = Math.clamped(pain, 0, 4)
                 }
 
                 const changePain = data.pain != pain
@@ -236,7 +237,7 @@ export default class Actordsa5 extends Actor {
                 if (AdvantageRulesDSA5.hasVantage(this, game.i18n.localize("LocalizedIDs.blind"))) this.addCondition("blind")
                 if (AdvantageRulesDSA5.hasVantage(this, game.i18n.localize("LocalizedIDs.mute"))) this.addCondition("mute")
                 if (AdvantageRulesDSA5.hasVantage(this, game.i18n.localize("LocalizedIDs.deaf"))) this.addCondition("deaf")
-                if (!TraitRulesDSA5.hasTrait(this, game.i18n.localize("LocalizedIDs.painImmunity")) && changePain)
+                if (changePain && !TraitRulesDSA5.hasTrait(this, game.i18n.localize("LocalizedIDs.painImmunity")))
                     this.addCondition("inpain", pain, true).then(() => (data.pain = undefined))
 
                 if (this.isMerchant()) {
@@ -275,7 +276,6 @@ export default class Actordsa5 extends Actor {
         return {
             label: game.i18n.localize("MERCHANT.locked"),
             icon: "icons/svg/padlock.svg",
-
             flags: {
                 core: { statusId: "locked" },
                 dsa5: {
@@ -400,6 +400,11 @@ export default class Actordsa5 extends Actor {
                     wounds: {
                         multiplier: 1,
                     },
+                    regeneration: {
+                        LePgearmodifier: 0,
+                        KaPgearmodifier: 0,
+                        AsPgearmodifier: 0
+                    }
                 },
                 repeatingEffects: {
                     startOfRound: {
@@ -754,7 +759,7 @@ export default class Actordsa5 extends Actor {
                         break
                     case "ammunition":
                         i.weight = parseFloat((i.data.weight.value * i.data.quantity.value).toFixed(3))
-                        inventory.ammunition.items.push(i)
+                        inventory.ammunition.items.push(Actordsa5.prepareMag(i))
                         inventory.ammunition.show = true
                         totalWeight += Number(i.weight)
                         break
@@ -1258,11 +1263,9 @@ export default class Actordsa5 extends Actor {
 
         this.resetTargetAndMessage(data, cardOptions)
 
-        let oldDamageRoll = duplicate(data.postData.damageRoll)
+        let oldDamageRoll = data.postData.damageRoll
         let newRoll = await DiceDSA5.manualRolls(
-            new Roll(oldDamageRoll.formula || oldDamageRoll._formula).evaluate({
-                async: false,
-            }),
+            await new Roll(oldDamageRoll.formula || oldDamageRoll._formula).evaluate({ async: true, }),
             "CHATCONTEXT.rerollDamage"
         )
 
@@ -1673,7 +1676,7 @@ export default class Actordsa5 extends Actor {
         let toSearch = [game.i18n.localize(statusId)]
         let combatskills = Itemdsa5.buildCombatSpecAbs(this, ["Combat"], toSearch, "parry")
         let situationalModifiers = DSA5StatusEffects.getRollModifiers(testData.extra.actor, testData.source)
-        Itemdsa5.getDefenseMalus(situationalModifiers, this)
+        const isRangeAttack = Itemdsa5.getDefenseMalus(situationalModifiers, this)
 
         const multipleDefenseValue = RuleChaos.multipleDefenseValue(this, testData.source)
 
@@ -1685,6 +1688,7 @@ export default class Actordsa5 extends Actor {
                 combatSpecAbs: combatskills,
                 showDefense: true,
                 situationalModifiers,
+                isRangeAttack,
                 defenseCountString: game.i18n.format("defenseCount", {
                     malus: multipleDefenseValue,
                 }),
@@ -1801,6 +1805,14 @@ export default class Actordsa5 extends Actor {
         return item
     }
 
+    static prepareMag(item){
+        if(item.data.ammunitiongroup.value == "mag"){
+            item.structureMax = item.data.mag.max
+            item.structureCurrent = item.data.mag.value
+        }
+        return item
+    }
+
     static _prepareitemStructure(item) {
         if (item.data.structure && item.data.structure.max != 0) {
             item.structureMax = item.data.structure.max
@@ -1899,6 +1911,15 @@ export default class Actordsa5 extends Actor {
         return item
     }
 
+    async actorEffects(){
+        const allowedEffects = ["dead"]
+        const isAllowedToSeeEffects = game.user.isGM || (this.testUserPermission(game.user, "OBSERVER")) || !(await game.settings.get("dsa5", "hideEffects"))
+
+        return isAllowedToSeeEffects ? this.effects.filter(x => {
+            return !x.data.disabled && !x.notApplicable && (game.user.isGM || !x.getFlag("dsa5", "hidePlayers")) && !x.getFlag("dsa5", "hideOnToken")
+        }) : this.effects.filter(x => allowedEffects.includes(x.getFlag("core", "statusId")));
+    }
+
     async _preCreate(data, options, user) {
         await super._preCreate(data, options, user)
         let update = {}
@@ -1925,12 +1946,10 @@ export default class Actordsa5 extends Actor {
     }
 
     static calcLZ(item, actor) {
+        let factor = 1
+        let modifier = 0
         if (item.data.combatskill.value == game.i18n.localize("LocalizedIDs.Throwing Weapons"))
-            return Math.max(
-                0,
-                Number(item.data.reloadTime.value) -
-                    SpecialabilityRulesDSA5.abilityStep(actor, game.i18n.localize("LocalizedIDs.quickdraw"))
-            )
+            modifier = SpecialabilityRulesDSA5.abilityStep(actor, game.i18n.localize("LocalizedIDs.quickdraw")) * -1
         else if (
             item.data.combatskill.value == game.i18n.localize("LocalizedIDs.Crossbows") &&
             SpecialabilityRulesDSA5.hasAbility(
@@ -1938,22 +1957,35 @@ export default class Actordsa5 extends Actor {
                 `${game.i18n.localize("LocalizedIDs.quickload")} (${game.i18n.localize("LocalizedIDs.Crossbows")})`
             )
         )
-            return Math.max(0, Math.round(Number(item.data.reloadTime.value) * 0.5))
+            factor = 0.5
+        else{
+            modifier = SpecialabilityRulesDSA5.abilityStep(
+                actor,
+                `${game.i18n.localize("LocalizedIDs.quickload")} (${game.i18n.localize(item.data.combatskill.value)})`
+            ) * -1
+        }
+
+        let reloadTime = `${item.data.reloadTime.value}`.split("/")
+        if(item.data.ammunitiongroup.value == "mag"){
+            let currentAmmo = actor.items.find((x) => x.id == item.data.currentAmmo.value || x._id == item.data.currentAmmo.value)
+            let reloadType = 0
+            if (currentAmmo) {
+                currentAmmo = duplicate(currentAmmo)
+                if(currentAmmo.data.mag.value <= 0) reloadType = 1
+            }
+            reloadTime = reloadTime[reloadType] || reloadTime[0]
+        }else{
+            reloadTime = reloadTime[0]
+        }
 
         return Math.max(
             0,
-            Number(item.data.reloadTime.value) -
-                SpecialabilityRulesDSA5.abilityStep(
-                    actor,
-                    `${game.i18n.localize("LocalizedIDs.quickload")} (${game.i18n.localize(item.data.combatskill.value)})`
-                )
+            Math.round(Number(reloadTime) * factor) + modifier
         )
     }
 
     static _parseDmg(item, modification = undefined) {
-        let parseDamage = new Roll(item.data.damage.value.replace(/[Ww]/g, "d"), {
-            async: false,
-        })
+        let parseDamage = new Roll(item.data.damage.value.replace(/[Ww]/g, "d"), {async: false})
 
         let damageDie = "",
             damageTerm = "",
@@ -2032,6 +2064,11 @@ export default class Actordsa5 extends Actor {
                         .map((x) => Math.round(Number(x) * rangeMultiplier))
                         .join("/")
                     item.attack += Number(currentAmmo.data.atmod) || 0
+                    if(currentAmmo.data.ammunitiongroup.value == "mag"){
+                        item.ammoMax = currentAmmo.data.mag.max
+                        item.ammoCurrent = currentAmmo.data.mag.value
+                    }
+                    
                 }
             }
             item.LZ = Actordsa5.calcLZ(item, actor)
@@ -2079,35 +2116,42 @@ export default class Actordsa5 extends Actor {
         }
         return cardOptions
     }
-
-    async basicTest({ testData, cardOptions }, options = {}) {
-        testData = await DiceDSA5.rollDices(testData, cardOptions)
-        let result = await DiceDSA5.rollTest(testData)
-
-        if (testData.extra.options.other) {
-            if (!result.other) result.other = []
-
-            result.other.push(...testData.extra.options.other)
+    
+    async swapMag(weaponId){
+        const weapon = this.items.get(weaponId)
+        const currentAmmo = this.items.get(weapon.data.data.currentAmmo.value)
+        if(currentAmmo && currentAmmo.data.data.quantity.value > 1){
+            await this.updateEmbeddedDocuments("Item",[ {
+                _id: currentAmmo.id, 
+                "data.quantity.value": currentAmmo.data.data.quantity.value - 1, 
+                "data.mag.value": currentAmmo.data.data.mag.max
+            }])
+            DSA5SoundEffect.playEquipmentWearStatusChange(currentAmmo)
+            return currentAmmo
         }
+        ui.notifications.error(game.i18n.localize("DSAError.NoAmmo"))
+        return undefined
+    }
 
-        result.postFunction = "basicTest"
-
-        if (game.user.targets.size) {
-            cardOptions.isOpposedTest = testData.opposable
-            if (cardOptions.isOpposedTest) cardOptions.title += ` - ${game.i18n.localize("Opposed")}`
-        }
-
+    async consumeAmmunition(testData){
         if (testData.extra.ammo && !testData.extra.ammoDecreased) {
             testData.extra.ammoDecreased = true
-            testData.extra.ammo.data.quantity.value--
+            
             if (testData.extra.ammo._id) {
-                await this.updateEmbeddedDocuments("Item", [
-                    {
-                        _id: testData.extra.ammo._id,
-                        "data.quantity.value": testData.extra.ammo.data.quantity.value,
-                    },
-                    { _id: testData.source._id, "data.reloadTime.progress": 0 },
-                ])
+                let ammoUpdate = {_id: testData.extra.ammo._id }
+                if(testData.extra.ammo.data.ammunitiongroup.value == "mag"){
+                    if(testData.extra.ammo.data.mag.value <= 0){
+                        testData.extra.ammo.data.quantity.value--
+                        ammoUpdate["data.quantity.value"] = testData.extra.ammo.data.quantity.value
+                        ammoUpdate["data.mag.value"] = testData.extra.ammo.data.mag.max - 1
+                    }else{
+                        ammoUpdate["data.mag.value"] = testData.extra.ammo.data.mag.value - 1
+                    }
+                }else{
+                    testData.extra.ammo.data.quantity.value--
+                    ammoUpdate["data.quantity.value"] = testData.extra.ammo.data.quantity.value
+                }
+                await this.updateEmbeddedDocuments("Item", [ammoUpdate, { _id: testData.source._id, "data.reloadTime.progress": 0 }])
             }
         } else if (
             (testData.source.type == "rangeweapon" ||
@@ -2125,6 +2169,27 @@ export default class Actordsa5 extends Actor {
                 },
             ])
         }
+    }
+
+    async basicTest({ testData, cardOptions }, options = {}) {
+        testData = await DiceDSA5.rollDices(testData, cardOptions)
+        let result = await DiceDSA5.rollTest(testData)
+
+        if (testData.extra.options.other) {
+            if (!result.other) result.other = []
+
+            result.other.push(...testData.extra.options.other)
+        }
+
+        result.postFunction = "basicTest"
+
+        if (game.user.targets.size) {
+            cardOptions.isOpposedTest = testData.opposable
+            const opposed = ` - ${game.i18n.localize("Opposed")}`
+            if (cardOptions.isOpposedTest && cardOptions.title.match(opposed+"$") != opposed) cardOptions.title += opposed
+        }
+
+        await this.consumeAmmunition(testData)
 
         if (!options.suppressMessage)
             await DiceDSA5.renderRollCard(cardOptions, result, options.rerenderMessage).then(async (msg) => {
@@ -2149,6 +2214,10 @@ export default class Actordsa5 extends Actor {
             else if (statusId == "drunken") {
                 await this.addCondition("stunned")
                 await this.removeCondition("drunken")
+            }
+            else if (statusId == "exhaustion") {
+                await this.addCondition("stunned")
+                await this.removeCondition("exhaustion")
             }
         }
 
@@ -2181,9 +2250,11 @@ export default class Actordsa5 extends Actor {
     }
 
     async markDead(dead) {
-        const tokens = game.canvas.tokens.documentCollection.filter((x) => x.data.actorId == this.id && x.combatant)
+        const tokens = this.getActiveTokens()
+
         for (let token of tokens) {
-            await token.combatant.update({ defeated: dead })
+            if(token.combatant)
+                await token.combatant.update({ defeated: dead })
         }
     }
 }

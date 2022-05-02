@@ -10,6 +10,7 @@ import RuleChaos from "../system/rule_chaos.js"
 import CreatureType from "../system/creature-type.js"
 import DPS from "../system/derepositioningsystem.js"
 import DSA5CombatDialog from "../dialog/dialog-combat-dsa5.js"
+import SpecialabilityRulesDSA5 from "../system/specialability-rules-dsa5.js"
 
 export default class Itemdsa5 extends Item {
     static defaultImages = {
@@ -147,7 +148,7 @@ export default class Itemdsa5 extends Item {
         let type = ""
         if (/^\*/.test(val)) {
             type = "*"
-            val = val.substring(1)
+            val = val.substring(1).replace(",", ".")
         }
         return {
             name,
@@ -223,10 +224,14 @@ export default class Itemdsa5 extends Item {
     }
 
     static getDefenseMalus(situationalModifiers, actor) {
+        let isRangeDefense = false
         if (actor.data.flags.oppose) {
             let message = game.messages.get(actor.data.flags.oppose.messageId)
+            const preData = message.data.flags.data.preData
+            isRangeDefense = !(getProperty(preData, "source.type") == "meleeweapon" || getProperty(preData, "source.data.traitType.value") == "meleeAttack")
+
             const regex = / \[(-)?\d{1,}\]/
-            for (let mal of message.data.flags.data.preData.situationalModifiers) {
+            for (let mal of preData.situationalModifiers) {
                 if (mal.dmmalus != undefined && mal.dmmalus != 0) {
                     situationalModifiers.push({
                         name: `${game.i18n.localize("MODS.defenseMalus")} - ${mal.name.replace(regex, "")}`,
@@ -250,6 +255,7 @@ export default class Itemdsa5 extends Item {
                 })
             }
         }
+        return isRangeDefense
     }
 
     static changeChars(source, ch1, ch2, ch3) {
@@ -407,10 +413,8 @@ export default class Itemdsa5 extends Item {
         delete rangeOptions[
             AdvantageRulesDSA5.hasVantage(actor, game.i18n.localize("LocalizedIDs.senseOfRange")) ? "long" : "rangesense"
         ]
-
-        const drivingArcher = actor.items.some(
-            (x) => x.name == game.i18n.localize("LocalizedIDs.drivingArcher") && x.type == "specialability"
-        )
+        if (!SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.extremeShot"))) delete rangeOptions["extreme"]
+        const drivingArcher = SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.drivingArcher"))
         const mountedOptions = drivingArcher ? duplicate(DSA5.drivingArcherOptions) : duplicate(DSA5.mountedRangeOptions)
 
         mergeObject(data, {
@@ -471,10 +475,11 @@ export default class Itemdsa5 extends Item {
     }
 
     static prepareMeleeParry(situationalModifiers, actor, data, source, combatskills, wrongHandDisabled) {
-        Itemdsa5.getDefenseMalus(situationalModifiers, actor)
+        const isRangeDefense = Itemdsa5.getDefenseMalus(situationalModifiers, actor)
         mergeObject(data, {
             visionOptions: DSA5.meleeRangeVision(data.mode),
             showDefense: true,
+            isRangeDefense,
             wrongHandDisabled: wrongHandDisabled && getProperty(source, "data.worn.offHand"),
             melee: true,
             combatSpecAbs: combatskills,
@@ -540,15 +545,9 @@ export default class Itemdsa5 extends Item {
 
         if (game.user.targets.size) {
             cardOptions.isOpposedTest = testData.opposable
-            if (cardOptions.isOpposedTest) cardOptions.title += ` - ${game.i18n.localize("Opposed")}`
+            const opposed = ` - ${game.i18n.localize("Opposed")}`
+            if (cardOptions.isOpposedTest && cardOptions.title.match(opposed + "$") != opposed) cardOptions.title += opposed
         }
-
-        // TODO this can probably be removed
-        /*if (testData.extra.ammo && !testData.extra.ammoDecreased) {
-            testData.extra.ammoDecreased = true
-            testData.extra.ammo.data.quantity.value--;
-            await this.updateEmbeddedDocuments("Item", [{ _id: testData.extra.ammo._id, "data.quantity.value": testData.extra.ammo.data.quantity.value }]);
-        }*/
 
         if (!options.suppressMessage) DiceDSA5.renderRollCard(cardOptions, result, options.rerenderMessage)
 
@@ -1072,20 +1071,12 @@ class ConsumableItemDSA extends Itemdsa5 {
     static async _applyActiveEffect(source) {
         let effects = source.data.effects.toObject()
         if (effects.length > 0) {
-            const effectsWithChanges = effects.filter((x) => x.changes && x.changes.length > 0)
-            await source.actor.createEmbeddedDocuments(
-                "ActiveEffect",
-                effectsWithChanges.map((x) => {
-                    x.origin = source.actor.uuid
-                    return x
-                })
-            )
-            const msg = await DSAActiveEffectConfig.applyAdvancedFunction(source.actor, effects, source, {
+            const { msg, resistRolls, effectNames } = await DSAActiveEffectConfig.applyAdvancedFunction(source.actor, effects, source, {
                 qualityStep: source.data.data.QL,
-            })
+            }, source.actor)
             const infoMsg = `${game.i18n.format("ActiveEffects.appliedEffect", {
                 target: source.actor.name,
-                source: source.name,
+                source: effectNames.join(", ")
             })} ${msg || ""}`
             ChatMessage.create(DSA5_Utility.chatDataSetup(infoMsg))
         }
@@ -1142,6 +1133,7 @@ class DiseaseItemDSA5 extends Itemdsa5 {
             hasZKModifier: source.data.resistance.value == "ZK",
         })
     }
+
     static setupDialog(ev, options, item, actor, tokenId) {
         let title = item.name + " " + game.i18n.localize(item.type) + " " + game.i18n.localize("Test")
 
@@ -1259,7 +1251,7 @@ class MeleeweaponDSA5 extends Itemdsa5 {
             callback: (html, options = {}) => {
                 DSA5CombatDialog.resolveMeleeDialog(testData, cardOptions, html, actor, options, multipleDefenseValue, mode)
                 Hooks.call("callbackDialogCombatDSA5", testData, actor, html, item, tokenId)
-
+                testData.isRangeDefense = data.isRangeDefense
                 return { testData, cardOptions }
             },
         }
@@ -1373,7 +1365,7 @@ class RangeweaponItemDSA5 extends Itemdsa5 {
 
             if (currentAmmo) {
                 currentAmmo = currentAmmo.toObject(false)
-                source.data.effect.attributes = source.data.effect.attributes
+                source.data.effect.attributes = (source.data.effect.attributes || "")
                     .split(",")
                     .concat((currentAmmo.data.effect.attributes || "").split(","))
                     .filter((x) => x != "")
@@ -1409,7 +1401,37 @@ class RangeweaponItemDSA5 extends Itemdsa5 {
         this.attackStatEffect(situationalModifiers, Number(actor.data.data.rangeStats[data.mode]))
     }
 
-    static setupDialog(ev, options, item, actor, tokenId) {
+    static async checkAmmunitionState(item, testData, actor, mode) {
+        let hasAmmo = true
+        if (actor.data.type != "creature" && mode != "damage") {
+            //TODO this has to go
+            let itemData = item.data.data ? item.data.data : item.data
+            if (itemData.ammunitiongroup.value == "infinite") {
+                //Dont count ammo
+            } else if (itemData.ammunitiongroup.value == "-") {
+                testData.extra.ammo = duplicate(item)
+                hasAmmo = testData.extra.ammo.data.quantity.value > 0
+            } else {
+                const ammoItem = actor.items.get(itemData.currentAmmo.value)
+                if (ammoItem) {
+                    testData.extra.ammo = ammoItem.toObject()
+                    if (itemData.ammunitiongroup.value == "mag") {
+                        hasAmmo = testData.extra.ammo.data.quantity.value > 1 || (testData.extra.ammo.data.mag.value > 0 && testData.extra.ammo.data.quantity.value > 0)
+
+                    } else {
+                        hasAmmo = testData.extra.ammo.data.quantity.value > 0
+                    }
+                } else {
+                    hasAmmo = false
+                }
+            }
+        }
+        if (!hasAmmo) ui.notifications.error(game.i18n.localize("DSAError.NoAmmo"))
+
+        return hasAmmo
+    }
+
+    static async setupDialog(ev, options, item, actor, tokenId) {
         let mode = options.mode
         let title = game.i18n.localize(item.name) + " " + game.i18n.localize(mode + "test")
 
@@ -1424,23 +1446,7 @@ class RangeweaponItemDSA5 extends Itemdsa5 {
             },
         }
 
-        if (actor.data.type != "creature" && mode != "damage") {
-            let itemData = item.data.data ? item.data.data : item.data
-            if (itemData.ammunitiongroup.value == "-") {
-                testData.extra.ammo = duplicate(item)
-                if (testData.extra.ammo.data.quantity.value <= 0) {
-                    return ui.notifications.error(game.i18n.localize("DSAError.NoAmmo"))
-                }
-            } else {
-                const ammoItem = actor.getEmbeddedDocument("Item", itemData.currentAmmo.value)
-                if (ammoItem) {
-                    testData.extra.ammo = ammoItem.toObject()
-                }
-                if (!testData.extra.ammo || !itemData.currentAmmo.value || testData.extra.ammo.data.quantity.value <= 0) {
-                    return ui.notifications.error(game.i18n.localize("DSAError.NoAmmo"))
-                }
-            }
-        }
+        if (!(await this.checkAmmunitionState(item, testData, actor, mode))) return
 
         let data = {
             rollMode: options.rollMode,
@@ -1683,7 +1689,7 @@ class TraitItemDSA5 extends Itemdsa5 {
                 } else {
                     DSA5CombatDialog.resolveRangeDialog(testData, cardOptions, html, actor, options)
                 }
-
+                testData.isRangeDefense = data.isRangeDefense
                 Hooks.call("callbackDialogCombatDSA5", testData, actor, html, item, tokenId)
                 return { testData, cardOptions }
             },

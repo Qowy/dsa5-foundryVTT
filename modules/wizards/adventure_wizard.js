@@ -1,6 +1,8 @@
+import { bindImgToCanvasDragStart } from "../hooks/imgTileDrop.js"
 import DSA5StatusEffects from "../status/status_effects.js"
 import DSA5ChatAutoCompletion from "../system/chat_autocompletion.js"
 import DSA5ChatListeners from "../system/chat_listeners.js"
+import DSA5_Utility from "../system/utility-dsa5.js"
 import { slist } from "../system/view_helper.js"
 
 export default class BookWizard extends Application {
@@ -160,9 +162,10 @@ export default class BookWizard extends Application {
             DSA5ChatListeners.postStatus($(ev.currentTarget).attr("data-id"))
         })
 
-        html.on('click', '.importBook', async() => {
-            this.importBook()
-        })
+        html.on('click', '.importBook', async() => this.importBook())
+        
+        bindImgToCanvasDragStart(html)
+
         slist(html, '.breadcrumbs', this.resaveBreadCrumbs)
         this.heightFix()
     }
@@ -241,6 +244,7 @@ export default class BookWizard extends Application {
         this.content = `<div><h1 class="journalHeader" data-uuid="${journal.uuid}">${journal.name}<div class="jrnIcons">${pinIcon}<a class="pinJournal"><i class="fas fa-thumbtack"></i></a><a class="showJournal"><i class="fas fa-eye"></i></a></div></h1>${TextEditor.enrichHTML(content)}`
         const chapter = $(this._element).find('.chapter')
         chapter.html(this.content)
+        bindImgToCanvasDragStart(chapter)
         chapter.find('.documentName-link, .entity-link').click(ev => {
             const elem = $(ev.currentTarget)
             if (this.bookData && elem.attr("data-pack") == this.bookData.journal) {
@@ -481,7 +485,7 @@ export default class BookWizard extends Application {
     }
 
     moduleEnabled(id) {
-        return game.modules.get(id) && game.modules.get(id).active
+        return DSA5_Utility.moduleEnabled(id)
     }
 }
 

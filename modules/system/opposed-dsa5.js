@@ -4,6 +4,7 @@ import { ReactToAttackDialog, ReactToSkillDialog } from "../dialog/dialog-react.
 import Actordsa5 from "../actor/actor-dsa5.js";
 import EquipmentDamage from "./equipment-damage.js";
 import DSAActiveEffectConfig from "../status/active_effects.js";
+import Itemdsa5 from "../item/item-dsa5.js";
 
 export default class OpposedDsa5 {
     static async handleOpposedTarget(message) {
@@ -244,14 +245,17 @@ export default class OpposedDsa5 {
     }
 
     static async playAutomatedJBA2(attacker, defender, opposedResult) {
-        if (game.modules.get("autoanimations") && game.modules.get("autoanimations").active) {
+        if (DSA5_Utility.moduleEnabled("autoanimations")) {
             //const attackerToken = canvas.tokens.get(attacker.speaker.token)
             const attackerToken = DSA5_Utility.getSpeaker(attacker.speaker).getActiveTokens()[0]
             const defenderToken = DSA5_Utility.getSpeaker(defender.speaker).getActiveTokens()[0]
             if (!attackerToken || !attackerToken.actor || !defenderToken || !defenderToken.actor) {
                 return
             }
-            const item = attackerToken.actor.items.get(attacker.testResult.source._id)
+            let item = attackerToken.actor.items.get(attacker.testResult.source._id)
+            if (!item) item = new Itemdsa5(attacker.testResult.source, { temporary: true })
+            if (!item) return
+
             const targets = [defenderToken]
             const hitTargets = opposedResult.winner == "attacker" ? targets : []
             AutoAnimations.playAnimation(attackerToken, targets, item, { hitTargets, playOnMiss: true })
@@ -259,7 +263,7 @@ export default class OpposedDsa5 {
     }
 
     static async showSpellWithoutTarget(message) {
-        if (game.modules.get("autoanimations") && game.modules.get("autoanimations").active) {
+        if (DSA5_Utility.moduleEnabled("autoanimations")) {
             const msgData = getProperty(message.data, "flags.data")
             if (!msgData || msgData.isOpposedTest) return
 

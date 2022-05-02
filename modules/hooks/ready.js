@@ -2,10 +2,11 @@ import DSA5Tutorial from "../system/tutorial.js";
 import OpposedDsa5 from "../system/opposed-dsa5.js";
 import MerchantSheetDSA5 from "../actor/merchant-sheet.js";
 import Itemdsa5 from "../item/item-dsa5.js";
-import DiceDSA5 from "../system/dice-dsa5.js";
 import PlayerMenu from "../wizards/player_menu.js";
-import { DiceSoNiceCustomization } from "./dicesonice.js";
 import OnUseEffect from "../system/onUseEffects.js";
+import RequestRoll from "../system/request-roll.js";
+import DSAActiveEffectConfig from "../status/active_effects.js";
+import DSA5_Utility from "../system/utility-dsa5.js";
 
 export default function() {
     Hooks.on("ready", async() => {
@@ -22,7 +23,7 @@ export default function() {
                         }
                         break
                     case "addEffect":
-                        DiceDSA5._applyEffect(data.payload.id, data.payload.mode, data.payload.actors)
+                        DSAActiveEffectConfig.applyEffect(data.payload.id, data.payload.mode, data.payload.actors)
                         break
                     case "updateMsg":
                         game.messages.get(data.payload.id).update(data.payload.updateData)
@@ -37,7 +38,7 @@ export default function() {
                         OpposedDsa5.hideReactionButton(data.payload.id)
                         break
                     case "updateGroupCheck":
-                        DiceDSA5._rerenderGC(game.messages.get(data.payload.messageId), data.payload.data)
+                        RequestRoll.rerenderGC(game.messages.get(data.payload.messageId), data.payload.data)
                         break
                     case "updateAttackMessage":
                         game.messages.get(data.payload.messageId).update({ "flags.data.unopposedStartMessage": data.payload.startMessageId });
@@ -66,19 +67,25 @@ export default function() {
                     case "socketedConditionAddActor":
                         fromUuid(data.payload.id).then(item => {
                             const onUse = new OnUseEffect(item)
-                            onUse.socketedConditionAddActor(payload.actors.map(x => game.actors.get(x)), payload.data)
+                            onUse.socketedConditionAddActor(data.payload.actors.map(x => game.actors.get(x)), data.payload.data)
                         })
                         break
                     case "socketedConditionAdd":
                         fromUuid(data.payload.id).then(item => {
                             const onUse = new OnUseEffect(item)
-                            onUse.socketedConditionAdd(payload.targets, payload.data)
+                            onUse.socketedConditionAdd(data.payload.targets, data.payload.data)
                         })
                         break
                     case "socketedRemoveCondition":
                         fromUuid(data.payload.id).then(item => {
                             const onUse = new OnUseEffect(item)
-                            onUse.socketedRemoveCondition(payload.targets, payload.coreId)
+                            onUse.socketedRemoveCondition(data.payload.targets, data.payload.coreId)
+                        })
+                        break
+                    case "socketedActorTransformation":
+                        fromUuid(data.payload.id).then(item => {
+                            const onUse = new OnUseEffect(item)
+                            onUse.socketedActorTransformation(data.payload.targets, data.payload.update)
                         })
                         break
                     case "updateHits":
@@ -93,12 +100,12 @@ export default function() {
             })
         }
 
-        if (game.modules.get("vtta-tokenizer") && game.modules.get("vtta-tokenizer").active && !(await game.settings.get("dsa5", "tokenizerSetup")) && game.user.isGM) {
-            await game.settings.set("vtta-tokenizer", "default-frame-pc", "systems/dsa5/icons/backgrounds/token_green.webp")
-            await game.settings.set("vtta-tokenizer", "default-frame-npc", "systems/dsa5/icons/backgrounds/token_black.webp")
+        if (DSA5_Utility.moduleEnabled("vtta-tokenizer") && !(await game.settings.get("dsa5", "tokenizerSetup")) && game.user.isGM) {
+            await game.settings.set("vtta-tokenizer", "default-frame-pc", "[data] systems/dsa5/icons/backgrounds/token_green.webp")
+            await game.settings.set("vtta-tokenizer", "default-frame-npc", "[data] systems/dsa5/icons/backgrounds/token_black.webp")
             await game.settings.set("dsa5", "tokenizerSetup", true)
         }
-        if (game.modules.get("dice-so-nice") && game.modules.get("dice-so-nice").active && !(await game.settings.get("dsa5", "diceSetup")) && game.user.isGM) {
+        if (DSA5_Utility.moduleEnabled("dice-so-nice") && !(await game.settings.get("dsa5", "diceSetup")) && game.user.isGM) {
             await game.settings.set("dice-so-nice", "immediatelyDisplayChatMessages", true)
             await game.settings.set("dsa5", "diceSetup", true)
         }

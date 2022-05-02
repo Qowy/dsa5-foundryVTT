@@ -59,7 +59,7 @@ export default function() {
         hint: "migrationVersion",
         scope: "world",
         config: false,
-        default: 14,
+        default: 15,
         type: Number
     })
     game.settings.register("dsa5", "firstTimeStart", {
@@ -202,6 +202,46 @@ export default function() {
         type: Boolean
     });
 
+    game.settings.register("dsa5", "tokenhotbarSize", {
+        name: "DSASETTINGS.tokenhotbarSize",
+        hint: "DSASETTINGS.tokenhotbarSizeHint",
+        scope: "client",
+        config: true,
+        default: 35,
+        type: Number,
+        range: {
+            min: 15,
+            max: 100,
+            step: 5
+        },
+        onChange: async(val) => {
+            game.dsa5.apps.tokenHotbar.constructor.defaultOptions.itemWidth = val
+        }
+    });
+
+    game.settings.register("dsa5", "tokenhotbarLayout", {
+        name: "DSASETTINGS.tokenhotbarLayout",
+        hint: "DSASETTINGS.tokenhotbarLayoutHint",
+        scope: "client",
+        config: true,
+        default: "0",
+        type: Number,
+        choices: {
+            0: game.i18n.localize('DSASETTINGS.tokenhotbarLayout0'),
+            2: game.i18n.localize('DSASETTINGS.tokenhotbarLayout1'),
+            1: game.i18n.localize('DSASETTINGS.tokenhotbarLayout2'),
+            3: game.i18n.localize('DSASETTINGS.tokenhotbarLayout3')
+        }
+    });
+
+    game.settings.register("dsa5", "tokenhotbarPosition", {
+        name: "tokenhotbarPosition",
+        scope: "client",
+        config: false,
+        default: {},
+        type: Object
+    });
+
     game.settings.register("dsa5", "soundConfig", {
         name: "DSASETTINGS.soundConfig",
         hint: "DSASETTINGS.soundConfigHint",
@@ -217,6 +257,14 @@ export default function() {
         label: "Changelog",
         hint: game.i18n.localize("DSASETTINGS.changelog"),
         type: ChangelogForm,
+        restricted: false
+    })
+
+    game.settings.registerMenu("dsa5", "resetTokenbar", {
+        name: game.i18n.localize("DSASETTINGS.resetTokenbar"),
+        label: game.i18n.localize("DSASETTINGS.resetTokenbar"),
+        hint: game.i18n.localize("DSASETTINGS.resetTokenbarHint"),
+        type: ResetTokenbar,
         restricted: false
     })
 
@@ -340,5 +388,15 @@ export default function() {
 class ChangelogForm extends FormApplication {
     render() {
         showPatchViewer()
+    }
+}
+
+class ResetTokenbar extends FormApplication {
+    async render() {
+        await game.settings.set("dsa5", "tokenhotbarPosition", {})
+        await game.settings.set("dsa5", "tokenhotbarLayout", 0)
+        await game.settings.set("dsa5", "tokenhotbarSize", 35)
+        game.dsa5.apps.tokenHotbar.resetPosition()
+        game.dsa5.apps.tokenHotbar.render(true)
     }
 }

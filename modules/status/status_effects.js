@@ -102,7 +102,7 @@ export default class DSA5StatusEffects {
         if (existing && existing.data.flags.dsa5.value == null) {
             if (target.token) target = target.token.actor
             const res = await target.deleteEmbeddedDocuments("ActiveEffect", [existing.id])
-            Hooks.call("deleteActorActiveEffect", target, existing)
+                //Hooks.call("deleteActorActiveEffect", target, existing)
             return res
         } else if (existing)
             return await DSA5StatusEffects.removeEffect(target, existing, value, absolute, auto)
@@ -356,6 +356,7 @@ class TheriakEffect extends DSA5StatusEffects {
         return 0
     }
 }
+
 class NoModifierEffect extends DSA5StatusEffects {
     static calculateRollModifier(effect, actor, item, options = {}) {
         return 0

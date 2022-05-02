@@ -18,6 +18,66 @@ export default class DialogShared extends Dialog {
         this.prepareFormRecall($(this._element))
     }
 
+    setRollButtonWarning() {
+        if (this.dialogData.mode == "attack") {
+            const noTarget = game.i18n.localize("DIALOG.noTarget")
+            $(this._element).find(".dialog-buttons .rollButton").html(
+                `${game.i18n.localize('Roll')}<span class="missingTarget"><i class="fas fa-exclamation-circle"></i> ${noTarget}</span>`
+                )
+        }
+    }
+
+    setMultipleTargetsWarning() {
+        if (this.dialogData.mode == "attack") {
+            const noTarget = game.i18n.localize("DIALOG.multipleTarget")
+            $(this._element).find(".dialog-buttons .rollButton").html(
+                `${game.i18n.localize('Roll')}<span class="multipleTarget"><i class="fas fa-exclamation-circle"></i> ${noTarget}</span>`
+                )
+        }
+    }
+
+    async updateTargets(html, targets) {
+        const template = await renderTemplate('systems/dsa5/templates/dialog/parts/targets.html', {targets})
+        html.find(".targets").html(template);
+        if (targets.length > 0) {
+            $(this._element).find('.dialog-buttons .missingTarget').remove()
+            if(targets.length > 1){
+                this.setMultipleTargetsWarning()
+            }else{
+                $(this._element).find('.dialog-buttons .multipleTarget').remove()
+            }
+        } else {
+            this.setRollButtonWarning()
+        }
+    }
+
+    removeTarget(ev){
+        const id = ev.currentTarget.dataset.id
+        $(ev.currentTarget).remove()
+        const newIds = []
+        game.user.targets.forEach((x) => {
+            if (id != x.id) newIds.push(x.id);
+        });
+        game.user.updateTokenTargets(newIds)
+    }
+
+    readTargets() {
+        let targets = [];
+        game.user.targets.forEach((x) => {
+            if (x.actor) targets.push({ name: x.actor.name, img: x.actor.img, id: x.id });
+        });
+        return targets;
+    }
+
+    compareTargets(html, targets) {
+        let newTargets = this.readTargets();
+        if (JSON.stringify(targets) != JSON.stringify(newTargets)) {
+            targets = newTargets;
+            this.updateTargets(html, targets);
+        }
+        return targets
+    }
+
     activateListeners(html) {
         super.activateListeners(html)
         html.find('.quantity-click').mousedown(ev => {
@@ -25,6 +85,12 @@ export default class DialogShared extends Dialog {
             RuleChaos.increment(ev, val, "val")
             $(ev.currentTarget).val(val.val)
         });
+        html.find(".modifiers option").mousedown((ev) => {
+            ev.preventDefault();
+            $(ev.currentTarget).prop("selected", !$(ev.currentTarget).prop("selected"));
+            return false;
+        });
+        html.on('click', '.rollTarget', (ev) => this.removeTarget(ev))
     }
 
     prepareFormRecall(html) {

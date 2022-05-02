@@ -1,3 +1,5 @@
+import DSA5_Utility from "../system/utility-dsa5.js";
+
 export default function() {
     Hooks.once('init', () => {
         game.dsa5.apps.DiceSoNiceCustomization = new DiceSoNiceCustomization()
@@ -116,7 +118,7 @@ export default function() {
             texture: 'none'
         });
 
-        import ("../../../../modules/dice-so-nice/Utils.js").then(module => {
+        import (foundry.utils.getRoute('/modules/dice-so-nice/Utils.js')).then(module => {
             game.dsa5.apps.DiceSoNiceCustomization.initConfigs(module)
             DiceSoNiceCustomization.onConnect()
         })
@@ -126,7 +128,6 @@ export default function() {
 export class DiceSoNiceCustomization extends Application {
     static attrs = ["mu", "kl", "in", "ch", "ff", "ge", "ko", "kk", "attack", "dodge", "parry", "damage"]
     initConfigs(module) {
-        this.labelColor = module.Utils.contrastOf(game.user.data.color)
         const colors = module.Utils.prepareColorsetList()
         this.choices = {}
         for (const [key, value] of Object.entries(colors)) {
@@ -157,11 +158,10 @@ export class DiceSoNiceCustomization extends Application {
                 type: String
             });
         }
-
     }
 
     getAttributeConfiguration(value) {
-        if (game.modules.get("dice-so-nice") && game.modules.get("dice-so-nice").active) {
+        if (DSA5_Utility.moduleEnabled("dice-so-nice")) {
             return {
                 colorset: game.settings.get("dsa5", `dice3d_${value}`),
                 appearance: {

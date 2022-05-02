@@ -224,6 +224,7 @@ export default class ItemSheetdsa5 extends ItemSheet {
                 break
         }
         data.isOwned = this.item.actor
+        data.editable = this.isEditable
         if (data.isOwned)
             data.canAdvance = this.item.actor.data.canAdvance && this._advancable()
 
@@ -505,21 +506,8 @@ class EquipmentSheet extends Enchantable {
         return data
     }
 
-    breakOverflow({ name, quantity, weight }, parent) {
-        let elm = $(`<div class="itemInfo">
-            <h3 class="center">${name}</h3>
-            <div class="row-section\">
-                <div class="col ten"></div>
-                <div class="col thirty center">
-                    # ${quantity}
-                </div>
-                <div class="col five"></div>
-                <div class="col thirty center">
-                    <i class="fas fa-anchor\"></i> ${weight}
-                </div>
-                <div class="col ten"></div>
-            </div>
-        </div>`)
+    async breakOverflow(data, parent) {
+        let elm = $(await renderTemplate('systems/dsa5/templates/items/baghover.html', data))
 
         let top = parent.offset().top + 52;
         let left = parent.offset().left - 75;
@@ -538,9 +526,9 @@ class EquipmentSheet extends Enchantable {
     activateListeners(html) {
         super.activateListeners(html)
         const slots = html.find('.slot')
-        slots.mouseenter((ev) => {
+        slots.mouseenter(async(ev) => {
             const item = $(ev.currentTarget)
-            let elm = this.breakOverflow({
+            let elm = await this.breakOverflow({
                 name: item.attr('data-name'),
                 weight: item.attr("data-weight"),
                 quantity: item.attr("data-quantity")
@@ -632,7 +620,7 @@ class PatronSheet extends ItemSheetdsa5 {
     async getData(options) {
         const data = await super.getData(options);
         data.patronCategories = [0, 1, 2, 3].map(x => { return { name: game.i18n.localize(`PATRON.${x}`), val: x } })
-        data.priorities = [game.i18n.localize("PATRON.primary"), game.i18n.localize("PATRON.secondary")]
+        data.priorities = { 0: game.i18n.localize("PATRON.primary"), 1: game.i18n.localize("PATRON.secondary") }
         return data
     }
 }
@@ -1016,8 +1004,9 @@ class SpellExtensionSheetDSA5 extends ItemSheetdsa5 {
     async getData(options) {
         const data = await super.getData(options)
         mergeObject(data, {
-            categories: ["spell", "liturgy", "ritual", "ceremony"]
+            categories: { spell: "spell", liturgy: "liturgy", ritual: "ritual", ceremony: "ceremony" }
         })
+        console.log(data)
         return data
     }
 }

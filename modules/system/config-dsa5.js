@@ -359,12 +359,14 @@ DSA5.localizedCompendiums = {
     de: [
         "dsa5.skills",
         "dsa5.combatskills",
-        "dsa5.species"
+        "dsa5.species",
+        "dsa5.patzer"
     ],
     en: [
         "dsa5.skillsen",
         "dsa5.combatskillsen",
-        "dsa5.speciesen"
+        "dsa5.speciesen",
+        "dsa5.botch"
     ]
 }
 
@@ -446,6 +448,14 @@ DSA5.equipmentTypes = {
 
 DSA5.equipmentCategories = ["meleeweapon", "rangeweapon", "equipment", "ammunition", "armor", "poison", "consumable", "plant"]
 
+DSA5.systemTables = [
+    { name: "Defense", attrs: "data-weaponless=\"false\"", roll: "botch-roll", pack: { de: "dsa5.patzer", en: "dsa5.botch" }, setting: { module: "dsa5", key: "defenseBotchTableEnabled" } },
+    { name: "Melee", attrs: "data-weaponless=\"false\"", roll: "botch-roll", pack: { de: "dsa5.patzer", en: "dsa5.botch" }, setting: { module: "dsa5", key: "meleeBotchTableEnabled" } },
+    { name: "Range", attrs: "data-weaponless=\"false\"", roll: "botch-roll", pack: { de: "dsa5.patzer", en: "dsa5.botch" }, setting: { module: "dsa5", key: "rangeBotchTableEnabled" } },
+    { name: "Liturgy", attrs: "", roll: "botch-roll", pack: { de: "dsa5.patzer", en: "dsa5.botch" }, setting: { module: "", key: "" } },
+    { name: "Spell", attrs: "", roll: "botch-roll", pack: { de: "dsa5.patzer", en: "dsa5.botch" }, setting: { module: "", key: "" } },
+]
+
 DSA5.narrowSpaceModifiers = {
     "weaponshort": {
         "attack": 0,
@@ -502,6 +512,10 @@ DSA5.rangeMods = {
     "rangesense": {
         "damage": -1,
         "attack": -1
+    },
+    "extreme": {
+        "damage": -2,
+        "attack": -4
     }
 }
 
@@ -681,7 +695,8 @@ DSA5.rangeWeaponModifiers = {
     "short": "RangeMod.short",
     "medium": "RangeMod.medium",
     "long": "RangeMod.long",
-    "rangesense": "RangeMod.rangesense"
+    "rangesense": "RangeMod.rangesense",
+    "extreme": "RangeMod.extreme"
 }
 
 DSA5.meleeRangesArray = [
@@ -707,7 +722,9 @@ DSA5.ammunitiongroups = {
     "bolt": "bolt",
     "bullet": "bullet",
     "stone": "stone",
-    "dart": "dart"
+    "dart": "dart",
+    "mag": "mag",
+    "infinite": "infinite"
 }
 
 DSA5.combatskillsGuidevalues = {

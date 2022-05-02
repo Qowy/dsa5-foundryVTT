@@ -11,6 +11,7 @@ import Actordsa5 from "./actor-dsa5.js";
 import DSA5SoundEffect from "../system/dsa-soundeffect.js";
 import RuleChaos from "../system/rule_chaos.js";
 import OnUseEffect from "../system/onUseEffects.js";
+import { bindImgToCanvasDragStart } from "../hooks/imgTileDrop.js";
 
 export default class ActorSheetDsa5 extends ActorSheet {
     get actorType() {
@@ -108,12 +109,12 @@ export default class ActorSheetDsa5 extends ActorSheet {
 
     async getData(options) {
         const baseData = await super.getData(options);
-        const sheetData = { actor: baseData.actor.data }
+        const sheetData = { actor: baseData.actor.data, editable: baseData.editable, limited: baseData.limited, owner: baseData.owner }
         const prepare = this.actor.prepareSheet({ details: this.openDetails })
         mergeObject(sheetData.actor, prepare)
 
         sheetData.isGM = game.user.isGM;
-        sheetData["initDies"] = { "-": "", "1d6": "1d6", "2d6": "2d6", "3d6": "3d6", "4d6": "d6" }
+        sheetData["initDies"] = { "": "-", "1d6": "1d6", "2d6": "2d6", "3d6": "3d6", "4d6": "4d6" }
         DSA5StatusEffects.prepareActiveEffects(this.actor, sheetData)
         return sheetData;
     }
@@ -400,24 +401,23 @@ export default class ActorSheetDsa5 extends ActorSheet {
 
         html.find('.loadWeapon').mousedown(async(ev) => {
             const itemId = this._getItemId(ev)
-            const item = (await this.actor.getEmbeddedDocument("Item", itemId)).toObject()
+            const item = this.actor.items.get(itemId).toObject()
+
             if (getProperty(item, "data.currentAmmo.value") === "" && this.actor.type != "creature") return
 
-            const actor = this.actor
-            const lz = item.type == "trait" ? item.data.reloadTime.value : Actordsa5.calcLZ(item, actor)
+            const lz = item.type == "trait" ? item.data.reloadTime.value : Actordsa5.calcLZ(item, this.actor)
 
             if (ev.button == 0)
                 item.data.reloadTime.progress = Math.min(item.data.reloadTime.progress + 1, lz)
             else if (ev.button == 2)
                 item.data.reloadTime.progress = 0
 
-            await actor.updateEmbeddedDocuments("Item", [item]);
+            await this.actor.updateEmbeddedDocuments("Item", [item]);
         })
 
         html.find('.chargeSpell').mousedown(async(ev) => {
             const itemId = this._getItemId(ev)
-            const item = (await this.actor.getEmbeddedDocument("Item", itemId)).toObject()
-            const actor = this.actor
+            const item = this.actor.items.get(itemId).toObject()
             const lz = Number(item.data.castingTime.modified)
             if (ev.button == 0)
                 item.data.castingTime.progress = Math.min(item.data.castingTime.progress + 1, lz)
@@ -425,16 +425,17 @@ export default class ActorSheetDsa5 extends ActorSheet {
                 item.data.castingTime.progress = 0
                 item.data.castingTime.modified = 0
             }
-            await actor.updateEmbeddedDocuments("Item", [item]);
+            await this.actor.updateEmbeddedDocuments("Item", [item]);
+        })
+
+        html.find('.item-swapMag').click(async(ev) => {
+            await this.actor.swapMag(this._getItemId(ev))
         })
 
         html.find('.ammo-selector').change(async(ev) => {
             ev.preventDefault()
             const itemId = this._getItemId(ev);
-            let item = (await this.actor.getEmbeddedDocument("Item", itemId)).toObject()
-
-            item.data.currentAmmo.value = $(ev.currentTarget).val()
-            await this.actor.updateEmbeddedDocuments("Item", [item]);
+            await this.actor.updateEmbeddedDocuments("Item", [{ _id: itemId, "data.currentAmmo.value": $(ev.currentTarget).val() }]);
         })
 
         html.find('.condition-edit').click(ev => {
@@ -451,18 +452,17 @@ export default class ActorSheetDsa5 extends ActorSheet {
 
         html.find('.item-toggle').click(ev => {
             const itemId = this._getItemId(ev);
-            let item = duplicate(this.actor.getEmbeddedDocument("Item", itemId))
+            let item = this.actor.items.get(itemId).toObject()
 
             switch (item.type) {
                 case "armor":
                 case "rangeweapon":
                 case "meleeweapon":
                 case "equipment":
-                    this.actor.updateEmbeddedDocuments("Item", [{ _id: item._id, "data.worn.value": !item.data.worn.value }]);
+                    this.actor.updateEmbeddedDocuments("Item", [{ _id: itemId, "data.worn.value": !item.data.worn.value }]);
                     DSA5SoundEffect.playEquipmentWearStatusChange(item)
                     break;
             }
-
         });
 
         html.find(".status-create").click(ev => {
@@ -512,7 +512,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
 
         html.find('.quantity-click').mousedown(ev => {
             const itemId = this._getItemId(ev);
-            let item = duplicate(this.actor.getEmbeddedDocument("Item", itemId));
+            let item = this.actor.items.get(itemId).toObject()
             RuleChaos.increment(ev, item, "data.quantity.value", 0)
             this.actor.updateEmbeddedDocuments("Item", [item]);
         });
@@ -624,8 +624,6 @@ export default class ActorSheetDsa5 extends ActorSheet {
         html.find(".cards .item").mouseenter(ev => {
 
             if (ev.currentTarget.getElementsByClassName('hovermenu').length == 0) {
-                const itemId = $(ev.currentTarget).attr("data-item-id")
-                const item = this.actor.items.get(itemId)
                 const div = document.createElement('div')
                 div.classList.add("hovermenu")
                 const del = document.createElement('i')
@@ -688,20 +686,21 @@ export default class ActorSheetDsa5 extends ActorSheet {
             await ef.update({ disabled: !ef.disabled })
         })
 
-        html.find('.talentSearch').keyup(event => this._filterTalents($(event.currentTarget)))
-
         html.find('.charimg').mousedown(ev => {
             if (ev.button == 2) DSA5_Utility.showArtwork(this.actor, true)
         })
 
         let filterTalents = ev => this._filterTalents($(ev.currentTarget))
         let talSearch = html.find('.talentSearch')
+        talSearch.keyup(event => this._filterTalents($(event.currentTarget)))
         talSearch[0] && talSearch[0].addEventListener("search", filterTalents, false);
 
-        html.find('.conditionSearch').keyup(event => this._filterConditions($(event.currentTarget)))
         let filterConditions = ev => this._filterConditions($(ev.currentTarget))
         let condSearch = html.find('.conditionSearch')
+        condSearch.keyup(event => this._filterConditions($(event.currentTarget)))
         condSearch[0] && condSearch[0].addEventListener("search", filterConditions, false);
+
+        bindImgToCanvasDragStart(html, "img.charimg")
     }
 
     _onMacroUseItem(ev) {
@@ -740,14 +739,14 @@ export default class ActorSheetDsa5 extends ActorSheet {
     async _deleteActiveEffect(id) {
         if (!this.isEditable) return
 
-        let item = this.actor.data.effects.find(x => x.id == id)
+        let item = this.actor.effects.find(x => x.id == id)
 
         if (item) {
             let actor = this.token ? this.token.actor : this.actor
 
             if (actor) await this.actor.deleteEmbeddedDocuments("ActiveEffect", [item.id])
 
-            Hooks.call("deleteActorActiveEffect", this.actor, item)
+            //Hooks.call("deleteActorActiveEffect", this.actor, item)
         }
     }
 
@@ -757,7 +756,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
         const itemId = this._getItemId(ev);
         let item = this.actor.items.get(itemId)
         let message = game.i18n.format("DIALOG.DeleteItemDetail", { item: item.name })
-        renderTemplate('systems/dsa5/templates/dialog/delete-item-dialog.html', { message: message }).then(html => {
+        renderTemplate('systems/dsa5/templates/dialog/delete-item-dialog.html', { message }).then(html => {
             new Dialog({
                 title: game.i18n.localize("Delete Confirmation"),
                 content: html,
@@ -765,9 +764,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
                     Yes: {
                         icon: '<i class="fa fa-check"></i>',
                         label: game.i18n.localize("yes"),
-                        callback: () => {
-                            this._cleverDeleteItem(itemId)
-                        }
+                        callback: () => this._cleverDeleteItem(itemId)
                     },
                     cancel: {
                         icon: '<i class="fas fa-times"></i>',
@@ -857,7 +854,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
         let tar = event.currentTarget
         let itemId = tar.getAttribute("data-item-id");
         let mod = tar.getAttribute("data-mod");
-        const item = itemId ? duplicate(this.actor.getEmbeddedDocument("Item", itemId)) : {}
+        const item = itemId ? this.actor.items.get(itemId).toObject() : {}
 
         event.dataTransfer.setData("text/plain", JSON.stringify({
             type: "Item",
