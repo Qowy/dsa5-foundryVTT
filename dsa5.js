@@ -24,7 +24,9 @@ import Migrakel from "./modules/system/migrakel.js"
 import DSA5Dialog from "./modules/dialog/dialog-dsa5.js"
 import DPS from "./modules/system/derepositioningsystem.js"
 import DSATables from "./modules/tables/dsatables.js"
+import DiceDSA5 from "./modules/system/dice-dsa5.js";
 import DSA5StatusEffects from './modules/status/status_effects.js'
+import { MerchantSheetMixin } from './modules/actor/merchantmixin.js'
 
 Hooks.once("init", () => {
     console.log("Initializing DSA5 system")
@@ -36,6 +38,7 @@ Hooks.once("init", () => {
             ActorSheetdsa5Character,
             ActorSheetdsa5Creature,
             ActorSheetdsa5NPC,
+            MerchantSheetMixin,
             ItemSheetdsa5,
             DSA5_Utility,
             DSA5Initializer,
@@ -47,7 +50,8 @@ Hooks.once("init", () => {
             DSA5Dialog,
             DSA5StatusEffects,
             DPS,
-            DSATables
+            DSATables,
+            DiceDSA5
         },
         entities: {
             Actordsa5,

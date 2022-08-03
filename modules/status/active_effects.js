@@ -8,26 +8,36 @@ function automatedAnimation(successLevel, options = {}) {
     }
 }
 
-async function callMacro(context, packName, name, actor, item, qs, args = {}) {
+async function callMacro(packName, name, actor, item, qs, args = {}) {
     let result = {};
     if (!game.user.can("MACRO_SCRIPT")) {
         ui.notifications.warn(`You are not allowed to use JavaScript macros.`);
     } else {
         const pack = game.packs.get(packName);
-        const documents = await pack.getDocuments({ name });
+        let documents = await pack.getDocuments({ name });
+        if (!documents.length) {
+            for (let pack of game.packs.filter(x => x.documentName == "Macro" && /\(internal\)/.test(x.metadata.label))) {
+                documents = await pack.getDocuments({ name });
+                if (documents.length) break
+            }
+        }
 
         if (documents.length) {
             const body = `(async () => {${documents[0].data.command}})()`;
-            const fn = Function("actor", "item", "qs", "args", body);
+            const fn = Function("actor", "item", "qs", "automatedAnimation", "args", body);
             try {
                 args.result = result;
                 const context = mergeObject({ automatedAnimation }, this)
-                await fn.call(context, actor, item, qs, args);
+                await fn.call(context, actor, item, qs, automatedAnimation, args);
             } catch (err) {
                 ui.notifications.error(`There was an error in your macro syntax. See the console (F12) for details`);
                 console.error(err);
                 result.error = true;
             }
+        } else {
+            ui.notifications.error(
+                game.i18n.format("DSAError.macroNotFound", { name })
+            );
         }
     }
     return result;
@@ -52,8 +62,9 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
     }
 
     async checkTimesUpInstalled() {
-        //TODO checkTimesUpInstalled
-        return false
+        const isInstalled = DSA5_Utility.moduleEnabled("times-up")
+        if (!isInstalled && game.user.isGM) ui.notifications.warn(game.i18n.localize('DSAError.shouldTimesUp'))
+        return isInstalled
     }
 
     async _render(force = false, options = {}) {
@@ -106,6 +117,8 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                 elem.find(".advancedFunctions").html(template);
             });
         });
+
+        this.checkTimesUpInstalled()
     }
 
     async _onSubmit(event, { updateData = null, preventClose = false, preventRender = false } = {}) {
@@ -164,7 +177,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                     const mod = `${skills.pop()}`;
                     resistRolls.push({
                         skill: skills.join(" "),
-                        mod: `${Roll.safeEval(mod.replace(/q(l|s)/i, qs))}`.replace("step", specStep) || 0,
+                        mod: Math.round(Roll.safeEval(`${mod}`.replace(/q(l|s)/i, qs).replace("step", specStep))) || 0,
                         effect: ef,
                         target: actor,
                         token: actor.token ? actor.token.data._id : undefined
@@ -180,7 +193,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                             case 1: //Systemeffekt
                                 {
                                     const effect = duplicate(CONFIG.statusEffects.find((e) => e.id == getProperty(ef, "flags.dsa5.args0")));
-                                    let value = `${getProperty(ef, "flags.dsa5.args1")}`;
+                                    let value = `${getProperty(ef, "flags.dsa5.args1")}` || "1";
                                     effect.duration = ef.duration;
                                     if (/,/.test(value)) {
                                         value = Number(value.split(",")[qs - 1]);
@@ -342,7 +355,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
             for (const reg of regexes) {
                 if (reg.regEx.test(duration)) {
                     const dur = duration.replace(reg.regEx, "").trim()
-                    const time = DiceDSA5._stringToRoll(dur);
+                    const time = await DiceDSA5._stringToRoll(dur);
                     if (!isNaN(time)) {
                         for (let ef of effects) {
                             let calcTime = time * reg.seconds;
@@ -381,6 +394,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
         const regenerate = game.i18n.localize("regenerate")
         const feature = `${game.i18n.localize("Healing")} 1`
         const descriptor = `${game.i18n.localize("Description")} 1`
+        const miracle = `${game.i18n.localize('LocalizedIDs.miracle')}`
 
         let optns = [
             { name: game.i18n.localize("protection"), val: "data.totalArmor", mode: 2, ph: "1" },
@@ -402,6 +416,18 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
             {
                 name: `${closeCombat} - ${game.i18n.localize("CHARAbbrev.PA")}`,
                 val: "data.meleeStats.parry",
+                mode: 2,
+                ph: "1",
+            },
+            {
+                name: `${miracle} - ${game.i18n.localize("CHARAbbrev.AT")}`,
+                val: "data.miracle.attack",
+                mode: 2,
+                ph: "1",
+            },
+            {
+                name: `${miracle} - ${game.i18n.localize("CHARAbbrev.PA")}`,
+                val: "data.miracle.parry",
                 mode: 2,
                 ph: "1",
             },

@@ -4,7 +4,7 @@ export default class DPS {
         const ray = new Ray(tokenSource, tokenTarget)
         const tileDistance = ray.distance / gridSize
         const distance = tileDistance * canvas.scene.data.gridDistance
-        const elevation = Math.abs(tokenSource.data.elevation - tokenTarget.data.elevation)
+        const elevation = Math.abs((getProperty(tokenSource, "data.elevation") || 0) - (getProperty(tokenTarget, "data.elevation") || 0))
         const distanceSum = Math.hypot(distance, elevation)
         return {
             elevation,
@@ -13,6 +13,13 @@ export default class DPS {
             tileDistance,
             unit: canvas.scene.data.gridUnits
         }
+    }
+
+    static inDistance(toToken) {
+        for (let token of canvas.scene.tokens) {
+            if (token.isOwner && this.rangeFinder(toToken, token.object).tileDistance <= 2) return true
+        }
+        return false
     }
 
     static distanceModifier(tokenSource, rangeweapon, currentAmmo) {
@@ -35,4 +42,16 @@ export default class DPS {
             return 1
         }
     }
+
+    static initDoorMinDistance() {
+        const originalDoorControl = DoorControl.prototype._onMouseDown
+        DoorControl.prototype._onMouseDown = function(event) {
+            if (!game.user.isGM && game.settings.get("dsa5", "enableDPS")) {
+                if (!DPS.inDistance(this))
+                    return ui.notifications.warn(game.i18n.localize('DSAError.notInRangeToLoot'))
+            }
+            return originalDoorControl.apply(this, arguments)
+        }
+    }
+
 }

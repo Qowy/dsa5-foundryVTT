@@ -45,6 +45,15 @@ export default function() {
             "4": "+4",
         }
     });
+    game.settings.register("dsa5", "enableItemDropToCanvas", {
+        name: "DSASETTINGS.enableItemDropToCanvas",
+        hint: "DSASETTINGS.enableItemDropToCanvasHint",
+        scope: "world",
+        config: true,
+        default: true,
+        type: Boolean
+    });
+
     game.settings.register("dsa5", "statusEffectCounterColor", {
         name: "DSASETTINGS.statusEffectCounterColor",
         hint: "DSASETTINGS.statusEffectCounterColorHint",
@@ -59,7 +68,7 @@ export default function() {
         hint: "migrationVersion",
         scope: "world",
         config: false,
-        default: 15,
+        default: 17,
         type: Number
     })
     game.settings.register("dsa5", "firstTimeStart", {
@@ -202,6 +211,24 @@ export default function() {
         type: Boolean
     });
 
+    game.settings.register("dsa5", "iniTrackerSize", {
+        name: "DSASETTINGS.iniTrackerSize",
+        hint: "DSASETTINGS.iniTrackerSizeHint",
+        scope: "client",
+        config: true,
+        default: 70,
+        type: Number,
+        range: {
+            min: 30,
+            max: 140,
+            step: 5
+        },
+        onChange: async(val) => {
+            game.dsa5.apps.tokenHotbar.constructor.defaultOptions.itemWidth = val
+        }
+    });
+
+
     game.settings.register("dsa5", "tokenhotbarSize", {
         name: "DSASETTINGS.tokenhotbarSize",
         hint: "DSASETTINGS.tokenhotbarSizeHint",
@@ -234,6 +261,20 @@ export default function() {
         }
     });
 
+    game.settings.register("dsa5", "forceLanguage", {
+        name: "DSASETTINGS.forceLanguage",
+        hint: "DSASETTINGS.forceLanguageHint",
+        scope: "world",
+        config: true,
+        default: "none",
+        type: String,
+        choices: {
+            "none": "-",
+            "de": "German",
+            "en": "English"
+        }
+    });
+
     game.settings.register("dsa5", "tokenhotbarPosition", {
         name: "tokenhotbarPosition",
         scope: "client",
@@ -242,6 +283,13 @@ export default function() {
         type: Object
     });
 
+    game.settings.register("dsa5", "iniTrackerPosition", {
+        name: "tokenhotbarPosition",
+        scope: "client",
+        config: false,
+        default: {},
+        type: Object
+    });
     game.settings.register("dsa5", "soundConfig", {
         name: "DSASETTINGS.soundConfig",
         hint: "DSASETTINGS.soundConfigHint",
@@ -305,6 +353,30 @@ export default function() {
         type: Boolean
     });
 
+    game.settings.register("dsa5", "enableCombatFlow", {
+        name: "DSASETTINGS.enableCombatFlow",
+        hint: "DSASETTINGS.enableCombatFlowHint",
+        scope: "client",
+        config: true,
+        default: true,
+        type: Boolean,
+        onchange: ev => {
+            if (game.dsa5.apps.initTracker) {
+                game.dsa5.apps.initTracker.close()
+                game.dsa5.apps.initTracker = undefined
+            }
+        }
+    });
+
+    game.settings.register("dsa5", "enableCombatPan", {
+        name: "DSASETTINGS.enableCombatPan",
+        hint: "DSASETTINGS.enableCombatPanHint",
+        scope: "client",
+        config: true,
+        default: true,
+        type: Boolean
+    });
+
     game.settings.register("dsa5", "sightAutomationEnabled", {
         name: "sightAutomationEnabled",
         scope: "world",
@@ -345,6 +417,24 @@ export default function() {
         type: Boolean
     });
 
+    game.settings.register("dsa5", "indexDescription", {
+        name: "DSASETTINGS.indexDescription",
+        hint: "DSASETTINGS.indexDescription",
+        scope: "client",
+        config: false,
+        default: true,
+        type: Boolean
+    });
+
+    game.settings.register("dsa5", "encumbranceForRange", {
+        name: "DSASETTINGS.encumbranceForRange",
+        hint: "DSASETTINGS.encumbranceForRangeHint",
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean
+    });
+
     game.settings.register("dsa5", "obfuscateTokenNames", {
         name: "DSASETTINGS.obfuscateTokenNames",
         hint: "DSASETTINGS.obfuscateTokenNamesHint",
@@ -356,6 +446,20 @@ export default function() {
             "0": game.i18n.localize('no'),
             "1": game.i18n.localize('yes'),
             "2": game.i18n.localize('DSASETTINGS.rename'),
+        }
+    });
+
+    game.settings.register("dsa5", "merchantNotification", {
+        name: "DSASETTINGS.merchantNotification",
+        hint: "DSASETTINGS.merchantNotificationHint",
+        scope: "world",
+        config: true,
+        default: "0",
+        type: String,
+        choices: {
+            0: game.i18n.localize('no'),
+            1: game.i18n.localize('yes'),
+            2: game.i18n.localize('MERCHANT.onlyGM'),
         }
     });
 

@@ -134,6 +134,11 @@ export default class DiceDSA5 {
             if (game.settings.get("dsa5", "noConfirmationRoll")) {
                 successLevel = 3
             } else {
+                rollConfirm = await DiceDSA5.manualRolls(
+                    rollConfirm,
+                    "confirmationRoll",
+                    testData.extra.options
+                )
                 let res2 = res - rollConfirm.terms[0].results[0].result
                 if (
                     AdvantageRulesDSA5.hasVantage(
@@ -157,6 +162,11 @@ export default class DiceDSA5 {
             if (game.settings.get("dsa5", "noConfirmationRoll")) {
                 successLevel = -3
             } else {
+                rollConfirm = await DiceDSA5.manualRolls(
+                    rollConfirm,
+                    "confirmationRoll",
+                    testData.extra.options
+                )
                 let res2 = res - rollConfirm.terms[0].results[0].result
                 if (
                     AdvantageRulesDSA5.hasVantage(
@@ -473,19 +483,26 @@ export default class DiceDSA5 {
         return result
     }
 
-    static _stringToRoll(text, testData) {
-        return Roll.safeEval(
-            `${text}`.replace(/\d{1}[dDwW]\d/g, function (match) {
-                let roll = new Roll(match.replace(/[Ww]/, "d")).evaluate({ async: false })
-                if (testData)
-                    DiceDSA5._addRollDiceSoNice(
-                        testData,
-                        roll,
-                        game.dsa5.apps.DiceSoNiceCustomization.getAttributeConfiguration("ch")
-                    )
-                return roll.total
-            })
-        )
+    static async _stringToRoll(text, testData) {
+        const promises = [];
+        const regex = /\d{1}[dDwW]\d/g;
+        const modText = `${text}`
+        modText.replace(regex, function (match) {
+            promises.push(new Roll(match.replace(/[Ww]/, "d")).evaluate({ async: true }))
+        })
+        const data = await Promise.all(promises)
+        const rollString = modText.replace(regex, () => {
+            const roll = data.shift()
+            if (testData){
+                DiceDSA5._addRollDiceSoNice(
+                    testData,
+                    roll,
+                    game.dsa5.apps.DiceSoNiceCustomization.getAttributeConfiguration("ch")
+                )
+            }
+            return roll.total
+        })
+        return await Roll.safeEval(rollString)
     }
 
     static async evaluateDamage(testData, result, weapon, isRangeWeapon, doubleDamage) {
@@ -494,31 +511,31 @@ export default class DiceDSA5 {
         let dmgMultipliers = []
         let damageBonusDescription = []
         let armorPen = []
-        let bonusDmg = testData.situationalModifiers.reduce((_this, val) => {
+        let bonusDmg = 0
+        for(let val of testData.situationalModifiers){
             let number = 0
             if (val.armorPen) armorPen.push(val.armorPen)
             if (val.damageBonus) {
                 if (/^\*/.test(val.damageBonus)) {
                     dmgMultipliers.push({ name: val.name, val: Number(val.damageBonus.replace("*", "")) })
-                    return _this
+                    continue
                 }
                 const isOverride = /^=/.test(val.damageBonus)
                 const rollString = `${val.damageBonus}`.replace(/^=/, "")
 
-                let roll = DiceDSA5._stringToRoll(rollString, testData)
+                let roll = await DiceDSA5._stringToRoll(rollString, testData)
                 number = roll * (val.step || 1)
 
                 if (isOverride) {
                     rollFormula = rollString.replace(/[Ww]/, "d")
                     overrideDamage.push({ name: val.name, roll })
-                    return _this
+                    continue
                 } else {
                     val.damageBonus = roll
-                    return _this + number
+                    bonusDmg += number
                 }
             }
-            return _this
-        }, 0)
+        }
         let damageRoll = testData.damageRoll
             ? await testData.damageRoll
             : await DiceDSA5.manualRolls(
@@ -575,7 +592,7 @@ export default class DiceDSA5 {
                 status = testData.extra.actor.data.meleeStats.damage
             }
 
-            const statusDmg = DiceDSA5._stringToRoll(status, testData)
+            const statusDmg = await DiceDSA5._stringToRoll(status, testData)
             if (statusDmg != 0) {
                 damage += statusDmg
                 damageBonusDescription.push(game.i18n.localize("statuseffects") + " " + statusDmg)
@@ -901,7 +918,14 @@ export default class DiceDSA5 {
                 }
                 if (/(,|;)/.test(formula)) formula = formula.split(/[,;]/)[res.qualityStep - 1]
 
-                let rollEffect = testData.damageRoll ? testData.damageRoll : await new Roll(formula).evaluate({ async: true })
+                let rollEffect = testData.damageRoll ? 
+                    testData.damageRoll : 
+                    await DiceDSA5.manualRolls(
+                        await new Roll(formula).evaluate({ async: true }),
+                        "CHAR.DAMAGE",
+                        testData.extra.options
+                    )
+                
                 this._addRollDiceSoNice(
                     testData,
                     rollEffect,
@@ -914,7 +938,7 @@ export default class DiceDSA5 {
                             res["characteristics"].push({ char: "effect", res: l.result, die: "d" + k.faces })
                 }
                 const damageBonusDescription = []
-                const statusDmg = DiceDSA5._stringToRoll(
+                const statusDmg = await DiceDSA5._stringToRoll(
                     testData.extra.actor.data[isClerical ? "liturgyStats" : "spellStats"].damage,
                     testData
                 )
@@ -953,7 +977,6 @@ export default class DiceDSA5 {
         let modifiers = this._situationalModifiers(testData)
 
         let fws = testData.source.data.talentValue.value + testData.advancedModifiers.fws + this._situationalModifiers(testData, "FW")
-
         const pcms = this._situationalPartCheckModifiers(testData, "TPM")
 
         let tar = [1, 2, 3].map(
@@ -965,7 +988,11 @@ export default class DiceDSA5 {
         )
         let res = [0, 1, 2].map((x) => roll.terms[x * 2].results[0].result - tar[x])
 
-        for (let k of res) if (k > 0) fws -= k
+        if(testData.routine)
+            fws = Math.round(fws / 2)
+        else
+            for (let k of res) if (k > 0) fws -= k
+
 
         let crit = testData.extra.actor.data.skillModifiers.crit
         let botch = testData.extra.actor.data.skillModifiers.botch
@@ -1020,6 +1047,8 @@ export default class DiceDSA5 {
             successLevel = -1
         } else {
             successLevel = DiceDSA5.get3D20SuccessLevel(roll, fws, botch, crit)
+            if(testData.routine) successLevel = 1
+
             description.push(DiceDSA5.getSuccessDescription(successLevel))
         }
 
@@ -1028,11 +1057,10 @@ export default class DiceDSA5 {
 
         if (successLevel > 0) {
             fws += this._situationalModifiers(testData, "FP")
-            qualityStep =
+            qualityStep = Math.max(1,
                 (fws == 0 ? 1 : fws > 0 ? Math.ceil(fws / 3) : 0) +
-                (testData.qualityStep != undefined ? Number(testData.qualityStep) : 0)
-
-            if (qualityStep > 0) qualityStep += (testData.advancedModifiers.qls || 0) + this._situationalModifiers(testData, "QL")
+                (testData.qualityStep != undefined ? Number(testData.qualityStep) : 0))
+                + (testData.advancedModifiers.qls || 0) + this._situationalModifiers(testData, "QL")
         }
 
         qualityStep = Math.min(game.settings.get("dsa5", "capQSat"), qualityStep)
@@ -1359,6 +1387,13 @@ export default class DiceDSA5 {
                     game.users.get(rerenderMessage.data.user).character
                 const rollData = actor ? actor.getRollData() : {}
                 chatOptions["content"] = TextEditor.enrichHTML(html, rollData)
+
+                const cummulative = getProperty(rerenderMessage, "data.flags.data.preData.extra.options.cummulative")
+                if(cummulative){
+                    testData.messageId = rerenderMessage.id
+                    RequestRoll.editGroupCheckRoll(cummulative, { result: testData }, preData.source.name, preData.source.type)
+                }
+
                 return rerenderMessage
                     .update({
                         content: chatOptions["content"],
@@ -1491,24 +1526,26 @@ export default class DiceDSA5 {
             ev.preventDefault()
             $(ev.currentTarget).parents(".chat-card").find(".display-toggle").toggle()
         })
-        html.on("click", ".botch-roll", (ev) => {
-            DSATables.showBotchCard(ev.currentTarget.dataset)
-        })
-        html.on("click", ".roll-item", (ev) => {
-            DiceDSA5._itemRoll(ev)
-        })
-        html.on("click", ".gearDamaged", async (ev) => {
-            DiceDSA5.gearDamaged(ev)
-        })
-        html.on("change", ".roll-edit", (ev) => {
-            DiceDSA5._rollEdit(ev)
-        })
-        html.on("click", ".applyEffect", (ev) => {
+        html.on("click", ".botch-roll", (ev) => DSATables.showBotchCard(ev.currentTarget.dataset))
+        html.on("click", ".roll-item", (ev) => DiceDSA5._itemRoll(ev))
+        html.on("click", ".gearDamaged", async (ev) => DiceDSA5.gearDamaged(ev))
+        html.on("change", ".roll-edit", (ev) => DiceDSA5._rollEdit(ev)
+        )
+        html.on("click", ".applyEffect", async(ev) => {
             const elem = $(ev.currentTarget)
-            const id = elem.parents(".message").attr("data-message-id")
-            const mode = elem.attr("data-target")
+            if(elem.hasClass("locked")) return
 
-            DSAActiveEffectConfig.applyEffect(id, mode)
+            elem.addClass("locked")
+            elem.prepend('<i class="fas fa-spinner fa-spin"></i>')
+            const id = elem.parents(".message").attr("data-message-id")
+            const mode = ev.currentTarget.dataset.target
+
+            await DSAActiveEffectConfig.applyEffect(id, mode)
+            setTimeout(() => {
+                elem.removeClass("locked")
+                elem.find("i").remove()
+            }, 2000)
+            
         })
         html.on("click", ".message-delete", (ev) => {
             let message = game.messages.get($(ev.currentTarget).parents(".message").attr("data-message-id"))
@@ -1519,9 +1556,7 @@ export default class DiceDSA5 {
             let target = canvas.tokens.get(message.data.flags.unopposeData.targetSpeaker.token)
             OpposedDsa5.clearOpposed(target.actor)
         })
-        html.on("click", ".resistEffect", (ev) => {
-            DSAActiveEffectConfig.resistEffect(ev)
-        })
+        html.on("click", ".resistEffect", (ev) => DSAActiveEffectConfig.resistEffect(ev))
         RequestRoll.chatListeners(html)
     }
 }

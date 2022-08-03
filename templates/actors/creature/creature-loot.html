@@ -1,4 +1,4 @@
-{{#each actor.inventory as |section sid|}} {{#if section.show}}
+{{> systems/dsa5/templates/actors/parts/gearSearch.html}} {{#each actor.inventory as |section sid|}} {{#if section.show}}
 <div class="groupbox">
     <div class="row-section table-title">
         <div class="col eight"></div>
@@ -28,7 +28,7 @@
         <div class="col item" data-item-id="{{item._id}}" data-category="{{item.data.equipmentType.value}}">
             <div class="row-section">
                 <div class="col eight image {{item.enchantClass}}">
-                    <div class="image" style="background-image: url({{item.img}})">
+                    <div class="image" style="background-image: url('{{item.img}}')">
                         {{#if item.structureMax}}
                         <div class="item-structure" style="--a: {{item.structureMax}}; --b: {{item.structureCurrent}}">
                             <div class="inner"></div>

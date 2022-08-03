@@ -4,7 +4,7 @@
 ![](https://repository-images.githubusercontent.com/311655339/4d523800-55a9-11eb-9e2e-6bbc2b71d8a4)
 
 ### Current Version and Compatibility:
-3.3.2 - FoundryVTT 9.+
+3.5.x - FoundryVTT 9.+
 This system is intended for usage with [Foundry Virtual Tabletop](https://foundryvtt.com/) to play "Das Schwarze Auge" 5th edition.
 If you want to learn more checkout the [German](https://ulisses-spiele.de/virtual-tabletop-dsa-vtt/) or [English](https://ulisses-us.com/ulisses-virtual-tabletops/virtual-tabletop-dsa-vtt/) VTT Page by Ulisses Spiele.
 
@@ -22,7 +22,7 @@ The core system includes a character sheet and allows you to create your advanta
 
 ## Discussion & Assistance
 If you want to discuss TDE for foundry or need some assistance you can also join the Discord Servers:
-* [Ulisses](https://discord.gg/WXu4m8sc)
+* [Ulisses](https://discord.com/invite/SnqCgcvPzR)
 * [FoundryVTT](https://discord.gg/foundryvtt)
 
 ## Notable Features
@@ -75,6 +75,9 @@ If you want to discuss TDE for foundry or need some assistance you can also join
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/2645/dsa5-werkstatt-des-meisters-fuer-foundry-vtt" title="Werkstatt des Meisters">
             <img src="https://www.ulissesf-shop.com/media/image/c3/89/d3/ESD1004_0_0999_600x600.jpg" alt="Werkstatt des Meisters" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
         </a>
+        <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/abenteuer-module/3028/dsa5-aventurische-tavernen-fuer-foundry-vtt" target="_blank" data-tooltip="Aventurische Tavernen">
+            <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-aventurian-taverns/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
+        </a>
         <h2>Inhalte</h2>
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/2485/dsa5-aventurisches-pandaemonium-fuer-foundry-vtt" title="Aventurisches Pandämonium I">
             <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-pandaemonium/icons/journal/coverde.webp" alt="Aventurisches Pandämonium I" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
@@ -99,6 +102,15 @@ If you want to discuss TDE for foundry or need some assistance you can also join
         </a>
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/2644/dsa5-aventurische-ruestkammer-ii-fuer-foundry-vtt" title="Aventurische Rüstkammer II">
             <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-armory2/icons/journals/coverde.webp" alt="Aventurische Rüstkammer II" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
+        </a>
+        <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/2936/dsa5-aventurisches-transmutarium-fuer-foundry-vtt">
+            <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-transmutarium/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
+        </a>
+        <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/3027/dsa5-aventurisches-herbarium-fuer-foundry-vtt" target="_blank" data-tooltip="Aventurisches Herbarium">
+            <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-herbarium/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
+        </a>
+        <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/3029/dsa5-orks-hauer-und-schwarzer-pelz-fuer-foundry-vtt" target="_blank" data-tooltip="Orks - Hauer & Schwarzer Pelz">
+            <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-orcs/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
         </a>
         <h2>Abenteuer</h2>
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/abenteuer-module/2640/dsa5-rabenkrieg-1-kampagne-fuer-foundry-vtt" title="Rabenkrieg I - Die Zähne des Kaimans">

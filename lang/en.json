@@ -101,13 +101,19 @@
         "assassinate": "Assassinate",
         "stun": "Stun",
         "assassinateDescr": "Approach victim undetected (Perception vs. Stealth)",
-        "multipleTarget": "Multiple Targets"
+        "multipleTarget": "Multiple Targets",
+        "addTarget": "Add Target",
+        "onlyInCombatTargets": "Targets are only shown in combat.",
+        "setTargetToUserHint": "Transfer currently targeted tokens to user.",
+        "setTargetToUser": "Set player target",
+        "noLoggedinUser": "No user logged in/available.",
+        "selectGroupCheckSkill": "Chose another talent for the cumulative group check."
     },
     "Equipment": {
         "misc": "General",
         "clothes": "Clothing",
         "tools": "Tools",
-        "light": "Liqhtsource",
+        "light": "Lightsource",
         "healing": "Remedies",
         "bags": "Bags",
         "wealth": "Valuables",
@@ -138,7 +144,24 @@
         "identify": "Identify diff.",
         "usages": "Applications",
         "recipes": "Recipes",
-        "ingredients": "Ingredients (typical)"
+        "ingredients": "Ingredients (typical)",
+        "availability": "Availability",
+        "highNorth": "High North",
+        "grasLands": "Grasslands",
+        "swamps": "Swamps",
+        "mountains": "Mountains",
+        "woods": "Woods",
+        "jungle": "Jungle",
+        "desert": "Deserts",
+        "maraskan": "Maraskan",
+        "avLevels": {
+            "5": "common",
+            "4": "occasional",
+            "3": "rarely",
+            "2": "rare",
+            "1": "very rare",
+            "0": "never"
+        }
     },
     "MERCHANT": {
         "buy": "Buy",
@@ -160,7 +183,17 @@
         "select": "Choice",
         "locked": "Locked",
         "selectRandomGoods": "Select categories and an amount of additional random commodities. The addition might take a moment, if the index of the library has not been created yet.",
-        "service": "{buyer} bought {amount} {item} from {merchant}."
+        "dropGround": "Drop {name} to the ground?",
+        "onlyGM": "Only GM",
+        "buyNotification": "<b>{source}</b> buys {amount}x {item} from <b>{target}</b> for {price} Silverthalers.",
+        "sellNotification": "<b>{source}</b> sells {amount}x {item} to <b>{target}</b> for {price} Silverthalers.",
+        "buyLootNotification": "<b>{source}</b> takes {amount}x {item} from <b>{target}</b>.",
+        "sellLootNotification": "<b>{source}</b> drops {amount}x {item} to <b>{target}</b>.",
+        "emptyDestroy": "Temporary",
+        "emptyDestroyHint": "Deletes the actor if its inventory is emptied during trading.",
+        "untradable": "Item not tradable",
+        "otherTradeFriend": "Drag an actor (that you own) on the sheet to change the trading partner.",
+        "priceMod": "Base price / Modified price (Double click for custom price)"
     },
     "GARADAN": {
         "1": "Pawn",
@@ -186,6 +219,8 @@
     "aim": "Aim",
     "arrow": "Arrow",
     "armor": "Armor",
+    "ok": "Ok",
+    "modules": "Modules",
     "advancementCost": "Advance for {cost} adventure points",
     "animal": "Animal",
     "attributeChange": "Attribute change",
@@ -195,6 +230,7 @@
     "Advances": "Advances",
     "attributes": "Attributes",
     "astralenergy": "Arcane energy",
+    "confirm": "Confirm",
     "fshopLink": "https://www.ulissesf-shop.com/virtual-tabletops/",
     "ammunition": "Ammunition",
     "aggregatedTests": "Cumulative checks",
@@ -203,6 +239,7 @@
     "ammunitiongroup": "Ammunition type",
     "AstoundingSuccess": "Astounding success",
     "AstoundingFailure": "Astounding failure",
+    "each": "each",
     "advantages": "Advantages",
     "advantage": "Advantage",
     "attackWeaponless": "Unarmed attack",
@@ -246,6 +283,7 @@
     "consumable": "Consumable",
     "Combat": "Combat",
     "combatskill": "Combat Technique",
+    "confirmationRoll": "Confirmation roll",
     "culture": "Culture",
     "count": "Amount",
     "cost": "Cost",
@@ -484,6 +522,7 @@
     "tradition": "Tradition",
     "skillglobal": "Skill (global)",
     "searchTalents": "Search skills",
+    "gearSearch": "Search equipment",
     "shieldSize": "Shield size",
     "specialisation": "Specialization",
     "talisman": "Talisman",
@@ -533,7 +572,8 @@
         "advanced": "Advanced search",
         "selectAdvanced": "Chose a category",
         "noFilter": "No filter",
-        "indexWorldItems": "Index world Items (deactivate to increase performance)"
+        "indexWorldItems": "Index world Items (deactivate to increase performance, requires reloading of the world)",
+        "fullTextSearch": "Full text search (deactivate to increase performance, requires reloading of the world)"
     },
     "Aggregated": {
         "noMoreAllowed": "No more rolls allowed."
@@ -883,7 +923,7 @@
     },
     "HELP": {
         "showHelp": "Show help",
-        "default": "Moreover you can find detailed FAQs in the <a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\">Wiki</a>.",
+        "default": "You can find additional help and FAQs here: <a href=\"https://youtube.com/c/VTTom\" target=\"_blank\"><button>VTTom's YouTube Channel</button></a><a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\"><button>Wiki & FAQ</button></a><a href=\"https://discord.gg/foundryvtt\" target=\"_blank\"><button>Foundry Discord (ulisses-dsa)</button></a><a href=\"https://discord.gg/foundryvtt\" target=\"_blank\"><a href=\"https://discord.com/invite/SnqCgcvPzR\" target=\"_blank\"><button>Ulisses Discord</button></a",
         "command": "Command",
         "example": "Example",
         "pay": "Pay",
@@ -973,7 +1013,8 @@
     },
     "ROLL": {
         "Targeting": "versus",
-        "failed": "failed"
+        "failed": "failed",
+        "routine": "Routine"
     },
     "OPPOSED": {
         "winsFP": "<b>{winner}</b> wins versus <b>{loser}</b> with {SL} quality level(s)",
@@ -1035,6 +1076,8 @@
         "frenzy": "Bloodlust",
         "senseOfRange": "Sense of Range",
         "ambidextrous": "Ambidextrous",
+        "miracle": "Miracle",
+        "miracleMight": "Miracle Power",
         "weaponAptitude": "Weapon Aptitude",
         "blindFighting": "Blind Fighting",
         "wildMagic": "Wild Magic",
@@ -1156,6 +1199,7 @@
         "takeSkills": "Keep skills"
     },
     "DSAError": {
+        "noTokenSelected": "No token selected",
         "MacroItemMissing": "Your character has no item named {item}. Make sure to select a token or assign a character to yourself.",
         "APUpdateError": "Unable to adapt AP value. Please configure manually.",
         "RangeCannotBeParsed": "Range can not be assigned automatically. Format not recognized",
@@ -1187,16 +1231,20 @@
         "onlyGMcanShapeshift": "You don't have the right permissions to shapeshift.",
         "staleData": "Stale opposing test data found. Please make sure to finish opposing tests. Stale data deleted.",
         "sceneNotInitialized": "Scene not found. Already initialized?",
-        "tooManyEnchants": "A item can only contain 7 enchantments",
+        "tooManyEnchants": "An item can only contain 7 enchantments",
         "onlyCompendiumSpells": "Only spells from compendiums can be used",
         "enchantmentNotFound": "Referenced spell not found",
         "nestedEffectNotSupported": "Foundry currently only supports adding of effects through the item directory.",
         "noBreakingResistance": "No Breaking Point Rating found for {item}.",
         "noBreakingStructure": "{name} has no accepted max structure value.",
         "noConjurationActive": "No actor to summon active (drag and drop)",
-        "notInRangeToLoot": "Zu weit entfernt für eine Interaktion.",
+        "notInRangeToLoot": "Too far away for an interaction.",
         "onlyGMallowed": "This function is only available to the game master.",
-        "macroNotFound": "The macro {name} could not be found...sorry."
+        "macroNotFound": "The macro {name} could not be found...sorry.",
+        "notOwner": "You are not allowed to modify this actor.",
+        "shouldTimesUp": "The module Times-Up is required for automatically expiring effects.",
+        "requiresModule": "This function requires the module {module}.",
+        "wrongLanguage": "Your language setting does not match the predefined setting ({lang}). Do you want to change this?"
     },
     "CEREMONYMODIFIER": {
         "holysite": "Sanctum of the god (+2)",
@@ -1298,7 +1346,7 @@
         "home": "Home",
         "search": "Search",
         "foundryUsage": "Foundry & TDE",
-        "foundryUsagedesc": "<p>You can get more informations on the usage of Foundry with TDE in the <a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\">Wiki</a>.</p><p>You can also get quick help in the Ulisses or Foundry Discord.</p><p>Using the journal browser: <ul class=\"dsalist\"><li>Right click on images to show them to your players.</li><li>Some references and text passages can point to a book location and differ from the game's location, as the modules are copies of printed books.<li>Some of the actors in the adventures might not have a token or statistics, because they only fullfill a tiny narrative role. If you need to make a check, you can use the chat command <b>/ch</b> to improvise a roll.</li><li>Important creatures and characters usually have additional information on their character sheet.</li></ul></p>",
+        "foundryUsagedesc": "<p>Using the journal browser: <ul class=\"dsalist\"><li>Right click on images to show them to your players.</li><li>Some references and text passages can point to a book location and differ from the game's location, as the modules are copies of printed books.<li>Some of the actors in the adventures might not have a token or statistics, because they only fullfill a tiny narrative role. If you need to make a check, you can use the chat command <b>/ch</b> to improvise a roll.</li><li>Important creatures and characters usually have additional information on their character sheet.</li></ul></p>",
         "fulltextsearch": "Full text search",
         "sceneReset": "Update scene",
         "sceneResetDescription": "The scene <b>{name}</b> has already been imported. Do you like to perform a reset for this scene?<br/> All changes and tokens will be removed.",
@@ -1369,7 +1417,7 @@
         "enableForeignSpellModifer": "Unfamiliar tradition modifier",
         "enableForeignSpellModiferHint": "Enable -2 modifier for unfamiliar tradition checks.",
         "enableDPS": "Activate DPS ",
-        "enableDPSHint": "Activate the \"Dere Positioning System\".\nYou can only interact with merchants in immediate distance.\nRange modifiers for ranged attacks are applied automatically.",
+        "enableDPSHint": "Activate the \"Dere Positioning System\".\nYou can only interact with merchants and doors in immediate distance.\nRange modifiers for ranged attacks are applied automatically.",
         "tokenhotbarSize": "Token hotbar size",
         "tokenhotbarSizeHint": "Size of the buttons in the token hotbar.",
         "tokenhotbarLayout": "Tokenhotbar Layout",
@@ -1379,7 +1427,21 @@
         "tokenhotbarLayout2": "Vertical, left",
         "tokenhotbarLayout3": "Vertical, right",
         "resetTokenbar": "Reset token hotbar",
-        "resetTokenbarHint": "Reset the position of the token hotbar"
+        "resetTokenbarHint": "Reset the position of the token hotbar",
+        "enableItemDropToCanvas": "Drop items on the map",
+        "enableItemDropToCanvasHint": "Put items as loot sheet on the map via drag & drop.",
+        "merchantNotification": "Trade notification",
+        "merchantNotificationHint": "Show transfers of items between actors (merchant/loot) in the chat.",
+        "enableCombatFlow": "TDE combat tracker",
+        "enableCombatFlowHint": "Activate the TDE combat tracker",
+        "iniTrackerSize": "TDE combat tracker size",
+        "iniTrackerSizeHint": "Size of the buttons in the TDE combat tracker.",
+        "enableCombatPan": "Pan to current turn",
+        "enableCombatPanHint": "Pan the view to the current turn and select the token if owned.",
+        "forceLanguage": "Force language",
+        "forceLanguageHint": "Players receive a message, if their language setting is wrong. Different language settings can lead to issues.",
+        "encumbranceForRange": "Encumbrance for range combat (house rule)",
+        "encumbranceForRangeHint": "Encumbrance normally doesn't affect range combat. Lay more weight on your players by increasing the difficulty."
     },
     "WEAR": {
         "check": "Breaking Point Rating Check ({category})",
@@ -1407,6 +1469,9 @@
             "4": "Weapon destroyed; unrepairable by mundane means"
         }
     },
+    "CONTROLS": {
+        "targetForUser": "Target for player"
+    },
     "ARMORSUBCATEGORIES": {
         "0": "Clothing, Normal",
         "1": "Clothing, Heavy",
@@ -1420,7 +1485,8 @@
     },
     "COMBATTRACKER": {
         "noDefenses": "Defense count",
-        "ongoing": "Ongoing actions"
+        "ongoing": "Ongoing actions",
+        "waitInit": "Wait"
     },
     "SCHIPSKILLS": {
         "meleeweaponattack": "Improve Attack",

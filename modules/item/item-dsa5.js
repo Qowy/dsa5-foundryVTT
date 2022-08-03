@@ -20,7 +20,7 @@ export default class Itemdsa5 extends Item {
         meleeweapon: "systems/dsa5/icons/categories/Meleeweapon.webp",
         rangeweapon: "systems/dsa5/icons/categories/Rangeweapon.webp",
         equipment: "systems/dsa5/icons/categories/Equipment.webp",
-        consumable: "systems/dsa5/icons/categories/Equipment.webp",
+        consumable: "systems/dsa5/icons/categories/consumable.webp",
         liturgy: "systems/dsa5/icons/categories/Liturgy.webp",
         spell: "systems/dsa5/icons/categories/Spell.webp",
         ammunition: "systems/dsa5/icons/categories/Munition.webp",
@@ -171,6 +171,34 @@ export default class Itemdsa5 extends Item {
         return DSA5StatusEffects.hasCondition(this, conditionKey)
     }
 
+    static getMiracleModifiers(actor, source, type, bonusAttribute) {
+        const regex = new RegExp(`${game.i18n.localize('combatskill')} `, 'gi')
+        const happyTalents = (getProperty(actor, "data.data.happyTalents.value") || "").split(/;|,/).map(x => x.replace(regex, '').trim())
+        const result = []
+        if (happyTalents.includes(source.name)) {
+            const availableKaP = actor.data.data.status.karmaenergy.value
+            const bonus = getProperty(actor.data, `data.miracle.${bonusAttribute}`) || 0
+            if (availableKaP < 4) return []
+
+            result.push({
+                name: game.i18n.localize('LocalizedIDs.miracle'),
+                value: 2 + bonus,
+                type,
+                selected: false
+            })
+            const miracleMight = game.i18n.localize('LocalizedIDs.miracleMight')
+            if (availableKaP >= 6 && SpecialabilityRulesDSA5.hasAbility(actor.data, miracleMight)) {
+                result.push({
+                    name: miracleMight,
+                    value: 3 + bonus,
+                    type,
+                    selected: false
+                })
+            }
+        }
+        return result
+    }
+
     static getSkZkModifier(data, source) {
         let skMod = []
         let zkMod = []
@@ -222,6 +250,7 @@ export default class Itemdsa5 extends Item {
         }
         return itemModifiers
     }
+
 
     static getDefenseMalus(situationalModifiers, actor) {
         let isRangeDefense = false
@@ -481,6 +510,7 @@ export default class Itemdsa5 extends Item {
             showDefense: true,
             isRangeDefense,
             wrongHandDisabled: wrongHandDisabled && getProperty(source, "data.worn.offHand"),
+            offHand: !wrongHandDisabled && getProperty(source, "data.worn.offHand") && getProperty(source, "data.combatskill.value") != game.i18n.localize('LocalizedIDs.Shields'),
             melee: true,
             combatSpecAbs: combatskills,
             constricted: actor.hasCondition("constricted"),
@@ -564,35 +594,27 @@ export default class Itemdsa5 extends Item {
     }
 
     async postItem() {
-        let chatData = duplicate(this.data)
-        const properties = Itemdsa5.getSubClass(this.data.type).chatData(duplicate(chatData.data), this.name)
+            let chatData = duplicate(this.data)
+            const properties = Itemdsa5.getSubClass(this.data.type).chatData(duplicate(chatData.data), this.name)
 
-        chatData["properties"] = properties
+            chatData["properties"] = properties
 
-        chatData.hasPrice = "price" in chatData.data
-        if (chatData.hasPrice) {
-            let price = chatData.data.price.value
-            if (chatData.data.QL) price *= chatData.data.QL
+            chatData.hasPrice = "price" in chatData.data
+            if (chatData.hasPrice) {
+                let price = chatData.data.price.value
+                if (chatData.data.QL) price *= chatData.data.QL
 
-            chatData.data.price.D = Math.floor(price / 10)
-            price -= chatData.data.price.D * 10
-            chatData.data.price.S = Math.floor(price)
-            price -= chatData.data.price.S
-            chatData.data.price.H = Math.floor(price / 0.1)
-            price -= chatData.data.price.H * 0.1
-            chatData.data.price.K = Math.round(price / 0.01)
+                chatData.data.price.D = Math.floor(price / 10)
+                price -= chatData.data.price.D * 10
+                chatData.data.price.S = Math.floor(price)
+                price -= chatData.data.price.S
+                chatData.data.price.H = Math.floor(price / 0.1)
+                price -= chatData.data.price.H * 0.1
+                chatData.data.price.K = Math.round(price / 0.01)
 
-            properties.push(
-                `<b>${game.i18n.localize("price")}</b>: ${chatData.data.price.D} <div title="${game.i18n.localize(
-                    "Money-D"
-                )}" class="chatmoney money-D"></div>, ${chatData.data.price.S} <div title="${game.i18n.localize(
-                    "Money-S"
-                )}" class="chatmoney money-S"></div>, ${chatData.data.price.H} <div title="${game.i18n.localize(
-                    "Money-H"
-                )}" class="chatmoney money-H"></div>, ${chatData.data.price.K} <div title="${game.i18n.localize(
-                    "Money-K"
-                )}" class="chatmoney money-K"></div>`
-            )
+                const prices = ["D", "S", "H", "K"].map(x =>
+                        `${chatData.data.price[x]} <div title="${game.i18n.localize(`Money-${x}`)}" class="chatmoney money-${x}"></div>`).join(",")
+            properties.push(`<b>${game.i18n.localize("price")}</b>: ${prices}`)
         }
 
         if (this.pack) chatData.itemLink = `@Compendium[${this.pack}.${this.id}]`
@@ -891,7 +913,19 @@ class SpellItemDSA5 extends Itemdsa5 {
                 options,
                 speaker: Itemdsa5.buildSpeaker(actor, tokenId),
             },
+            advancedModifiers: {
+                chars: [0, 0, 0],
+                fws: 0,
+                qls: 0,
+            },
+            calculatedSpellModifiers: {
+                castingTime: 0,
+                cost: 0,
+                reach: 0,
+                maintainCost: 0,
+            }
         }
+
         let data = {
             rollMode: options.rollMode,
             spellCost: spell.data.AsPCost.value,
@@ -1021,7 +1055,7 @@ class CombatskillDSA5 extends Itemdsa5 {
 }
 
 class ConsumableItemDSA extends Itemdsa5 {
-    static chatData(dat, name) {
+    static chatData(data, name) {
         return [
             this._chatLineHelper("qualityStep", data.QL),
             this._chatLineHelper("effect", DSA5_Utility.replaceDies(data.QLList.split("\n")[data.QL - 1])),
@@ -1215,6 +1249,8 @@ class MeleeweaponDSA5 extends Itemdsa5 {
             this.prepareMeleeParry(situationalModifiers, actor, data, source, combatskills, wrongHandDisabled)
         }
         this.attackStatEffect(situationalModifiers, Number(actor.data.data.meleeStats[data.mode]))
+
+        if (["attack", "parry"].includes(data.mode)) situationalModifiers.push(...MeleeweaponDSA5.getMiracleModifiers(actor, { name: source.data.combatskill.value }, "", data.mode))
     }
 
     static setupDialog(ev, options, item, actor, tokenId) {
@@ -1314,7 +1350,7 @@ class PoisonItemDSA5 extends Itemdsa5 {
 
         let situationalModifiers = []
         this.getSituationalModifiers(situationalModifiers, actor, data, item)
-        data["situationalModifiers"] = situationalModifiers
+        data.situationalModifiers = situationalModifiers
 
         let dialogOptions = {
             title,
@@ -1396,7 +1432,17 @@ class RangeweaponItemDSA5 extends Itemdsa5 {
                     if (currentAmmo.data.armorMod) dmgMod["armorPen"] = currentAmmo.data.armorMod
                     situationalModifiers.push(dmgMod)
                 }
+                if(currentAmmo.effects.length){
+                    situationalModifiers.push({
+                        name: `${currentAmmo.name} - ${game.i18n.localize("effect")}`,
+                        value: 1,
+                        type: game.i18n.localize('effect'),
+                        selected: true,
+                        specAbId: source.data.currentAmmo.value,
+                    })
+                }
             }
+            situationalModifiers.push(...RangeweaponItemDSA5.getMiracleModifiers(actor, { name: source.data.combatskill.value }, "", data.mode))
         }
         this.attackStatEffect(situationalModifiers, Number(actor.data.data.rangeStats[data.mode]))
     }
@@ -1509,10 +1555,11 @@ class SkillItemDSA5 extends Itemdsa5 {
 
     static getSituationalModifiers(situationalModifiers, actor, data, source) {
         situationalModifiers.push(
-            ...ItemRulesDSA5.getTalentBonus(actor.data, source.name, ["advantage", "disadvantage", "specialability", "equipment"])
+            ...ItemRulesDSA5.getTalentBonus(actor.data, source.name, ["advantage", "disadvantage", "specialability", "equipment"]),
+            ...actor.getSkillModifier(source.name, source.type),
+            ...SkillItemDSA5.getMiracleModifiers(actor, source, "FW", "skill")
         )
 
-        situationalModifiers.push(...actor.getSkillModifier(source.name, source.type))
         for (const thing of actor.data.data.skillModifiers.global) {
             situationalModifiers.push({ name: thing.source, value: thing.value })
         }
@@ -1535,11 +1582,11 @@ class SkillItemDSA5 extends Itemdsa5 {
             difficultyLabels: DSA5.skillDifficultyLabels,
             modifier: options.modifier || 0,
             characteristics: [1, 2, 3].map((x) => skill.data[`characteristic${x}`].value),
+            situationalModifiers: actor ? DSA5StatusEffects.getRollModifiers(actor, skill) : []
         }
 
-        let situationalModifiers = actor ? DSA5StatusEffects.getRollModifiers(actor, skill) : []
-        this.getSituationalModifiers(situationalModifiers, actor, data, skill)
-        data["situationalModifiers"] = situationalModifiers
+        if(options.situationalModifiers) data.situationalModifiers.push(...options.situationalModifiers)
+        this.getSituationalModifiers(data.situationalModifiers, actor, data, skill)
 
         let dialogOptions = {
             title,

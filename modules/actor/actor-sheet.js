@@ -12,6 +12,7 @@ import DSA5SoundEffect from "../system/dsa-soundeffect.js";
 import RuleChaos from "../system/rule_chaos.js";
 import OnUseEffect from "../system/onUseEffects.js";
 import { bindImgToCanvasDragStart } from "../hooks/imgTileDrop.js";
+import DSA5ChatAutoCompletion from "../system/chat_autocompletion.js";
 
 export default class ActorSheetDsa5 extends ActorSheet {
     get actorType() {
@@ -60,7 +61,8 @@ export default class ActorSheetDsa5 extends ActorSheet {
         const html = $(this.form).parent()
         this.searchFields = {
             talentFiltered: $(html.find(".filterTalents")).hasClass("filtered"),
-            searchText: $(html.find(".talentSearch")).val()
+            searchText: $(html.find(".talentSearch")).val(),
+            gearSearch: $(html.find(".gearSearch")).val()
         }
     }
 
@@ -71,10 +73,15 @@ export default class ActorSheetDsa5 extends ActorSheet {
                 $(html.find(".filterTalents")).addClass("filtered")
                 $(html.find(".allTalents")).removeClass("showAll")
             }
-            let talentSearchInput = $(html.find(".talentSearch"))
+            const talentSearchInput = $(html.find(".talentSearch"))
             talentSearchInput.val(this.searchFields.searchText)
             if (this.searchFields.searchText != "") {
                 this._filterTalents(talentSearchInput)
+            }
+            const gearSearchInput = $(html.find(".gearSearch"))
+            gearSearchInput.val(this.searchFields.gearSearch)
+            if (this.searchFields.searchText != "") {
+                this._filterGear(gearSearchInput)
             }
         }
     }
@@ -448,8 +455,6 @@ export default class ActorSheetDsa5 extends ActorSheet {
             $(ev.currentTarget).closest(".groupbox").find('.row-section:nth-child(2)').fadeToggle()
         })
 
-        html.find('.collapseField').click(ev => $(`.${$(ev.currentTarget).attr("data-target")}`).fadeToggle())
-
         html.find('.item-toggle').click(ev => {
             const itemId = this._getItemId(ev);
             let item = this.actor.items.get(itemId).toObject()
@@ -553,15 +558,16 @@ export default class ActorSheetDsa5 extends ActorSheet {
             }
         })
         html.on('click', '.chat-condition', ev => DSA5ChatListeners.postStatus($(ev.currentTarget).attr("data-id")))
+        html.find('.money-change, .skill-advances').focusin(ev => {
+            this.currentFocus = $(ev.currentTarget).closest('[data-item-id]').attr('data-item-id');;
+        })
         html.find('.money-change').change(async ev => {
             const itemId = this._getItemId(ev);
             await this.actor.updateEmbeddedDocuments("Item", [{ _id: itemId, "data.quantity.value": Number(ev.target.value) }]);
-            this.currentFocus = $(document.activeElement).closest('.item').attr('data-item-id');;
         })
         html.find('.skill-advances').change(async ev => {
             const itemId = this._getItemId(ev);
             await this.actor.updateEmbeddedDocuments("Item", [{ _id: itemId, "data.talentValue.value": Number(ev.target.value) }]);
-            this.currentFocus = $(document.activeElement).closest('.row-section').attr('data-item-id');;
         });
         html.find('.item-edit').click(ev => {
             ev.preventDefault()
@@ -690,6 +696,8 @@ export default class ActorSheetDsa5 extends ActorSheet {
             if (ev.button == 2) DSA5_Utility.showArtwork(this.actor, true)
         })
 
+        DSA5ChatAutoCompletion.bindRollCommands(html)
+
         let filterTalents = ev => this._filterTalents($(ev.currentTarget))
         let talSearch = html.find('.talentSearch')
         talSearch.keyup(event => this._filterTalents($(event.currentTarget)))
@@ -700,6 +708,11 @@ export default class ActorSheetDsa5 extends ActorSheet {
         condSearch.keyup(event => this._filterConditions($(event.currentTarget)))
         condSearch[0] && condSearch[0].addEventListener("search", filterConditions, false);
 
+        let filterGear = ev => this._filterGear($(ev.currentTarget))
+        let gearSearch = html.find('.gearSearch')
+        gearSearch.keyup(event => this._filterGear($(event.currentTarget)))
+        gearSearch[0] && gearSearch[0].addEventListener("search", filterGear, false);
+
         bindImgToCanvasDragStart(html, "img.charimg")
     }
 
@@ -709,6 +722,18 @@ export default class ActorSheetDsa5 extends ActorSheet {
         onUse.executeOnUseEffect()
     }
 
+    _filterGear(tar) {
+        if (tar.val() != undefined) {
+            let val = tar.val().toLowerCase().trim()
+            let gear = $(this.element).find('.inventory .item')
+            gear.removeClass('filterHide')
+            gear.filter(function() {
+                return $(this).find('a.item-edit').text().toLowerCase().trim().indexOf(val) == -1
+            }).addClass('filterHide')
+        }
+    }
+
+    //TODO replace this with foundry SearchFilter
     _filterTalents(tar) {
         if (tar.val() != undefined) {
             let val = tar.val().toLowerCase().trim()

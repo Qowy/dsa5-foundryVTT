@@ -7,9 +7,18 @@ import OnUseEffect from "../system/onUseEffects.js";
 import RequestRoll from "../system/request-roll.js";
 import DSAActiveEffectConfig from "../status/active_effects.js";
 import DSA5_Utility from "../system/utility-dsa5.js";
+import { dropToGround } from "./itemDrop.js";
 
 export default function() {
     Hooks.on("ready", async() => {
+        game.socket.on("system.dsa5", data => {
+            switch (data.type) {
+                case "hideDeletedSheet":
+                    let target = data.payload.target.token ? game.actors.tokens[data.payload.target.token] : game.actors.get(data.payload.target.actor)
+                    MerchantSheetDSA5.hideDeletedSheet(target)
+                    break
+            }
+        })
         if (game.user.isGM) {
             game.socket.on("system.dsa5", data => {
                 switch (data.type) {
@@ -88,6 +97,17 @@ export default function() {
                             onUse.socketedActorTransformation(data.payload.targets, data.payload.update)
                         })
                         break
+                    case "itemDrop":
+                        {
+                            let sourceActor = data.payload.sourceActorId ? game.actors.get(data.payload.sourceActorId) : undefined
+                            fromUuid(data.payload.itemId).then(item => {
+                                dropToGround(sourceActor, item, data.payload.data, data.payload.amount)
+                            })
+                        }
+                        break
+                    case "hideDeletedSheet":
+                    case "finalizeidentification":
+                        break
                     case "updateHits":
                     case "hideResistButton":
                         break
@@ -103,6 +123,7 @@ export default function() {
         if (DSA5_Utility.moduleEnabled("vtta-tokenizer") && !(await game.settings.get("dsa5", "tokenizerSetup")) && game.user.isGM) {
             await game.settings.set("vtta-tokenizer", "default-frame-pc", "[data] systems/dsa5/icons/backgrounds/token_green.webp")
             await game.settings.set("vtta-tokenizer", "default-frame-npc", "[data] systems/dsa5/icons/backgrounds/token_black.webp")
+            await game.settings.set("vtta-tokenizer", "default-frame-neutral", "[data] systems/dsa5/icons/backgrounds/token_blue.webp")
             await game.settings.set("dsa5", "tokenizerSetup", true)
         }
         if (DSA5_Utility.moduleEnabled("dice-so-nice") && !(await game.settings.get("dsa5", "diceSetup")) && game.user.isGM) {

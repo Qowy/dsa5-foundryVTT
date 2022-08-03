@@ -115,8 +115,13 @@
         "assassinate": "Meucheln",
         "stun": "Betäuben",
         "assassinateDescr": "Opfer muss ahnungslos sein (Sinnesschärfe gegen Verbergen)",
-        "multipleTarget": "Mehrere Ziele"
-
+        "multipleTarget": "Mehrere Ziele",
+        "addTarget": "Ziel hinzufügen",
+        "onlyInCombatTargets": "Ziele werden nur im Kampf angezeigt.",
+        "setTargetToUserHint": "Aktuell markierte Ziele auf den User übertragen.",
+        "setTargetToUser": "Spielerziel setzen",
+        "noLoggedinUser": "Keine User eingeloggt/auswählbar.",
+        "selectGroupCheckSkill": "Wähle ein weiteres Talent für die Gruppensammelprobe."
     },
     "Equipment": {
         "misc": "Allgemein",
@@ -167,8 +172,10 @@
     "ammunitiongroup": "Munitionstyp",
     "AstoundingSuccess": "Spektakulärer Erfolg",
     "AstoundingFailure": "Schreckliches Missgeschick",
+    "confirm": "Bestätigen",
     "advantages": "Vorteile",
     "advantage": "Vorteil",
+    "modules": "Module",
     "fshopLink": "https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/",
     "attackWeaponless": "Waffenloser Angriff",
     "animalSpecialAbilities": "Tierische Sonderfertigkeiten",
@@ -190,6 +197,7 @@
     "Burden": "Belastung",
     "biography": "Hintergrundgeschichte",
     "Category": "Kategorie",
+    "confirmationRoll": "Bestätigungswurf",
     "clerical": "klerikal",
     "circle": "Kreis",
     "condition": "Zustand",
@@ -211,6 +219,7 @@
     "cost": "Kosten",
     "charges": "Ladungen",
     "cancel": "Abbrechen",
+    "ok": "Ok",
     "combatskillcountdivider": "aus",
     "closeCombatAttacks": "Nahkampfangriffe",
     "Current": "Aktuell",
@@ -445,6 +454,7 @@
     "tradition": "Tradition",
     "talisman": "Talisman",
     "searchTalents": "Talente durchsuchen",
+    "gearSearch": "Ausrüstung durchsuchen",
     "skillglobal": "Talent (global)",
     "spellextension": "Zauber/Liturgieerweiterung",
     "defense": "Verteidigung",
@@ -477,6 +487,7 @@
     "weaponModifier": "Waffenmodifikator",
     "weapontype": "Waffengattung",
     "worn": "Ausgerüstet",
+    "each": "je",
     "wearable": "Ausrüstbar",
     "wrongHand": "Falsche Hand",
     "writing": "Schrift",
@@ -496,7 +507,8 @@
         "advanced": "Erweiterte Suche",
         "selectAdvanced": "Wähle eine Kategorie",
         "noFilter": "Kein Filter",
-        "indexWorldItems": "Welt Items indexieren (Deaktivieren verbessert Leistung)"
+        "indexWorldItems": "Welt Items indexieren (Deaktivieren verbessert Leistung, erfordert neuladen der Welt)",
+        "fullTextSearch": "Volltextsuche (Deaktivieren verbessert Leistung, erfordert neuladen der Welt)"
     },
     "Aggregated": {
         "noMoreAllowed": "Keine Proben mehr erlaubt."
@@ -747,7 +759,7 @@
         "home": "Hauptverzeichnis",
         "foundryUsage": "Foundry & DSA",
         "search": "Durchsuchen",
-        "foundryUsagedesc": "<p>Mehr Informationen über die Verwendung von Foundry gibt's im <a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\">Wiki</a>.</p><p>Schnelle Hilfe kannst du im Ulisses Discord oder Foundry Discord bekommen.</p><p>Den Journalbrowser verwenden:<ul class=\"dsalist\"><li>Mit einem Rechtsklick auf Bilder kannst du diese separat anzeigen und deinen Spielern zeigen</li><li>Da die Module Kopien der Printausgaben sind, können Verweise und Formulierungen auf das jeweilige Printprodukt hinweisen und im Spiel abweichen.</li><li>Einge der Akteure der Abenteuer haben möglicherweise keinen Token und keine Statistiken, da diese nur eine sehr kleine erzählerische Rolle einnehmen. Falls Würfelwürfe notwendig sind, kannst du diese über das Chatcommand <b>/ch</b> improvisieren.</li><li>Wichtige Kreaturen und Charaktere haben gewöhnlicherweise noch extra Informationen im Charakterblatt.</li><li>Die zusätzlichen Werte und Fertigkeiten der Nscs in Abenteuern sind ergänzt worden und entsprechen nicht zwingendermaßen dem Inhalt des gedruckten Abenteuers. Sie dienen der breiteren Nutzung der Nscs, sind aber nicht notwendigerweise regelkonform.</li></ul></p>",
+        "foundryUsagedesc": "<p>Den Journalbrowser verwenden:<ul class=\"dsalist\"><li>Mit einem Rechtsklick auf Bilder kannst du diese separat anzeigen und deinen Spielern zeigen</li><li>Da die Module Kopien der Printausgaben sind, können Verweise und Formulierungen auf das jeweilige Printprodukt hinweisen und im Spiel abweichen.</li><li>Einge der Akteure der Abenteuer haben möglicherweise keinen Token und keine Statistiken, da diese nur eine sehr kleine erzählerische Rolle einnehmen. Falls Würfelwürfe notwendig sind, kannst du diese über das Chatcommand <b>/ch</b> improvisieren.</li><li>Wichtige Kreaturen und Charaktere haben gewöhnlicherweise noch extra Informationen im Charakterblatt.</li><li>Die zusätzlichen Werte und Fertigkeiten der Nscs in Abenteuern sind ergänzt worden und entsprechen nicht zwingendermaßen dem Inhalt des gedruckten Abenteuers. Sie dienen der breiteren Nutzung der Nscs, sind aber nicht notwendigerweise regelkonform.</li></ul></p>",
         "fulltextsearch": "Volltextsuche",
         "sceneReset": "Szene aktualisieren",
         "sceneResetDescription": "Die Szene <b>{name}</b> wurde bereits importiert. Möchtest du diese zurücksetzen?<br/> Es werden alle Änderungen und Token entfernt.",
@@ -894,7 +906,7 @@
     },
     "HELP": {
         "showHelp": "Hilfe anzeigen",
-        "default": "Außerdem kannst du detaillierte Anleitungen und FAQs im <a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\">Wiki</a> finden und Unterstützung im ulisses-dsa Channel im <a href=\"https://discord.gg/foundryvtt\" target=\"_blank\">Foundry Discord</a> erhalten.",
+        "default": "Weiterführende Hilfe und Informationen gibt es hier: <a href=\"https://youtube.com/c/VTTom\" target=\"_blank\"><button>VTTom's YouTube Kanal</button></a><a href=\"https://github.com/Plushtoast/dsa5-foundryVTT/wiki\" target=\"_blank\"><button>Wiki & FAQ</button></a><a href=\"https://discord.gg/foundryvtt\" target=\"_blank\"><button>Foundry Discord (ulisses-dsa)</button></a><a href=\"https://discord.gg/foundryvtt\" target=\"_blank\"><a href=\"https://discord.com/invite/SnqCgcvPzR\" target=\"_blank\"><button>Ulisses Discord</button></a>",
         "command": "Befehl",
         "example": "Beispiel",
         "pay": "Bezahlen",
@@ -947,7 +959,24 @@
         "identify": "Bestimmungsschw.",
         "usages": "Anwendungen",
         "recipes": "Rezepte",
-        "ingredients": "Zutaten (typisch)"
+        "ingredients": "Zutaten (typisch)",
+        "availability": "Verfügbarkeit",
+        "highNorth": "Hoher Norden",
+        "grasLands": "Grasländer",
+        "mountains": "Gebirge",
+        "swamps": "Sümpfe",
+        "woods": "Wälder",
+        "jungle": "Regenwälder",
+        "desert": "Wüsten",
+        "maraskan": "Maraskan",
+        "avLevels": {
+            "5": "gewöhnlich",
+            "4": "gelegentlich",
+            "3": "eher selten",
+            "2": "selten",
+            "1": "sehr selten",
+            "0": "nie"
+        }
     },
     "ITEM.TypeAdvantage": "Vorteil",
     "ITEM.TypeAggregatedtest": "Sammelprobe",
@@ -1053,7 +1082,8 @@
     },
     "ROLL": {
         "Targeting": "gegen",
-        "failed": "ist gescheitert"
+        "failed": "ist gescheitert",
+        "routine": "Routine"
     },
     "OPPOSED": {
         "winsFP": "<b>{winner}</b> gewinnt gegen <b>{loser}</b> mit {SL} Qualitätsstufe(n)",
@@ -1085,6 +1115,8 @@
         "weaponAptitude": "Waffenbegabung",
         "wildMagic": "Wilde Magie",
         "incompetent": "Unfähig",
+        "miracle": "Mirakel",
+        "miracleMight": "Mirakelmacht",
         "circumvent": "Unterlaufen",
         "keepAtDistance": "Auf Distanz halten",
         "drivingArcher": "Fahrender Schütze",
@@ -1126,7 +1158,7 @@
         "localKnowledge": "Ortskenntnis",
         "naturalArmor": "Natürliche Rüstung",
         "improvisedWeaponMaster": "Meister der improvisierten Waffen",
-        
+
         "all": "alle",
         "twoWeaponCombat": "Beidhändiger Kampf",
         "poisonResistance": "Giftresistenz",
@@ -1193,6 +1225,7 @@
         "Peitschen": "Whips"
     },
     "DSAError": {
+        "noTokenSelected": "Kein Token markiert",
         "MacroItemMissing": "Dein Charakter hat kein Item namens {item}. Stelle sicher, dass dir entweder ein Charakter zugeordnet ist oder du einen Token für den Wurf markierst.",
         "APUpdateError": "AP Wert konnte nicht angepasst werden. Bitte manuell durchführen.",
         "RangeCannotBeParsed": "Die Reichweite kan nicht automatisch angepasst werden. Format nicht erkannt.",
@@ -1233,7 +1266,11 @@
         "noConjurationActive": "Kein zu beschwörender Akteur aktiv (drag and drop)",
         "notInRangeToLoot": "Zu weit entfernt für eine Interaktion.",
         "onlyGMallowed": "Diese Funktion steht nur dem Spielleiter zur Verfügung.",
-        "macroNotFound": "Das Macro {name} konnte nicht gefunden werden...sorry."
+        "macroNotFound": "Das Macro {name} konnte nicht gefunden werden...sorry.",
+        "notOwner": "Du darfst diesen Charakter nicht modifizieren.",
+        "shouldTimesUp": "Für automatische auslaufende Effekte wird das Modul Times-Up benötigt.",
+        "requiresModule": "Diese Funktion benötigt das Modul {module}.",
+        "wrongLanguage": "Deine Spracheinstellung passt nicht zur vorgegebenen Einstellung ({lang}). Möchtest du die Sprache ändern?"
     },
     "Shapeshift": {
         "title": "Gestaltwandlung",
@@ -1394,7 +1431,7 @@
         "enableForeignSpellModifer": "Fremdzauber Modifikator",
         "enableForeignSpellModiferHint": "Aktiviere Fremdzaubermodifikator -2 bei Zauberproben.",
         "enableDPS": "DPS aktivieren",
-        "enableDPSHint": "Aktiviere das \"Dere Positioning System\".\nMit Händlern kann nur noch aus direkter Nähe interagiert werden.\nDer Distanzmodifikator für Fernkampfwaffen wird automatisch gesetzt.",
+        "enableDPSHint": "Aktiviere das \"Dere Positioning System\".\nMit Händlern und Türen kann nur noch aus direkter Nähe interagiert werden.\nDer Distanzmodifikator für Fernkampfwaffen wird automatisch gesetzt.",
         "tokenhotbarSize": "Tokenhotbar Größe",
         "tokenhotbarSizeHint": "Größe der Buttons in der Tokenhotbar.",
         "tokenhotbarLayout": "Tokenhotbar Layout",
@@ -1404,11 +1441,29 @@
         "tokenhotbarLayout2": "Vertikal, nach links",
         "tokenhotbarLayout3": "Vertikal, nach rechts",
         "resetTokenbar": "Reset Tokenhotbar",
-        "resetTokenbarHint": "Stelle die Position der Tokenhotbar auf den Ursprungswert"
+        "resetTokenbarHint": "Stelle die Position der Tokenhotbar auf den Ursprungswert",
+        "enableItemDropToCanvas": "Items auf die Map legen",
+        "enableItemDropToCanvasHint": "Lege Gegenstände per drag & drop auf die Karte als Schatztoken.",
+        "merchantNotification": "Benachrichtigung bei Handel",
+        "merchantNotificationHint": "Zeige Transfers zwischen Akteuren (Händler/Schatz) im Chat.",
+        "enableCombatFlow": "DSA Kampftracker",
+        "enableCombatFlowHint": "Aktiviere den DSA Kampftracker",
+        "iniTrackerSize": "DSA Kampftracker Größe",
+        "iniTrackerSizeHint": "Größe der Buttons im DSA Kampftracker",
+        "enableCombatPan": "Schwenke zu aktuellem Zug",
+        "enableCombatPanHint": "Schwenke die Sicht auf den aktuellen Zug und selektiere den Token sofern Besitzerrechte vorhanden.",
+        "forceLanguage": "Sprache erzwingen",
+        "forceLanguageHint": "Spieler erhalten beim Login einen Dialog, wenn deren Sprache falsch eingestellt ist. Unterschiedliche Spracheinstellungen können zu Problemen führen.",
+        "encumbranceForRange": "Belastung für Fernkampf (Hausregel)",
+        "encumbranceForRangeHint": "Belastung beeinträchtigt Fernkampf normalerweise nicht. Mach deinen Spielern das Leben noch schwerer."
+    },
+    "CONTROLS": {
+        "targetForUser": "Ziel für Spieler wählen"
     },
     "COMBATTRACKER": {
         "noDefenses": "Anzahl Verteidigungen",
-        "ongoing": "Laufende Handlungen"
+        "ongoing": "Laufende Handlungen",
+        "waitInit": "Zurückstellen"
     },
     "CHATFATE": {
         "faitepointUsed": "Das Schicksal ändert sich",
@@ -1478,7 +1533,17 @@
         "select": "Auswahl",
         "locked": "Abgeschlossen",
         "selectRandomGoods": "Wähle Kategorien und Anzahl an zusätzlichen zufälligen Waren. Das Hinzufügen dauert einen Moment, wenn der Index der Bibliothek noch nicht erstellt wurde.",
-        "service": "{buyer} hat {amount} {item} von {merchant} gekauft."
+        "dropGround": "{name} auf dem Boden ablegen?",
+        "onlyGM": "Nur GM",
+        "buyNotification": "<b>{source}</b> kauft {amount}x {item} von <b>{target}</b> für {price} Silberstücke.",
+        "sellNotification": "<b>{source}</b> verkauft {amount}x {item} an <b>{target}</b> für {price} Silberstücke.",
+        "buyLootNotification": "<b>{source}</b> nimmt {amount}x {item} aus <b>{target}</b>.",
+        "sellLootNotification": "<b>{source}</b> legt {amount}x {item} in <b>{target}</b>.",
+        "emptyDestroy": "Temporär",
+        "emptyDestroyHint": "Löscht den Akteur, wenn das Inventar beim Handel geleert wird",
+        "untradable": "Gegenstand nicht handelbar",
+        "otherTradeFriend": "Ziehe einen Akteur für den du Ownerrechte hast auf das Charakterblatt um den Handelspartner zu ändern.",
+        "priceMod": "Grundpreis / Modifizierter Preis (Doppelclick für eigenen Preis)"
     },
     "GARADAN": {
         "1": "Bauer",

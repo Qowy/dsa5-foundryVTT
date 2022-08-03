@@ -393,6 +393,8 @@ DSA5.defaultWeapon = {
     effects: [],
     data: {
         type: "meleeweapon",
+        crit: 1,
+        botch: 20,
         reach: {
             value: "short"
         },
@@ -757,6 +759,8 @@ DSA5.sizeCategories = {
     "big": "SIZE.big",
     "giant": "SIZE.giant"
 }
+
+DSA5.morePackages = {}
 
 DSA5.tokenSizeCategories = {
     "tiny": 0.5,
