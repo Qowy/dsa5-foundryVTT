@@ -9,7 +9,7 @@ import RequestRoll from "../system/request-roll.js"
 export default class MastersMenu {
     static registerButtons() {
         game.dsa5.apps.playerMenu = new PlayerMenu()
-        CONFIG.Canvas.layers.dsamenu = { layerClass: DSAMenuLayer, group: "primary" }
+        CONFIG.Canvas.layers.dsamenu = { layerClass: DSAMenuLayer, group: "interface" }
         Hooks.on("getSceneControlButtons", btns => {
             const dasMenuOptions = [{
                     name: "JournalBrowser",
@@ -54,7 +54,7 @@ export default class MastersMenu {
     }
 }
 
-class DSAMenuLayer extends CanvasLayer {
+class DSAMenuLayer extends InteractionLayer {
     static get layerOptions() {
         return foundry.utils.mergeObject(super.layerOptions, {
             name: "dsamenu",
@@ -63,6 +63,10 @@ class DSAMenuLayer extends CanvasLayer {
             rotatableObjects: true,
             zIndex: 666,
         });
+    }   
+    
+    selectObjects(optns) {
+        canvas.tokens.selectObjects(optns)
     }
 }
 
@@ -76,7 +80,7 @@ class GameMasterMenu extends Application {
 
         if (game.user.isGM) {
             Hooks.on("updateActor", async(document, data, options, userId) => {
-                const properties = ["data.status.fatePoints", "data.status.wounds", "data.status.karmaenergy", "data.status.astralenergy"]
+                const properties = ["system.status.fatePoints", "system.status.wounds", "system.status.karmaenergy", "system.status.astralenergy"]
                 if (this.heros.find(x => x.id == document.id) && properties.reduce((a, b) => {
                         return a || hasProperty(data, b)
                     }, false)) {
@@ -210,7 +214,7 @@ class GameMasterMenu extends Application {
             let val = Number(ev.currentTarget.getAttribute("data-val"))
             if (val == 1 && $(ev.currentTarget).closest('.hero').find(".fullSchip").length == 1) val = 0
 
-            game.actors.get(this.getID(ev)).update({ "data.status.fatePoints.value": val })
+            game.actors.get(this.getID(ev)).update({ "system.status.fatePoints.value": val })
         })
         html.find('.groupCheck').click((ev) => {
             ev.stopPropagation()
@@ -232,6 +236,22 @@ class GameMasterMenu extends Application {
             elem.activateListeners(html)
         }
         slist(html, '.heros', this.updateHeroOrder, '.hero')
+        html.on("dragstart", ".hero", event => {
+            event.stopPropagation();
+            const a = event.currentTarget;
+            let dragData = { type: "Actor", uuid: a.dataset.uuid };
+            event.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        })
+
+        html.find('.dragEveryone').each(function(i, cond) {
+            cond.setAttribute("draggable", true);
+        })
+        html.on("dragstart", ".dragEveryone", ev => {
+            ev.stopPropagation();
+            const a = ev.currentTarget;
+            let dragData = { type: "GroupDrop", ids: this.selectedIDs() };
+            ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        })
 
         if (game.dsa5.apps.LightDialog) game.dsa5.apps.LightDialog.activateButtonListener(html)
     }
@@ -344,14 +364,14 @@ class GameMasterMenu extends Application {
             if (!isNaN(number)) {
                 for (const actor of actors) {
                     let xpBonus = number
-                    if (RuleChaos.isFamiliar(actor.data) || RuleChaos.isPet(actor.data)) {
+                    if (RuleChaos.isFamiliar(actor) || RuleChaos.isPet(actor)) {
                         xpBonus = familiarXP
                         familiars.push(actor)
                     } else {
                         heros.push(actor)
                     }
 
-                    await actor.update({ "data.details.experience.total": actor.data.data.details.experience.total + xpBonus });
+                    await actor.update({ "system.details.experience.total": actor.system.details.experience.total + xpBonus });
                 }
                 if (heros.length > 0) await ChatMessage.create(DSA5_Utility.chatDataSetup(game.i18n.format('MASTER.xpMessage', { heros: this.getNames(heros), number })));
                 if (familiars.length > 0) await ChatMessage.create(DSA5_Utility.chatDataSetup(game.i18n.format('MASTER.xpMessage', { heros: this.getNames(familiars), number })));
@@ -393,10 +413,11 @@ class GameMasterMenu extends Application {
         let data;
         try {
             data = JSON.parse(event.dataTransfer.getData('text/plain'));
+            data = await Actor.implementation.fromDropData(data)
         } catch (err) {
             return false;
         }
-        if (data.type == "Actor") {
+        if (data.documentName == "Actor") {
             let tracked = game.settings.get("dsa5", "trackedActors")
             tracked = tracked.actors || []
             if (tracked.indexOf(data.id) == -1 && !data.pack) {
@@ -413,6 +434,7 @@ class GameMasterMenu extends Application {
         for (const [key, value] of Object.entries(this.selected)) {
             if (value) ids.push(key)
         }
+        if(!ids.length) return game.settings.get("dsa5", "trackedActors").actors || []
         return ids
     }
 
@@ -465,7 +487,7 @@ class GameMasterMenu extends Application {
         const actors = game.actors.filter(x => actorIds.includes(x.id))
         for (const actor of actors) {
             let skill = actor.items.find(x => x.name == name && x.type == "skill")
-            actor.setupSkill(skill.data, { rollMode: "blindroll", subtitle: ` (${actor.name})` }, undefined).then(setupData => {
+            actor.setupSkill(skill, { rollMode: "blindroll", subtitle: ` (${actor.name})` }, undefined).then(setupData => {
                 actor.basicTest(setupData)
             });
         }
@@ -490,8 +512,7 @@ class GameMasterMenu extends Application {
         return options;
     }
 
-    async getData(options) {
-        const data = await super.getData(options);
+    async getTrackedHeros(){
         const trackedActors = game.settings.get("dsa5", "trackedActors")
         let heros = []
         if (trackedActors.actors && trackedActors.actors.length > 0) {
@@ -500,6 +521,12 @@ class GameMasterMenu extends Application {
             heros = game.actors.filter(x => x.hasPlayerOwner)
             await game.settings.set("dsa5", "trackedActors", { actors: heros.map(x => x.id) })
         }
+        return heros
+    }
+
+    async getData(options) {
+        const data = await super.getData(options);
+        const heros = await this.getTrackedHeros()
         const schipSetting = this.getGroupSchipSetting()
         let groupschips = []
         for (let i = 1; i <= schipSetting[1]; i++) {
@@ -515,23 +542,23 @@ class GameMasterMenu extends Application {
             sceneAutomationEnabled: game.settings.get("dsa5", "sightAutomationEnabled"),
             enableDPS: game.settings.get("dsa5", "enableDPS"),
             visions,
-            darkness: canvas.scene ? canvas.scene.data.darkness : 0
+            darkness: canvas.scene ? canvas.scene.darkness : 0
         }
 
         this.heros = heros
         for (const hero of heros) {
             hero.gmSelected = this.selected[hero.id]
             let schips = []
-            for (let i = 1; i <= Number(hero.data.data.status.fatePoints.max); i++) {
+            for (let i = 1; i <= Number(hero.system.status.fatePoints.max); i++) {
                 schips.push({
                     value: i,
-                    cssClass: i <= Number(hero.data.data.status.fatePoints.value) ? "fullSchip" : "emptySchip"
+                    cssClass: i <= Number(hero.system.status.fatePoints.value) ? "fullSchip" : "emptySchip"
                 })
             }
             hero.schips = schips
             hero.purse = hero.items.filter(x => x.type == "money")
-                .sort((a, b) => b.data.data.price.value - a.data.data.price.value)
-                .map(x => `<span title="${game.i18n.localize(x.name)}">${x.data.data.quantity.value}</span>`).join(" - ")
+                .sort((a, b) => b.system.price.value - a.system.price.value)
+                .map(x => `<span data-tooltip="${game.i18n.localize(x.name)}">${x.system.quantity.value}</span>`).join(" - ")
             hero.advantages = hero.items.filter(x => x.type == "advantage").map(x => { return { name: x.name, uuid: x.uuid } })
             hero.disadvantages = hero.items.filter(x => x.type == "disadvantage").map(x => { return { name: x.name, uuid: x.uuid } })
         }

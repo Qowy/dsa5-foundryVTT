@@ -1,83 +1,101 @@
 {
-    "name": "dsa5",
+    "id": "dsa5",
     "title": "Das Schwarze Auge/The Dark Eye (5th Edition)",
     "description": "The \"Das Schwarze Auge\" system for Foundry VTT. Includes all relevant mechanisms to play in the wonderous world of Aventuria and Das Schwarze Auge/The Dark Eye.",
-    "version": "3.5.2",
-    "templateVersion": 102,
-    "author": "Plushtoast",
+    "version": "4.1.6",
+    "authors": [{
+        "name": "Plushtoast"
+    }],
     "scripts": [
-        "./libs/flexsearch.min.js",
-        "./libs/select2.min.js"
+        "libs/flexsearch.min.js",
+        "libs/select2.min.js"
     ],
     "esmodules": [
-        "dsa5.js"
+        "bundle/dsa5.bundle.js"
     ],
     "styles": [
-        "styles/select2.min.css",
-        "styles/dsa5.css"
+        "styles/css/select2.min.css",
+        "styles/css/dsa5.css"
     ],
     "packs": [{
             "name": "skills",
             "label": "Talente",
             "system": "dsa5",
             "path": "packs/skills.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false,
+            "flags": { "dsalang": "de"}
         },
         {
             "name": "skillsen",
             "label": "Skills",
             "system": "dsa5",
             "path": "packs/skillsen.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false,
+            "flags": { "dsalang": "en"}
         },
         {
             "name": "combatskills",
             "label": "Kampftalente",
             "system": "dsa5",
             "path": "packs/combatskills.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false,
+            "flags": { "dsalang": "de"}
         },
         {
             "name": "combatskillsen",
             "label": "Combat Techniques",
             "system": "dsa5",
             "path": "packs/combatskillsen.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false,
+            "flags": { "dsalang": "en"}
         },
         {
             "name": "money",
             "label": "Geld",
             "system": "dsa5",
             "path": "packs/money.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false
         },
         {
             "name": "speciesen",
             "label": "Species",
             "system": "dsa5",
             "path": "packs/speciesen.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false,
+            "flags": { "dsalang": "en"}
         },
         {
             "name": "species",
             "label": "Spezies",
             "system": "dsa5",
             "path": "packs/species.db",
-            "type": "Item"
+            "type": "Item",
+            "private": false,
+            "flags": { "dsalang": "de"}
         },
         {
             "name": "patzer",
             "label": "Patzer",
             "system": "dsa5",
             "path": "packs/patzer.db",
-            "type": "RollTable"
+            "type": "RollTable",
+            "private": false,
+            "flags": { "dsalang": "de"}
         },
         {
             "name": "botch",
             "label": "Botch",
             "system": "dsa5",
             "path": "packs/botch.db",
-            "type": "RollTable"
+            "type": "RollTable",
+            "private": false,
+            "flags": { "dsalang": "en"}
         }
     ],
     "languages": [{
@@ -91,16 +109,21 @@
             "path": "lang/en.json"
         }
     ],
-    "background": "icons/githublogo.webp",
+    "background": "systems/dsa5/icons/githublogo.webp",
     "socket": true,
     "initiative": "@status.initiative.value + @status.initiative.die + @status.initiative.diemodifier",
     "gridDistance": 1,
     "gridUnits": "Schritt",
     "primaryTokenAttribute": "status.wounds",
     "secondaryTokenAttribute": "status.astralenergy",
-    "minimumCoreVersion": "9.245",
-    "compatibleCoreVersion": "9",
+    "compatibility": {
+        "minimum": "10.286",
+        "verified": "10",
+        "maximum": "10"
+    },
     "url": "https://github.com/Plushtoast/dsa5-foundryVTT",
-    "manifest": "https://raw.githubusercontent.com/Plushtoast/dsa5-foundryVTT/foundry9/system.json",
-    "download": "https://github.com/Plushtoast/dsa5-foundryVTT/releases/download/3.5.2/dsa5-foundryVTT-3.5.2.zip"
+    "manifest": "https://raw.githubusercontent.com/Plushtoast/dsa5-foundryVTT/foundry10/system.json",
+    "download": "https://github.com/Plushtoast/dsa5-foundryVTT/releases/download/4.1.6/dsa5-foundryVTT-4.1.6.zip",
+    "name": "dsa5",
+    "minimumCoreVersion": "10.286"
 }

@@ -1,15 +1,17 @@
+{{> systems/dsa5/templates/actors/parts/information.html}}
+
 <div class="groupbox">
     <div class="row-section header-label">
         <div class="col ninety lineheight">
             <b>{{localize "Description"}}</b>
         </div>
         <div class="col lineheight ten">
-            <a class="ch-collapse"><i class="fas fa-angle-up" title="{{localize 'SHEET.collapse'}}"></i></a>
+            <a class="ch-collapse"><i class="fas fa-angle-up" data-tooltip="{{localize 'SHEET.collapse'}}"></i></a>
         </div>
     </div>
     <div class="row-section">
         <div class="col notes-box">
-            {{editor content=actor.data.description.value target="data.description.value" button=true owner=owner editable=editable}}
+            {{editor enrichedDescription target="system.description.value" button=true owner=owner editable=editable}}
         </div>
     </div>
 </div>
@@ -19,12 +21,12 @@
             <b>{{localize "behaviour"}}</b>
         </div>
         <div class="col lineheight ten">
-            <a class="ch-collapse"><i class="fas fa-angle-up" title="{{localize 'SHEET.collapse'}}"></i></a>
+            <a class="ch-collapse"><i class="fas fa-angle-up" data-tooltip="{{localize 'SHEET.collapse'}}"></i></a>
         </div>
     </div>
     <div class="row-section">
         <div class="col notes-box">
-            {{editor content=actor.data.behaviour.value target="data.behaviour.value" button=true owner=owner editable=editable}}
+            {{editor enrichedBehaviour target="system.behaviour.value" button=true owner=owner editable=editable}}
         </div>
     </div>
 </div>
@@ -34,12 +36,12 @@
             <b>{{localize "flight"}}</b>
         </div>
         <div class="col lineheight ten">
-            <a class="ch-collapse"><i class="fas fa-angle-up" title="{{localize 'SHEET.collapse'}}"></i></a>
+            <a class="ch-collapse"><i class="fas fa-angle-up" data-tooltip="{{localize 'SHEET.collapse'}}"></i></a>
         </div>
     </div>
     <div class="row-section">
         <div class="col notes-box">
-            {{editor content=actor.data.flight.value target="data.flight.value" button=true owner=owner editable=editable}}
+            {{editor enrichedFlight target="system.flight.value" button=true owner=owner editable=editable}}
         </div>
     </div>
 </div>
@@ -49,12 +51,12 @@
             <b>{{localize "specialRules"}}</b>
         </div>
         <div class="col lineheight ten">
-            <a class="ch-collapse"><i class="fas fa-angle-up" title="{{localize 'SHEET.collapse'}}"></i></a>
+            <a class="ch-collapse"><i class="fas fa-angle-up" data-tooltip="{{localize 'SHEET.collapse'}}"></i></a>
         </div>
     </div>
     <div class="row-section">
         <div class="col notes-box">
-            {{editor content=actor.data.specialRules.value target="data.specialRules.value" button=true owner=owner editable=editable}}
+            {{editor enrichedSpecialrules target="system.specialRules.value" button=true owner=owner editable=editable}}
         </div>
     </div>
 </div>
@@ -65,12 +67,12 @@
             <b>{{localize "ownerNotes"}}</b>
         </div>
         <div class="col lineheight ten">
-            <a class="ch-collapse"><i class="fas fa-angle-up" title="{{localize 'SHEET.collapse'}}"></i></a>
+            <a class="ch-collapse"><i class="fas fa-angle-up" data-tooltip="{{localize 'SHEET.collapse'}}"></i></a>
         </div>
     </div>
     <div class="row-section">
         <div class="col notes-box">
-            {{editor content=actor.data.details.notes.ownerdescription target="data.details.notes.ownerdescription" button=true owner=owner editable=editable}}
+            {{editor enrichedOwnerdescription target="system.details.notes.ownerdescription" button=true owner=owner editable=editable}}
         </div>
     </div>
 </div>

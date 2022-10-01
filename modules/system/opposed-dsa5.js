@@ -10,25 +10,25 @@ export default class OpposedDsa5 {
     static async handleOpposedTarget(message) {
         if (!message) return;
 
-        let actor = DSA5_Utility.getSpeaker(message.data.speaker)
+        let actor = DSA5_Utility.getSpeaker(message.speaker)
         if (!actor) return
 
-        let testResult = message.data.flags.data.postData
-        let preData = message.data.flags.data.preData
+        let testResult = message.flags.data.postData
+        let preData = message.flags.data.preData
 
-        if (actor.data.flags.oppose) {
+        if (actor.flags.oppose) {
             console.log("answering opposed")
             OpposedDsa5.answerOpposedTest(actor, message, testResult, preData)
-        } else if (game.user.targets.size && message.data.flags.data.isOpposedTest && !message.data.flags.data.defenderMessage && !message.data.flags.data.attackerMessage) {
+        } else if (game.user.targets.size && message.flags.data.isOpposedTest && !message.flags.data.defenderMessage && !message.flags.data.attackerMessage) {
             console.log("start opposed")
             OpposedDsa5.createOpposedTest(actor, message, testResult, preData)
-        } else if (message.data.flags.data.defenderMessage || message.data.flags.data.attackerMessage) {
+        } else if (message.flags.data.defenderMessage || message.flags.data.attackerMessage) {
             console.log("end opposed")
             OpposedDsa5.resolveFinalMessage(message)
-        } else if (message.data.flags.data.unopposedStartMessage) {
+        } else if (message.flags.data.unopposedStartMessage) {
             console.log("repeat")
             OpposedDsa5.redoUndefended(message)
-        } else if (message.data.flags.data.startMessagesList) {
+        } else if (message.flags.data.startMessagesList) {
             console.log("change start")
             OpposedDsa5.changeStartMessage(message)
         } else {
@@ -39,48 +39,48 @@ export default class OpposedDsa5 {
     }
 
     static async redoUndefended(message) {
-        let startMessage = game.messages.get(message.data.flags.data.unopposedStartMessage);
-        startMessage.data.flags.unopposeData.attackMessageId = message.data._id;
+        let startMessage = game.messages.get(message.flags.data.unopposedStartMessage);
+        startmessage.flags.unopposeData.attackMessageId = message.id;
         this.resolveUndefended(startMessage);
     }
 
     static async answerOpposedTest(actor, message, testResult, preData) {
-        let attackMessage = game.messages.get(actor.data.flags.oppose.messageId)
+        let attackMessage = game.messages.get(actor.flags.oppose.messageId)
         if (!attackMessage) {
             ui.notifications.error(game.i18n.localize("DSAError.staleData"))
             await OpposedDsa5.clearOpposed(actor)
             return OpposedDsa5.createOpposedTest(actor, message, testResult, preData)
         }
         let attacker = {
-            speaker: actor.data.flags.oppose.speaker,
-            testResult: attackMessage.data.flags.data.postData,
-            messageId: attackMessage.data._id,
-            img: DSA5_Utility.getSpeaker(actor.data.flags.oppose.speaker).data.img
+            speaker: actor.flags.oppose.speaker,
+            testResult: attackMessage.flags.data.postData,
+            messageId: attackMessage.id,
+            img: DSA5_Utility.getSpeaker(actor.flags.oppose.speaker).img
         };
-        attacker.testResult.source = attackMessage.data.flags.data.preData.source
+        attacker.testResult.source = attackMessage.flags.data.preData.source
         if (attacker.testResult.ammo) attacker.testResult.source.effects.push(...attacker.testResult.ammo.effects)
 
         let defender = {
-            speaker: message.data.speaker,
+            speaker: message.speaker,
             testResult,
-            messageId: message.data._id,
-            img: actor.data.msg
+            messageId: message.id,
+            img: actor.msg
         };
 
-        let listOfDefenders = attackMessage.data.flags.data.defenderMessage ? Array.from(attackMessage.data.flags.data.defenderMessage) : [];
-        listOfDefenders.push(message.data._id);
+        let listOfDefenders = attackMessage.flags.data.defenderMessage ? Array.from(attackMessage.flags.data.defenderMessage) : [];
+        listOfDefenders.push(message.id);
 
         if (game.user.isGM) {
             await attackMessage.update({ "flags.data.defenderMessage": listOfDefenders });
         }
 
-        await message.update({ "flags.data.attackerMessage": attackMessage.data._id });
+        await message.update({ "flags.data.attackerMessage": attackMessage.id });
 
         await this.completeOpposedProcess(attacker, defender, {
             target: true,
-            startMessageId: actor.data.flags.oppose.startMessageId,
-            whisper: message.data.whisper,
-            blind: message.data.blind,
+            startMessageId: actor.flags.oppose.startMessageId,
+            whisper: message.whisper,
+            blind: message.blind,
         })
         await OpposedDsa5.clearOpposed(actor)
     }
@@ -95,13 +95,13 @@ export default class OpposedDsa5 {
     static async createOpposedTest(actor, message, testResult, preData) {
         let attacker;
 
-        if (message.data.speaker.token)
-            attacker = canvas.tokens.get(message.data.speaker.token).data
+        if (message.speaker.token)
+            attacker = canvas.tokens.get(message.speaker.token).document
         else
-            attacker = actor.data.token
+            attacker = actor.prototypeToken
 
         if (testResult.successLevel > 0) {
-            let attackOfOpportunity = message.data.flags.data.preData.attackOfOpportunity
+            let attackOfOpportunity = message.flags.data.preData.attackOfOpportunity
             let unopposedButton = attackOfOpportunity ? "" : `<div><button class="unopposed-button small-button chat-button-target" data-target="true">${game.i18n.localize('Unopposed')}</button></div>`
             let startMessagesList = [];
 
@@ -111,13 +111,13 @@ export default class OpposedDsa5 {
                     let startMessage = await ChatMessage.create({
                         user: game.user.id,
                         content,
-                        speaker: message.data.speaker,
+                        speaker: message.speaker,
                         ["flags.unopposeData"]: {
-                            attackMessageId: message.data._id,
+                            attackMessageId: message.id,
                             targetSpeaker: {
-                                scene: target.scene.data._id,
-                                token: target.data._id,
-                                alias: target.data.name
+                                scene: target.scene.id,
+                                token: target.id,
+                                alias: target.document.name
                             }
                         }
                     })
@@ -126,38 +126,38 @@ export default class OpposedDsa5 {
                         game.socket.emit("system.dsa5", {
                             type: "target",
                             payload: {
-                                target: target.data._id,
+                                target: target.id,
                                 scene: canvas.scene.id,
                                 opposeFlag: {
-                                    speaker: message.data.speaker,
-                                    messageId: message.data._id,
-                                    startMessageId: startMessage.data._id
+                                    speaker: message.speaker,
+                                    messageId: message.id,
+                                    startMessageId: startMessage.id
                                 }
                             }
                         })
                     } else {
                         await target.actor.update({
                             "flags.oppose": {
-                                speaker: message.data.speaker,
-                                messageId: message.data._id,
-                                startMessageId: startMessage.data._id
+                                speaker: message.speaker,
+                                messageId: message.id,
+                                startMessageId: startMessage.id
                             }
                         })
                     }
-                    startMessagesList.push(startMessage.data._id);
+                    startMessagesList.push(startMessage.id);
                     if (attackOfOpportunity) {
                         await OpposedDsa5.resolveUndefended(startMessage, game.i18n.localize("OPPOSED.attackOfOpportunity"))
                     }
                 }
             })
-            message.data.flags.data.startMessagesList = startMessagesList;
+            message.flags.data.startMessagesList = startMessagesList;
         } else {
             game.user.targets.forEach(async target => {
                 if (target.actor) {
                     await ChatMessage.create({
                         user: game.user.id,
                         content: OpposedDsa5.opposeMessage(attacker, target, true),
-                        speaker: message.data.speaker
+                        speaker: message.speaker
                     })
                 }
             })
@@ -166,19 +166,19 @@ export default class OpposedDsa5 {
 
     static opposeMessage(attacker, target, fail) {
         return `<div class ="opposed-message">
-            <b>${attacker.name}</b> ${game.i18n.localize("ROLL.Targeting")} <b>${target.data.name}</b> ${fail ? game.i18n.localize("ROLL.failed"): ""}
+            <b>${attacker.name}</b> ${game.i18n.localize("ROLL.Targeting")} <b>${target.document.name}</b> ${fail ? game.i18n.localize("ROLL.failed"): ""}
             </div>
             <div class = "opposed-tokens row-section">
-                <div class="col two attacker">${OpposedDsa5.videoOrImgTag(attacker.img)}</div>
-                <div class="col two defender">${OpposedDsa5.videoOrImgTag(target.data.img)}</div>
+                <div class="col two attacker">${OpposedDsa5.videoOrImgTag(attacker.texture.src)}</div>
+                <div class="col two defender">${OpposedDsa5.videoOrImgTag(target.document.texture.src)}</div>
             </div>
              `
     }
 
     static async changeStartMessage(message) {
-        for (let startMessageId of message.data.flags.data.startMessagesList) {
+        for (let startMessageId of message.flags.data.startMessagesList) {
             let startMessage = game.messages.get(startMessageId);
-            let data = startMessage.data.flags.unopposeData;
+            let data = startMessage.flags.unopposeData;
 
             game.socket.emit("system.dsa5", {
                 type: "target",
@@ -186,39 +186,39 @@ export default class OpposedDsa5 {
                     target: data.targetSpeaker.token,
                     scene: canvas.scene.id,
                     opposeFlag: {
-                        speaker: message.data.speaker,
-                        messageId: message.data._id,
-                        startMessageId: startMessage.data._id
+                        speaker: message.speaker,
+                        messageId: message.id,
+                        startMessageId: startMessage.id
                     }
                 }
             })
-            await startMessage.update({ "flags.unopposeData.attackMessageId": message.data._id });
+            await startMessage.update({ "flags.unopposeData.attackMessageId": message.id });
         }
     }
 
     static resolveFinalMessage(message) {
         let attacker, defender;
-        if (message.data.flags.data.defenderMessage) {
-            for (let msg of message.data.flags.data.defenderMessage) {
+        if (message.flags.data.defenderMessage) {
+            for (let msg of message.flags.data.defenderMessage) {
                 attacker = OpposedDsa5.getMessageDude(message)
                 let defenderMessage = game.messages.get(msg);
                 defender = OpposedDsa5.getMessageDude(defenderMessage)
-                this.completeOpposedProcess(attacker, defender, { blind: message.data.blind, whisper: message.data.whisper });
+                this.completeOpposedProcess(attacker, defender, { blind: message.blind, whisper: message.whisper });
             }
         } else {
             defender = OpposedDsa5.getMessageDude(message)
-            let attackerMessage = game.messages.get(message.data.flags.data.attackerMessage);
+            let attackerMessage = game.messages.get(message.flags.data.attackerMessage);
             attacker = OpposedDsa5.getMessageDude(attackerMessage)
-            this.completeOpposedProcess(attacker, defender, { blind: message.data.blind, whisper: message.data.whisper });
+            this.completeOpposedProcess(attacker, defender, { blind: message.blind, whisper: message.whisper });
         }
     }
 
     static getMessageDude(message) {
         let res = {
-            speaker: message.data.speaker,
-            testResult: mergeObject(message.data.flags.data.postData, { source: message.data.flags.data.preData.source }),
-            img: DSA5_Utility.getSpeaker(message.data.speaker).data.img,
-            messageId: message.data._id
+            speaker: message.speaker,
+            testResult: mergeObject(message.flags.data.postData, { source: message.flags.data.preData.source }),
+            img: DSA5_Utility.getSpeaker(message.speaker).img,
+            messageId: message.id
         }
         if (res.testResult.ammo) res.testResult.source.effects.push(...res.testResult.ammo.effects)
         return res
@@ -226,12 +226,12 @@ export default class OpposedDsa5 {
 
     static async showDamage(message, hide = false) {
         if (game.user.isGM) {
-            if ((!hide || !message.data.flags.data.hideDamage) && message.data.flags.data.postData.damageRoll) {
+            if ((!hide || !message.flags.data.hideDamage) && message.flags.data.postData.damageRoll) {
                 await message.update({
-                    "content": message.data.content.replace(`data-hide-damage="${!hide}"`, `data-hide-damage="${hide}"`),
+                    "content": message.content.replace(`data-hide-damage="${!hide}"`, `data-hide-damage="${hide}"`),
                     "flags.data.hideDamage": hide
                 });
-                if (!hide) DiceDSA5._addRollDiceSoNice(message.data.flags.data.preData, Roll.fromData(message.data.flags.data.postData.damageRoll), game.dsa5.apps.DiceSoNiceCustomization.getAttributeConfiguration("damage"))
+                if (!hide) DiceDSA5._addRollDiceSoNice(message.flags.data.preData, Roll.fromData(message.flags.data.postData.damageRoll), game.dsa5.apps.DiceSoNiceCustomization.getAttributeConfiguration("damage"))
             }
         } else {
             game.socket.emit("system.dsa5", {
@@ -264,7 +264,7 @@ export default class OpposedDsa5 {
 
     static async showSpellWithoutTarget(message) {
         if (DSA5_Utility.moduleEnabled("autoanimations")) {
-            const msgData = getProperty(message.data, "flags.data")
+            const msgData = getProperty(message, "flags.data")
             if (!msgData || msgData.isOpposedTest) return
 
             const result = getProperty(msgData, "postData.result") || -1
@@ -298,8 +298,8 @@ export default class OpposedDsa5 {
     static async _handleReaction(ev) {
         let messageId = $(ev.currentTarget).parents('.message').attr("data-message-id");
         let message = game.messages.get(messageId)
-        let attackMessage = game.messages.get(message.data.flags.unopposeData.attackMessageId)
-        let source = attackMessage.data.flags.data.preData.source
+        let attackMessage = game.messages.get(message.flags.unopposeData.attackMessageId)
+        let source = attackMessage.flags.data.preData.source
         switch (source.type) {
             case "skill":
                 ReactToSkillDialog.showDialog(message)
@@ -320,7 +320,7 @@ export default class OpposedDsa5 {
         if (startMessageId) {
             if (game.user.isGM) {
                 let startMessage = game.messages.get(startMessageId)
-                let query = $(startMessage.data.content)
+                let query = $(startMessage.content)
                 query.find('button.unopposed-button').remove()
                 query = $('<div></div>').append(query)
 
@@ -340,13 +340,16 @@ export default class OpposedDsa5 {
         let opposedResult = await this.evaluateOpposedTest(attacker.testResult, defender.testResult, options);
         this.formatOpposedResult(opposedResult, attacker.speaker, defender.speaker);
         this.rerenderMessagesWithModifiers(opposedResult, attacker, defender);
-        await Hooks.call("finishOpposedTest", attacker, defender, opposedResult, options)
+        Hooks.call("finishOpposedTest", attacker, defender, opposedResult, options)
+        await this.finishOpposedTestHookAsync(attacker, defender, opposedResult, options)
         this.playAutomatedJBA2(attacker, defender, opposedResult)
         await this.renderOpposedResult(opposedResult, options)
         await this.hideReactionButton(options.startMessageId)
 
         return opposedResult
     }
+
+    static async finishOpposedTestHookAsync(attacker, defender, opposedResult, options) {}
 
     static async evaluateOpposedTest(attackerTest, defenderTest, options = {}) {
         let opposeResult = {};
@@ -395,7 +398,7 @@ export default class OpposedDsa5 {
                 damage.spellArmor != 0 ? `${damage.spellArmor} ${game.i18n.localize('spellArmor')}` : "",
                 damage.liturgyArmor != 0 ? `${damage.liturgyArmor} ${game.i18n.localize('liturgyArmor')}` : ""
             ]
-            let description = `<b>${game.i18n.localize("damage")}</b>: ${damage.damage} - <span title="${title.join("")}">${damage.armor} (${game.i18n.localize("protection")})</span> = ${damage.sum}`
+            let description = `<b>${game.i18n.localize("damage")}</b>: ${damage.damage} - <span data-tooltip="${title.join("")}">${damage.armor} (${game.i18n.localize("protection")})</span> = ${damage.sum}`
             opposeResult.damage = {
                 description,
                 value: damage.sum,
@@ -407,7 +410,7 @@ export default class OpposedDsa5 {
     }
 
     static _calculateOpposedDamage(attackerTest, defenderTest, options = {}) {
-        const actor = DSA5_Utility.getSpeaker(defenderTest.speaker).data
+        const actor = DSA5_Utility.getSpeaker(defenderTest.speaker)
         options.origin = attackerTest.source
         options.damage = attackerTest.damage
 
@@ -423,8 +426,8 @@ export default class OpposedDsa5 {
         }
         let spellArmor = 0
         let liturgyArmor = 0
-        if (["spell", "ritual"].includes(attackerTest.source.type)) spellArmor += actor.data.spellArmor || 0
-        else if (["liturgy", "ceremony"].includes(attackerTest.source.type)) spellArmor += actor.data.liturgyArmor || 0
+        if (["spell", "ritual"].includes(attackerTest.source.type)) spellArmor += actor.system.spellArmor || 0
+        else if (["liturgy", "ceremony"].includes(attackerTest.source.type)) spellArmor += actor.system.liturgyArmor || 0
 
         armor += armorMod
         const armorMultiplier = multipliers.reduce((sum, x) => { return sum * x }, 1)
@@ -508,22 +511,22 @@ export default class OpposedDsa5 {
     }
 
     static async resolveUndefended(startMessage, additionalInfo = "") {
-        let unopposeData = startMessage.data.flags.unopposeData;
+        let unopposeData = startMessage.flags.unopposeData;
 
         let attackMessage = game.messages.get(unopposeData.attackMessageId)
         let attacker = {
-            speaker: attackMessage.data.speaker,
-            testResult: attackMessage.data.flags.data.postData,
+            speaker: attackMessage.speaker,
+            testResult: attackMessage.flags.data.postData,
             messageId: unopposeData.attackMessageId
         }
-        attacker.testResult.source = attackMessage.data.flags.data.preData.source
+        attacker.testResult.source = attackMessage.flags.data.preData.source
         if (attacker.testResult.ammo) attacker.testResult.source.effects.push(...attacker.testResult.ammo.effects)
 
         let target = canvas.tokens.get(unopposeData.targetSpeaker.token)
         let defender = {
             speaker: unopposeData.targetSpeaker,
             testResult: {
-                actor: target.actor.data,
+                actor: target.actor,
                 speaker: {
                     token: unopposeData.targetSpeaker.token
                 }
@@ -533,17 +536,17 @@ export default class OpposedDsa5 {
 
         await this.completeOpposedProcess(attacker, defender, {
             target: true,
-            startMessageId: startMessage.data._id,
+            startMessageId: startMessage.id,
             additionalInfo: additionalInfo
         });
         if (game.user.isGM) {
-            await attackMessage.update({ "flags.data.unopposedStartMessage": startMessage.data._id });
+            await attackMessage.update({ "flags.data.unopposedStartMessage": startMessage.id });
         } else {
             await game.socket.emit("system.dsa5", {
                 type: "updateAttackMessage",
                 payload: {
                     messageId: attackMessage.id,
-                    startMessageId: startMessage.data._id
+                    startMessageId: startMessage.id
                 }
             })
         }

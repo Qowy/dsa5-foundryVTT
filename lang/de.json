@@ -105,7 +105,7 @@
         "warning": "Vorsicht",
         "deselectWithStrg": "Strg + Click zum Deselektieren",
         "noCombatskills": "Keine passenden Kampfsonderfertigkeiten",
-        "noExtensions": "Keine passend Zauber/Liturgieerweiterungen",
+        "noExtensions": "Keine passenden Zauber-/Liturgieerweiterungen",
         "firstTime": "Spracheinstellungen",
         "firstTimeWarning": "Bitte wähle die passende Sprache. Kompendien verschiedener Sprachen sind nicht miteinander kompatibel und bestehende Charaktere können nicht in die andere Sprache migriert werden. Stelle sicher, dass alle User die gleiche Sprache verwenden, um Problemen vorzubeugen.",
         "selectReaction": "Bitte wähle die passende Reaktion.",
@@ -121,7 +121,8 @@
         "setTargetToUserHint": "Aktuell markierte Ziele auf den User übertragen.",
         "setTargetToUser": "Spielerziel setzen",
         "noLoggedinUser": "Keine User eingeloggt/auswählbar.",
-        "selectGroupCheckSkill": "Wähle ein weiteres Talent für die Gruppensammelprobe."
+        "selectGroupCheckSkill": "Wähle ein weiteres Talent für die Gruppensammelprobe.",
+        "updateMaintainSpell": "Für {actor} ein neues Interval bezahlen oder den Effekt beenden?"
     },
     "Equipment": {
         "misc": "Allgemein",
@@ -172,6 +173,7 @@
     "ammunitiongroup": "Munitionstyp",
     "AstoundingSuccess": "Spektakulärer Erfolg",
     "AstoundingFailure": "Schreckliches Missgeschick",
+    "information": "Information",
     "confirm": "Bestätigen",
     "advantages": "Vorteile",
     "advantage": "Vorteil",
@@ -181,6 +183,7 @@
     "animalSpecialAbilities": "Tierische Sonderfertigkeiten",
     "Age": "Alter",
     "aspect": "Aspekt",
+
     "AsPCost": "Astralpunktekosten",
     "AsPCostDetail": "AsP Detail",
     "KaPCostDetail": "KaP Detail",
@@ -209,7 +212,7 @@
     "critBotch": "Krit./Patzer",
     "Characteristic": "Attribut",
     "ceremony": "Zeremonie",
-    "ceremonies": "Zermonien",
+    "ceremonies": "Zeremonien",
     "ceremonyTest": "Zeremonieprobe",
     "castingTime": "Aktionsdauer",
     "Combat": "Kampf",
@@ -219,6 +222,7 @@
     "cost": "Kosten",
     "charges": "Ladungen",
     "cancel": "Abbrechen",
+    "delete": "Löschen",
     "ok": "Ok",
     "combatskillcountdivider": "aus",
     "closeCombatAttacks": "Nahkampfangriffe",
@@ -332,6 +336,7 @@
     "Main": "Daten",
     "maybe": "Evtl",
     "max": "Max",
+    "aoewidth": "Breite",
     "magical": "magisch",
     "meleeweapon": "Nahkampfwaffe",
     "meleeweapons": "Nahkampfwaffen",
@@ -499,6 +504,13 @@
     "zkModifier": "Zähigkeit (Ziel)",
     "vulnerability": "Verwundbarkeit",
     "zoo": "Zoo",
+    "AoE": "Flächeneffekt",
+    "areaTargetTypes": {
+        "rect": "Würfel",
+        "ray": "Strahl",
+        "circle": "Sphäre",
+        "cone": "Kegel"
+    },
     "Library": {
         "searchPlaceholder": "Durchsuche die Bibliothek",
         "searchCategoryDescription": "Bitte Filterkategorie(n) auswählen",
@@ -508,7 +520,8 @@
         "selectAdvanced": "Wähle eine Kategorie",
         "noFilter": "Kein Filter",
         "indexWorldItems": "Welt Items indexieren (Deaktivieren verbessert Leistung, erfordert neuladen der Welt)",
-        "fullTextSearch": "Volltextsuche (Deaktivieren verbessert Leistung, erfordert neuladen der Welt)"
+        "fullTextSearch": "Volltextsuche (Deaktivieren verbessert Leistung, erfordert neuladen der Welt)",
+        "loading": "Lade {item}..."
     },
     "Aggregated": {
         "noMoreAllowed": "Keine Proben mehr erlaubt."
@@ -552,7 +565,8 @@
         "conjuration": "Beschwörung",
         "creation": "Herstellung",
         "services": "Dienste",
-        "finalize": "Fertigstellen"
+        "finalize": "Fertigstellen",
+        "material": "Material"
     },
     "MASTER": {
         "automation": "Automatisierung",
@@ -570,7 +584,8 @@
         "threshold": "Dunkelheitsschwelle",
         "darkness": "Dunkelheit",
         "sightautomationTooltip": "Setzt bei Angriffs- und Verteidigungswürfen automatisch einen Modifikator, wenn der Dunkelheitswert die entsprechende Schwelle überschreitet.",
-        "gmMenuPlaceholder": "NSC Generatoren u.ä. siehe Werkstatt des Meisters Modul"
+        "gmMenuPlaceholder": "NSC Generatoren u.ä. siehe Werkstatt des Meisters Modul",
+        "dragEveryone": "Ziehe alle markierten Charaktere auf die Map"
     },
     "MODS": {
         "partChecks": "Teilprobenmodifikator",
@@ -583,7 +598,8 @@
         "global": "Globaler Modifikator",
         "armor": "Rüstungsmodifikator",
         "range": "Reichweitenfaktor",
-        "creatureBonus": "Bonusschaden (Kreatur)"
+        "creatureBonus": "Bonusschaden (Kreatur)",
+        "armorPen": "Rüstungsdurchdringung"
     },
     "WIZARD": {
         "addItem": "{item} hinzufügen",
@@ -806,7 +822,8 @@
         "value": "Wert",
         "modifiers": "Mod.",
         "advances": "Zukauf",
-        "max": "Max"
+        "max": "Max", 
+        "AoE": "Größe in Schritt, Template"
     },
     "Range-short": "Kurz",
     "Range-medium": "Mittel",
@@ -844,7 +861,30 @@
         "permRegeneration": "Permanent, wird bei jedem Regenerationswurf hinzugezählt",
         "panMapNote": "Map Notiz fokussieren",
         "onUseEffect": "Gegenstand benutzen/Fähigkeit anwenden",
-        "swapMag": "Magazin tauschen"
+        "swapMag": "Magazin tauschen",
+        "selectTraditionartifact": "Traditionsartefakt auswählen",
+        "deobfuscateItem": "Abschnitt entschleieren",
+        "obfuscateItem": "Abschnitt verschleiern"
+    },
+    "traditionArtifacts": {
+        "Animistenwaffe": "Animistenwaffe",
+        "Bannschwert": "Bannschwert",
+        "Druidendolch": "Druidendolch",
+        "Druidensichel": "Druidensichel",
+        "Zauberkleidung": "Zauberkleidung",
+        "Magierkugel": "Magierkugel",
+        "Zauberinstrument": "Zauberinstrument",
+        "Narrenkappe": "Narrenkappe",
+        "Hexenkessel": "Hexenkessel",
+        "Krallenkette": "Krallenkette",
+        "Lebensring": "Lebensring",
+        "Alchimistenschale": "Alchimistenschale",
+        "Scharlatanische Zauberkugel": "Scharlatanische Zauberkugel",
+        "Sippenchronik": "Sippenchronik",
+        "Schelmenspielzeug": "Schelmenspielzeug",
+        "Zauberstecken": "Zauberstecken",
+        "Magierstab": "Magierstab",
+        "Trinkhorn": "Trinkhorn"
     },
     "ITEMSHEET": {
         "offHandMod": "Bonus/Malus als Nebenhand (z.b. Parierwaffe)"
@@ -878,6 +918,7 @@
         "gainsBloodrush": "Der Zorn überwältigt {character} und er/sie verfällt in den Zustand Blutrausch.",
         "unableReroll": "Würfel {die} wegen Unfähigkeit erneut geworfen ({oldVal}/{newVal})",
         "requestRoll": "{user} fordert einen Wurf in {item}",
+        "requestInformation": "Was weiß mein Held über...",
         "editRoll": "Wurf editieren",
         "BlindRoll": "Blinder Wurf",
         "whisper": "Private Nachricht",
@@ -902,7 +943,8 @@
         "foreignSpell": "Fremdzauber können nicht modifiziert werden",
         "assignCharacter": "Charaktere können in der Spielerliste unten links per Rechtsclick zugewiesen werden.",
         "dragLink": "Drag & drop Akteur z.B. für Gestaltwandlung und Beschwörung",
-        "onlyGM": "Nur für den Spielleiter sichtbar."
+        "onlyGM": "Nur für den Spielleiter sichtbar.",
+        "placeTemplate": "Flächeneffekt Template platzieren"
     },
     "HELP": {
         "showHelp": "Hilfe anzeigen",
@@ -980,6 +1022,7 @@
     },
     "ITEM.TypeAdvantage": "Vorteil",
     "ITEM.TypeAggregatedtest": "Sammelprobe",
+    "ITEM.TypeInformation": "Information",
     "ITEM.TypeAmmunition": "Munition",
     "ITEM.TypeArmor": "Rüstung",
     "ITEM.TypeBlessing": "Segnung",
@@ -1016,6 +1059,15 @@
     "character": "Charakter",
     "npc": "Nichtspielercharakter",
     "creature": "Kreatur",
+    "wrongGrip": {
+        "oneHanded": "Einhändig geführt",
+        "twoHanded": "Beidhändig geführt",
+        "yieldTwo": "PA -1, TP +1, kann nur während deines Zuges einmal geändert werden",
+        "yieldOnePolearms": "Waffenreichweite mittel, -1 TP, -1 PA",
+        "yieldOneSwordBlunt": "Waffenreichweite mittel, 0.5 * TP, -3 PA",
+        "yieldOneBastard": "Waffenreichweite mittel, -2 TP, -3 PA",
+        "wrongGripBastardRegex": "(Anderthalbhänder|Bastardschwert)"
+    },
     "UNITS": {
         "weight": "Gewicht in Stein",
         "money": "Wert in Silberstücken"
@@ -1050,7 +1102,17 @@
         "combatRounds": "( )?(in )?(Kampfrunde(n)?|KR(s)?)",
         "minutes": "( )?(in )?(minute(n)?|min)",
         "hours": "( )?(in )?(stunde(n)?)",
-        "days": "( )?(in )?tag(e)?"
+        "days": "( )?(in )?tag(e)?",
+        "weeks": "( )?(in )?woche(n)?",
+        "months": "( )?(in )?monat(e)?",
+        "years": "( )?(in )?jahr(e)?"
+    },
+    "DSAREGEXmaintain": {
+        "combatRounds": "(Kampfrunde(n)?|KR(s)?)",
+        "seconds": "(sekunden(n)?)",
+        "minutes": "(minute(n)?|min)",
+        "hours": "(stunde(n)?)",
+        "days": "tag(e)?"
     },
     "ActiveEffects": {
         "hideOnToken": "Am Token verstecken",
@@ -1062,7 +1124,7 @@
         "custom": "Sondereffekt",
         "creature": "Akteurlink (z.b. das5-core.corebestiary.Gotongi)",
         "resistRoll": "Widerstandsprobe",
-
+        "resistPain": "Der Schmerz ist überwältigend (Stufe 4). Die Handlungsfähigkeit ist nur über eine Selbstbeherrschungsprobe zu bewahren.",
         "placeholder": {
             "macros": "Macros können auf diese Variablen zugreifen:\nactor - Der anvisierte Akteur\ntestData - All Daten für die aktuelle Probe\nsource - Die Quelle des Macros",
             "armorPostprocess": "Rüstungstransformation können auf diese Variablen zugreifen:\nactor - Der anvisierte Akteur\noptions.armor - Die Rüstungs des Ziels\noptions.attackItem - Die Quelle des Macros",
@@ -1281,7 +1343,9 @@
         "takeSpells": "Zauber/Rituale übernehmen",
         "takeLiturgies": "Liturgien/Zeremonien übernehmen",
         "keepVision": "Sichteinstellung übernehmen",
-        "takeSkills": "Talente übernehmen"
+        "takeSkills": "Talente übernehmen",
+        "keepItems": "Ausrüstung behalten",
+        "keepToken": "Token behalten"
     },
     "COMBATSKILLCATEGORY": {
         "subcategory": "Subkategorie",
@@ -1455,7 +1519,20 @@
         "forceLanguage": "Sprache erzwingen",
         "forceLanguageHint": "Spieler erhalten beim Login einen Dialog, wenn deren Sprache falsch eingestellt ist. Unterschiedliche Spracheinstellungen können zu Problemen führen.",
         "encumbranceForRange": "Belastung für Fernkampf (Hausregel)",
-        "encumbranceForRangeHint": "Belastung beeinträchtigt Fernkampf normalerweise nicht. Mach deinen Spielern das Leben noch schwerer."
+        "encumbranceForRangeHint": "Belastung beeinträchtigt Fernkampf normalerweise nicht. Mach deinen Spielern das Leben noch schwerer.",
+        "information0": "Jeder",
+        "information1": "Nur Spieler",
+        "information2": "Nur SL",
+        "informationDistribution": "Informationsergebnisse anzeigen",
+        "informationDistributionHint": "Lege fest wer das Ergebnis von Informationswürfen sehen kann.",
+        "selfControlOnPain": "Selbstbeherrschung bei Schmerz",
+        "selfControlOnPainHint": "Löse einen automatischen Wurf für Selbstbeherrschung aus, wenn der Schmerz zu groß wird.",
+        "selfControlOnPain0": "Alle",
+        "selfControlOnPain1": "Nur Spieler",
+        "selfControlOnPain2": "Aus",
+        "yesNumbered": "Ja (Nummeriert)",
+        "renameNumbered": "Umbenennen (Nummeriert)"
+
     },
     "CONTROLS": {
         "targetForUser": "Ziel für Spieler wählen"
@@ -1520,7 +1597,7 @@
         "commerce": "Handel",
         "Factor": "Faktor",
         "hidePlayer": "Für Spieler verbergen",
-        "hidePlayerHint": "Im Aktuerverzeichnis den Spielern nicht anzeigen. Setzen bevor Spieler Permissions erhalten.",
+        "hidePlayerHint": "Im Aktuerverzeichnis den Spielern nicht anzeigen. Setzen bevor Spieler Berechtigungen erhalten.",
         "buyingFactor": "Kauffaktor",
         "sellingFactor": "Verkaufsfaktor",
         "typeMerchant": "Händler",

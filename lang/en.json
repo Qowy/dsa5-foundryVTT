@@ -107,7 +107,8 @@
         "setTargetToUserHint": "Transfer currently targeted tokens to user.",
         "setTargetToUser": "Set player target",
         "noLoggedinUser": "No user logged in/available.",
-        "selectGroupCheckSkill": "Chose another talent for the cumulative group check."
+        "selectGroupCheckSkill": "Chose another talent for the cumulative group check.",
+        "updateMaintainSpell": "Pay for a new interval or end the effect for {actor}?"
     },
     "Equipment": {
         "misc": "General",
@@ -376,6 +377,7 @@
     "Hair_color": "Hair color",
     "Height": "Height",
     "Home": "Home",
+    "delete": "Delete",
     "Initial": "Initial value",
     "initiative": "Initiative",
     "initDieMod": "Initiative die mod.",
@@ -399,7 +401,7 @@
     "liturgies": "Liturgical chants",
     "initComplete": "Initialization done",
     "initSkipped": "Initialization canceled",
-    "initialize": "initialization",
+    "initialize": "Initialization",
     "Main": "Data",
     "maybe": "Maybe",
     "max": "Max",
@@ -468,6 +470,7 @@
     "parryWeaponless": "Unarmed defense",
     "rangeweapon": "Rangeweapon",
     "refundCost": "Refund {cost} adventure points",
+    "AoE": "Area of Effect",
     "Roll": "Roll",
     "result": "Result",
     "rule": "Rule",
@@ -536,6 +539,7 @@
     "table": "Table",
     "Total": "Total",
     "time": "Time",
+    "aoewidth": "Width",
     "toughness": "Toughness",
     "targetCategory": "Target category",
     "target": "Target",
@@ -563,6 +567,7 @@
     "YouAlreadyHaveit": "Already owned",
     "zkModifier": "Toughness (Target)",
     "vulnerability": "Vulnerability",
+    "information": "Information",
     "zoo": "Zoo",
     "Library": {
         "search": "Search",
@@ -573,7 +578,8 @@
         "selectAdvanced": "Chose a category",
         "noFilter": "No filter",
         "indexWorldItems": "Index world Items (deactivate to increase performance, requires reloading of the world)",
-        "fullTextSearch": "Full text search (deactivate to increase performance, requires reloading of the world)"
+        "fullTextSearch": "Full text search (deactivate to increase performance, requires reloading of the world)",
+        "loading": "Loading {item}..."
     },
     "Aggregated": {
         "noMoreAllowed": "No more rolls allowed."
@@ -617,7 +623,8 @@
         "conjuration": "Summoning",
         "creation": "Production",
         "services": "Services",
-        "finalize": "Finalize"
+        "finalize": "Finalize",
+        "material": "Material"
     },
     "MASTER": {
         "automation": "Automation",
@@ -635,7 +642,8 @@
         "threshold": "Darkness threshold",
         "darkness": "Darkness",
         "sightautomationTooltip": "Sets automatically a modifier for attack and defense rolls, if the darkness exceeds the darkness threshold value.",
-        "gmMenuPlaceholder": "NPC generators and similar things see module Master's Workshop"
+        "gmMenuPlaceholder": "NPC generators and similar things see module Master's Workshop",
+        "dragEveryone": "Drag all selected characters to the map"
     },
     "WIZARD": {
         "addItem": "Add {item}",
@@ -664,7 +672,17 @@
         "global": "Global modifier",
         "armor": "Armor modifier",
         "range": "Range multiplier",
-        "creatureBonus": "Bonus damage (creature)"
+        "creatureBonus": "Bonus damage (creature)",
+        "armorPen": "Armor penetration"
+    },
+    "wrongGrip": {
+        "oneHanded": "One-handed guided",
+        "twoHanded": "Two-handed guided",
+        "yieldTwo": "PA -1, DP +1, can be changed once on your turn only",
+        "yieldOnePolearms": "Weapon reach medium, -1 DP, -1 PA",
+        "yieldOneSwordBlunt": "Weapon reach medium, 0.5 * DP, -3 PA",
+        "yieldOneBastard": "Weapon reach medium, -2 DP, -3 PA",
+        "wrongGripBastardRegex": "(Bastard Sword)"
     },
     "Features": {
         "Object": "Object",
@@ -804,7 +822,14 @@
         "value": "Value",
         "modifiers": "Mod.",
         "advances": "Advance",
-        "max": "Max"
+        "max": "Max", 
+        "AoE": "Size in yard, Template"
+    },
+    "areaTargetTypes": {
+        "rect": "Cube",
+        "ray": "Ray",
+        "circle": "Sphere",
+        "cone": "Cone"
     },
     "Range-short": "Short",
     "Range-medium": "Medium",
@@ -842,7 +867,30 @@
         "permRegeneration": "Permanent, bonus for every regeneration roll",
         "panMapNote": "Focus map note",
         "onUseEffect": "Use item/use ability",
-        "swapMag": "Swap magazine"
+        "swapMag": "Swap magazine",
+        "selectTraditionartifact": "Select tradition artifact",
+        "deobfuscateItem": "Deobfuscate section",
+        "obfuscateItem": "Obfuscate section"
+    },
+    "traditionArtifacts": {
+        "Animistenwaffe": "Animist weapon",
+        "Bannschwert": "Spell-Sword",
+        "Druidendolch": "Druid's dagger",
+        "Druidensichel": "Druid's sickle",
+        "Zauberkleidung": "Magical Attire",
+        "Magierkugel": "Magical Orb",
+        "Zauberinstrument": "Magical instrument",
+        "Narrenkappe": "Jester's cap",
+        "Hexenkessel": "Witch's cauldron",
+        "Krallenkette": "Claw necklace",
+        "Lebensring": "Ring of Life",
+        "Alchimistenschale": "Alchemist bowl",
+        "Scharlatanische Zauberkugel": "Charlatan magic ball",
+        "Sippenchronik": "Chronicle of clans",
+        "Schelmenspielzeug": "Rascal Toys",
+        "Zauberstecken": "Magic Wand",
+        "Magierstab": "Mage's staff",
+        "Trinkhorn": "Drinking horn"
     },
     "ITEMSHEET": {
         "offHandMod": "Bonus/handicap offhand (e.g. parry weapon)"
@@ -901,6 +949,7 @@
         "usesItem": "{actor} uses {item}.",
         "requestGroupCheck": " requests a group check in ",
         "enchantmentUsed": "<b>{item}</b> used one charge of <b>{spell}</b>.",
+        "requestInformation": "What does my hero know about...",
         "regenerates": "regenerates",
         "getsHurt": "loses",
         "burning": {
@@ -919,7 +968,8 @@
         "foreignSpell": "Unfamiliar tradition spells can not be modified",
         "assignCharacter": "Characters can be assigned using a right click on the player list in the bottom left corner.",
         "dragLink": "Drag & drop actor e.g. for shapeshifting and summoning",
-        "onlyGM": "Only visible to the gamemaster."
+        "onlyGM": "Only visible to the gamemaster.",
+        "placeTemplate": "Place Area of Effect template"
     },
     "HELP": {
         "showHelp": "Show help",
@@ -945,6 +995,7 @@
     },
     "ITEM.TypeAdvantage": "Advantage",
     "ITEM.TypeAggregatedtest": "Cumulative Check",
+    "ITEM.TypeInformation": "Information",
     "ITEM.TypeAmmunition": "Ammunition",
     "ITEM.TypeArmor": "Armor",
     "ITEM.TypeBlessing": "Blessing",
@@ -1035,7 +1086,17 @@
         "combatRounds": "( )?(in )?(combat round(s)?|CR(s)?)",
         "minutes": "( )?(in )?(minute(s)?|min)",
         "hours": "( )?(in )?(hour(s)?)",
-        "days": "( )?(in )?day(s)?"
+        "days": "( )?(in )?day(s)?",
+        "weeks": "( )?(in )?week(s)?",
+        "months": "( )?(in )?month(s)?",
+        "years": "( )?(in )?year(s)?"
+    },
+    "DSAREGEXmaintain": {
+        "combatRounds": "(combat round(s)?|CR(s)?)",
+        "minutes": "(minute(s)?|min)",
+        "seconds": "(second(s)?)",
+        "hours": "(hour(s)?)",
+        "days": "day(s)?"
     },
     "ActiveEffects": {
         "hideOnToken": "Hide on Token",
@@ -1047,6 +1108,7 @@
         "custom": "Special effect",
         "creature": "Actorlink (e.g. das5-core.coreenbestiary.Gotongi)",
         "resistRoll": "Resist check",
+        "resistPain": "The pain is overwhelming (level 4). The ability to act can only be maintained via a self-control check.",
         "placeholder": {
             "macros": "Macros have access to the following variables:\nactor - The targeted actor\ntestData - All data for the current check\nsource - The source of the macro",
             "armorPostprocess": "Armor transformations have access to the following variables:\nactor - The targeted actor\narmor - The armor of the target\nsource - The source of the macro",
@@ -1196,7 +1258,9 @@
         "takeLiturgies": "Keep Liturgies/Ceremonies",
         "done": "The shapeshift has been finished.",
         "keepVision": "Keep vision",
-        "takeSkills": "Keep skills"
+        "takeSkills": "Keep skills",
+        "keepItems": "Keep equipment",
+        "keepToken": "Keep token"
     },
     "DSAError": {
         "noTokenSelected": "No token selected",
@@ -1441,7 +1505,19 @@
         "forceLanguage": "Force language",
         "forceLanguageHint": "Players receive a message, if their language setting is wrong. Different language settings can lead to issues.",
         "encumbranceForRange": "Encumbrance for range combat (house rule)",
-        "encumbranceForRangeHint": "Encumbrance normally doesn't affect range combat. Lay more weight on your players by increasing the difficulty."
+        "encumbranceForRangeHint": "Encumbrance normally doesn't affect range combat. Lay more weight on your players by increasing the difficulty.",
+        "information0": "Everyone",
+        "information1": "Only Player",
+        "information2": "Only GM",
+        "informationDistribution": "Show information results",
+        "informationDistributionHint": "Define who gets the results of information rolls.",
+        "selfControlOnPain": "Self-Control on Pain",
+        "selfControlOnPainHint": "Show a automatic check for Self-Control if the pain gets too strong (Level 4).",
+        "selfControlOnPain0": "All",
+        "selfControlOnPain1": "Only players",
+        "selfControlOnPain2": "Off",
+        "yesNumbered": "Yes (Numbering)",
+        "renameNumbered": "Rename (Numbering)"
     },
     "WEAR": {
         "check": "Breaking Point Rating Check ({category})",

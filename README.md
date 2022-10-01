@@ -4,15 +4,15 @@
 ![](https://repository-images.githubusercontent.com/311655339/4d523800-55a9-11eb-9e2e-6bbc2b71d8a4)
 
 ### Current Version and Compatibility:
-3.5.x - FoundryVTT 9.+
+4.1.x - FoundryVTT 10.+
 This system is intended for usage with [Foundry Virtual Tabletop](https://foundryvtt.com/) to play "Das Schwarze Auge" 5th edition.
 If you want to learn more checkout the [German](https://ulisses-spiele.de/virtual-tabletop-dsa-vtt/) or [English](https://ulisses-us.com/ulisses-virtual-tabletops/virtual-tabletop-dsa-vtt/) VTT Page by Ulisses Spiele.
 
 ## Installation - Auto Installer
-In the FVTT Game Systems Menu, click Install System and enter the Manifest URL: `https://raw.githubusercontent.com/Plushtoast/dsa5-foundryVTT/foundry9/system.json`
+In the FVTT Game Systems Menu, click Install System and enter the Manifest URL: `https://raw.githubusercontent.com/Plushtoast/dsa5-foundryVTT/foundry10/system.json`
 
 ## Roadmap
-See [Milestones](https://github.com/Plushtoast/dsa5-foundryVTT/milestones) for our short term goals. Those might be subject to change.
+See [Roadmap](https://github.com/users/Plushtoast/projects/1/views/6) for our short term goals. Those might be subject to change.
 
 ## Current State
 Aventuria awaits, as TDE 5 is now fully integrated with Foundry VTT.
@@ -75,7 +75,7 @@ If you want to discuss TDE for foundry or need some assistance you can also join
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/2645/dsa5-werkstatt-des-meisters-fuer-foundry-vtt" title="Werkstatt des Meisters">
             <img src="https://www.ulissesf-shop.com/media/image/c3/89/d3/ESD1004_0_0999_600x600.jpg" alt="Werkstatt des Meisters" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
         </a>
-        <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/abenteuer-module/3028/dsa5-aventurische-tavernen-fuer-foundry-vtt" target="_blank" data-tooltip="Aventurische Tavernen">
+         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/abenteuer-module/3028/dsa5-aventurische-tavernen-fuer-foundry-vtt" target="_blank" data-tooltip="Aventurische Tavernen">
             <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-aventurian-taverns/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
         </a>
         <h2>Inhalte</h2>
@@ -105,6 +105,7 @@ If you want to discuss TDE for foundry or need some assistance you can also join
         </a>
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/2936/dsa5-aventurisches-transmutarium-fuer-foundry-vtt">
             <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-transmutarium/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
+        </a>
         </a>
         <a href="https://www.f-shop.de/virtual-tabletops/das-schwarze-auge-vtt/regel-module/3027/dsa5-aventurisches-herbarium-fuer-foundry-vtt" target="_blank" data-tooltip="Aventurisches Herbarium">
             <img src="https://ulisses-digital.de/R20/dsa5/modules/dsa5-herbarium/icons/journal/coverde.webp" alt="Aventurisches Transmutarium" style="margin-right: 5px; margin-bottom: 5px; text-align:center; width:210px;">
@@ -167,7 +168,6 @@ As of this moment several modules are in the making. We will inform you as soon 
 ## Other Recommended Modules
 The following modules are recommended for the best gaming experience:
 - [Dice So Nice!](https://gitlab.com/riccisi/foundryvtt-dice-so-nice) - Shows beautiful 3d dice on every roll. A must have! DSA5 fully integrates this module.
-- [Pings](https://gitlab.com/foundry-azzurite/pings/) - Mark points of interest on the map with a long mouseclick.
 - [VTTA Tokenizer](https://github.com/mrprimate/vtta-tokenizer) - Lets you create beautiful Tokens. DSA5 sets up token frames for the Tokenizer on the first time the module gets activated.
 - [Dice Tray](https://gitlab.com/asacolips-projects/foundry-mods/foundry-vtt-dice-calculator) - If you want to do quick die rolls without knowing foundry's chat syntax. Not needed for advanced users.
 

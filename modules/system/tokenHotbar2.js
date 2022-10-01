@@ -1,3 +1,4 @@
+import Actordsa5 from "../actor/actor-dsa5.js";
 import OnUseEffect from "./onUseEffects.js";
 
 export default class TokenHotbar2 extends Application {
@@ -11,50 +12,52 @@ export default class TokenHotbar2 extends Application {
         this.combatSkills = ["selfControl", "featOfStrength", "bodyControl", "perception"].map(x => game.i18n.localize(`LocalizedIDs.${x}`))
         this.defaultSkills = [game.i18n.localize("LocalizedIDs.perception")]
 
+        const parentUpdate = (source) => {
+            const id = source.parent ? source.parent.id : undefined
+            if (id) TokenHotbar2.hookUpdate(id)
+        }
+
         Hooks.on("controlToken", (elem, controlTaken) => {
             this.updateDSA5Hotbar()
         })
-        
+
         Hooks.on("updateActor", (actor, updates) => {
-            TokenHotbar2.hookUpdate(actor.id)     
+            TokenHotbar2.hookUpdate(actor.id)
         });
-    
+
         Hooks.on("updateToken", (scene, token, updates) => {
-            if (token._id == getProperty(game.dsa5.apps.tokenHotbar, "actor.token.id"))
-                this.updateDSA5Hotbar()        
+            if (token._id == getProperty(game.dsa5.apps.tokenHotbar, "actor.prototypeToken.id"))
+                this.updateDSA5Hotbar()
         });
-    
+
         Hooks.on("updateOwnedItem", (source, item) => {
-            TokenHotbar2.hookUpdate(source.data.id )       
+            TokenHotbar2.hookUpdate(source.data.id)
         });
-    
+
         Hooks.on("createOwnedItem", (source, item) => {
-            TokenHotbar2.hookUpdate(source.data.id )   
+            TokenHotbar2.hookUpdate(source.data.id)
         });
-    
+
         Hooks.on("deleteOwnedItem", (source, item) => {
-            TokenHotbar2.hookUpdate(source.data.id )   
+            TokenHotbar2.hookUpdate(source.data.id)
         });
-    
+
         Hooks.on("updateItem", (source, item) => {
-            const id = getProperty(source, "parent.id")
-            if(id) TokenHotbar2.hookUpdate(id) 
+            parentUpdate(source)
         });
-    
+
         Hooks.on("createItem", (source, item) => {
-            const id = getProperty(source, "parent.id")
-            if(id) TokenHotbar2.hookUpdate(id)       
+            parentUpdate(source)
         });
-    
+
         Hooks.on("deleteItem", (source, item) => {
-            const id = getProperty(source, "parent.id")
-            if(id) TokenHotbar2.hookUpdate(id)       
+            parentUpdate(source)
         });
     }
 
-    static hookUpdate(changeId){
+    static hookUpdate(changeId) {
         if (changeId == getProperty(game.dsa5.apps.tokenHotbar, "actor.id"))
-            game.dsa5.apps.tokenHotbar.updateDSA5Hotbar()   
+            game.dsa5.apps.tokenHotbar.updateDSA5Hotbar()
     }
 
     resetPosition() {
@@ -78,7 +81,8 @@ export default class TokenHotbar2 extends Application {
             zIndex: 61,
             left: hotbarPosition.left + 8,
             top: hotbarPosition.top - itemWidth - 25,
-            template: "systems/dsa5/templates/status/tokenHotbar.html"
+            template: "systems/dsa5/templates/status/tokenHotbar.html",
+            title: "TokenHotbar"
         });
         mergeObject(options, position)
         return options;
@@ -125,33 +129,24 @@ export default class TokenHotbar2 extends Application {
             await this.executeQuickButton(ev)
             return false
         })
-        html.on('mouseenter', 'li', ev => {
-            const li = $(ev.currentTarget)
-            let tooltip = li.find(".tooltip");
-            if (tooltip) tooltip.remove();
-            tooltip = document.createElement("SPAN");
-            tooltip.classList.add("tooltip");
-            tooltip.textContent = li.attr("data-name")
-            li.append($(tooltip));
-            if (li.hasClass("primary")) {
-                html.find(`.secondary[data-category="${li.attr("data-category")}"]`).addClass("shown")
-            }
+                 
+        html.on('mouseenter', 'li.primary', ev => {
+            const cat = ev.currentTarget.dataset.category
+            this.category = cat
+            setTimeout(() => {
+                html.find('.secondary').removeClass('shown')
+                if(cat==this.category) 
+                    html.find(`.secondary[data-category="${cat}"]`).addClass("shown")
+            }, 700)
         })
-        html.on('mouseenter', '.subbuttons', ev => {
-            $(ev.currentTarget).closest('li').find('>.tooltip').remove()
+        html.on('mouseleave', 'li.primary', ev => {
+            const cat = ev.currentTarget.dataset.category
+            this.category = undefined
+            setTimeout(()=>{
+                if(cat!=this.category) 
+                    html.find(`.secondary[data-category="${cat}"]`).removeClass("shown")
+            },50)
         })
-        html.on('mouseleave', 'li', ev => {
-            const li = $(ev.currentTarget)
-            let tooltip = li.find(".tooltip");
-            if (tooltip) tooltip.remove()
-            if (li.hasClass("primary")) {
-                html.find(`.secondary[data-category="${li.attr("data-category")}"]`).removeClass("shown")
-            }
-        })
-        html.on('mouseleave', '.tokenQuickHot', ev => {
-            $(ev.currentTarget).find('.secondary').removeClass('shown')
-        })
-
     }
 
     async executeQuickButton(ev) {
@@ -188,6 +183,8 @@ export default class TokenHotbar2 extends Application {
                 } else {
                     let result = actor.items.get(id)
                     if (result) {
+                        if(ev.button == 2) return result.sheet.render(true)
+
                         switch (result.type) {
                             case "meleeweapon":
                             case "rangeweapon":
@@ -196,10 +193,10 @@ export default class TokenHotbar2 extends Application {
                                 break
                             case "liturgy":
                             case "spell":
-                                actor.setupSpell(result.data, {}, tokenId).then(setupData => { actor.basicTest(setupData) });
+                                actor.setupSpell(result, {}, tokenId).then(setupData => { actor.basicTest(setupData) });
                                 break
                             case "skill":
-                                actor.setupSkill(result.data, {}, tokenId).then(setupData => { actor.basicTest(setupData) })
+                                actor.setupSkill(result, {}, tokenId).then(setupData => { actor.basicTest(setupData) })
                                 break
                             case "consumable":
                                 new Dialog({
@@ -229,8 +226,8 @@ export default class TokenHotbar2 extends Application {
         }
     }
 
-    subWidth(items, itemWidth) {
-        return `style="width:${Math.ceil(items.length / 3) * itemWidth}px"`
+    subWidth(items, itemWidth, defaultCount = 7) {
+        return `style="width:${Math.ceil(items.length / defaultCount) * 200}px"`
     }
 
     async getData() {
@@ -250,31 +247,47 @@ export default class TokenHotbar2 extends Application {
         const direction = game.settings.get("dsa5", "tokenhotbarLayout")
         const vertical = direction % 2
         const itemWidth = TokenHotbar2.defaultOptions.itemWidth
+        const spellTypes = ["liturgy", "spell"]
         if (actor) {
-
+            const moreSkills = []
             let moreSpells = []
-            effects = (await actor.actorEffects()).map(x => { return { name: x.data.label, id: x.id, icon: x.data.icon, cssClass: "effect", abbrev: `${x.data.label[0]} ${x.getFlag("dsa5","value") || ""}`, subfunction: "effect" } })
+            effects = (await actor.actorEffects()).map(x => { return { name: x.label, id: x.id, icon: x.icon, cssClass: "effect", abbrev: `${x.label[0]} ${x.getFlag("dsa5","value") || ""}`, subfunction: "effect" } })
             if (game.combat) {
-                items.attacks.push({
-                    name: game.i18n.localize("attackWeaponless"),
-                    id: "attackWeaponless",
-                    icon: "systems/dsa5/icons/categories/attack_weaponless.webp"
-                })
-
+                const combatskills = actor.items.filter(x => x.type == "combatskill").map(x => Actordsa5._calculateCombatSkillValues(x.toObject(), actor.system))
+                const brawl = combatskills.find(x => x.name == game.i18n.localize('LocalizedIDs.wrestle'))
+                if(brawl) {
+                    items.attacks.push({
+                        name: game.i18n.localize("attackWeaponless"),
+                        id: "attackWeaponless",
+                        icon: "systems/dsa5/icons/categories/attack_weaponless.webp",
+                        attack: brawl.system.attack.value,
+                        damage: "1d6"
+                    })
+                }
+                
                 const attacktypes = ["meleeweapon", "rangeweapon"]
-                const traitTypes = ["meleeAttack", "rangeAttack"]
-                const spellTypes = ["liturgy", "spell"]
+                const traitTypes = ["meleeAttack", "rangeAttack"]                
 
                 for (const x of actor.items) {
-                    if ((attacktypes.includes(x.type) && x.data.data.worn.value == true) || (x.type == "trait" && traitTypes.includes(x.data.data.traitType.value))) {
-                        items.attacks.push({ name: x.name, id: x.id, icon: x.img, cssClass: "", abbrev: x.name[0] })
+                    if (x.type == "trait" && traitTypes.includes(x.system.traitType.value)) {
+                        const preparedItem = Actordsa5._parseDmg(x.toObject())
+                        items.attacks.push({ name: x.name, id: x.id, icon: x.img, cssClass: `weapon ${x.id}`, abbrev: x.name[0], attack: x.system.at.value, damage: preparedItem.damagedie, dadd: preparedItem.damageAdd})
+                    }
+                    else if (attacktypes.includes(x.type) && x.system.worn.value == true) {
+                        const preparedItem = x.type == "meleeweapon" ? Actordsa5._prepareMeleeWeapon(x.toObject(), combatskills, actor) : Actordsa5._prepareRangeWeapon(x.toObject(), [], combatskills, actor)
+                        items.attacks.push({ name: x.name, id: x.id, icon: x.img, cssClass: `weapon ${x.id}`, abbrev: x.name[0], attack: preparedItem.attack, damage: preparedItem.damagedie, dadd: preparedItem.damageAdd })
                     } else if (spellTypes.includes(x.type)) {
-                        if (x.data.data.effectFormula.value) items.spells.push({ name: x.name, id: x.id, icon: x.img, cssClass: "spell", abbrev: x.name[0] })
+                        if (x.system.effectFormula.value) items.spells.push({ name: x.name, id: x.id, icon: x.img, cssClass: "spell", abbrev: x.name[0] })
                         else moreSpells.push({ name: x.name, id: x.id, icon: x.img, cssClass: "spell", abbrev: x.name[0] })
                     } else if (["skill"].includes(x.type) && this.combatSkills.includes(x.name)) {
-                        items.default.push({ name: `${x.name} (${x.data.data.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill", abbrev: x.name[0] })
-                    } else if (x.type == "consumable") {
-                        consumables.push({ name: x.name, id: x.id, icon: x.img, cssClass: "consumable", abbrev: x.data.data.quantity.value })
+                        items.default.push({ name: `${x.name} (${x.system.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill", abbrev: x.name[0] })
+                    } 
+                    else if (["skill"].includes(x.type)){
+                        const elem = { name: `${x.name} (${x.system.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill",addClass: x.system.group.value, abbrev: x.name[0], tw: x.system.talentValue.value }
+                        moreSkills.push(elem)
+                    }
+                    else if (x.type == "consumable") {
+                        consumables.push({ name: x.name, id: x.id, icon: x.img, cssClass: "consumable", abbrev: x.system.quantity.value })
                     }
 
                     if (x.getFlag("dsa5", "onUseEffect")) {
@@ -286,16 +299,22 @@ export default class TokenHotbar2 extends Application {
                 let descendingSkills = []
                 for (const x of actor.items) {
                     if (["skill"].includes(x.type) && this.defaultSkills.includes(x.name)) {
-                        items.default.push({ name: `${x.name} (${x.data.data.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill", abbrev: x.name[0] })
-                    } else if (["skill"].includes(x.type) && !this.defaultSkills.includes(x.name) && x.data.data.talentValue.value > 0) {
-                        descendingSkills.push({ name: `${x.name} (${x.data.data.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill", abbrev: x.name[0], tw: x.data.data.talentValue.value })
+                        items.default.push({ name: `${x.name} (${x.system.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill", abbrev: x.name[0] })
+                    } else if (["skill"].includes(x.type)) {
+                        const elem = { name: `${x.name} (${x.system.talentValue.value})`, id: x.id, icon: x.img, cssClass: "skill",addClass: x.system.group.value, abbrev: x.name[0], tw: x.system.talentValue.value }
+                        if(x.system.talentValue.value > 0) descendingSkills.push(elem)
+
+                        moreSkills.push(elem)
+                    }else if (spellTypes.includes(x.type)) {
+                        if (x.system.effectFormula.value) items.spells.push({ name: x.name, id: x.id, icon: x.img, cssClass: "spell", abbrev: x.name[0] })
+                        else moreSpells.push({ name: x.name, id: x.id, icon: x.img, cssClass: "spell", abbrev: x.name[0] })
                     }
 
                     if (x.getFlag("dsa5", "onUseEffect")) {
                         onUsages.push({ name: x.name, id: x.id, icon: x.img, cssClass: "onUse", abbrev: x.name[0], subfunction: "onUse" })
                     }
                 }
-                items.skills.push(...descendingSkills.sort((a, b) => { return b.tw - a.tw }).slice(0, 10))
+                items.skills.push(...descendingSkills.sort((a, b) => { return b.tw - a.tw }).slice(0, 5))
             }
 
             onUse = onUsages.pop()
@@ -306,6 +325,10 @@ export default class TokenHotbar2 extends Application {
             if (items.spells.length > 0 && moreSpells.length > 0) {
                 items.spells[0].more = moreSpells.sort((a, b) => { return a.name.localeCompare(b.name) })
                 items.spells[0].subwidth = this.subWidth(moreSpells, itemWidth)
+            }
+            if (items.default.length > 0 && moreSkills.length > 0) {
+                items.default[0].more = moreSkills.sort((a, b) => { return a.addClass.localeCompare(b.addClass) || a.name.localeCompare(b.name) })
+                items.default[0].subwidth = this.subWidth(moreSkills, itemWidth, 20)
             }
 
             if (consumable) {

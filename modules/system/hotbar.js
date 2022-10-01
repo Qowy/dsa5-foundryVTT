@@ -1,19 +1,18 @@
 export default class DSA5Hotbar extends Hotbar {
     async _render(force = false, options = {}) {
         await super._render(force, options);
-        //$(this._element).append($('<div class="tokenQuickHot"></div>'))
         this.addContextColor()
     }
 
     async collapse() {
-        if ( this._collapsed ) return true
+        if (this._collapsed) return true
 
         $(this.element).addClass("collapsedHotbar")
         return super.collapse()
     }
 
     async expand() {
-        if ( !this._collapsed ) return true
+        if (!this._collapsed) return true
 
         $(this.element).removeClass("collapsedHotbar")
         return super.expand()
@@ -26,10 +25,10 @@ export default class DSA5Hotbar extends Hotbar {
         for (const macro of this.macros) {
             if (!macro.macro) continue
 
-            if (parry.test(macro.macro.data.name)) {
-                macroList.find(`[data-macro-id="${macro.macro.data._id}"]`).addClass("parry")
-            } else if (attack.test(macro.macro.data.name)) {
-                macroList.find(`[data-macro-id="${macro.macro.data._id}"]`).addClass("attack")
+            if (parry.test(macro.macro.name)) {
+                macroList.find(`[data-macro-id="${macro.macro.id}"]`).addClass("parry")
+            } else if (attack.test(macro.macro.name)) {
+                macroList.find(`[data-macro-id="${macro.macro.id}"]`).addClass("attack")
             }
         }
     }

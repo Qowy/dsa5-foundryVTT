@@ -20,34 +20,24 @@ export function svgAutoFit(elem, width = 320, height = 40) {
     }
 }
 
-export async function itemFromDrop(dragData, actorId) {
+export async function itemFromDrop(dragData, actorId, toObject = true) {
     let item
-    let typeClass
-    let selfTarget = dragData.actorId && dragData.actorId == actorId
-    if (dragData.uuid) {
-        item = await fromUuid(dragData.uuid)
-        if (dragData.amount) item.data.data.quantity.value = Number(dragData.amount)
-        typeClass = item.data.type
-    } else if (dragData.id && dragData.pack) {
-        item = await DSA5_Utility.findItembyIdAndPack(dragData.id, dragData.pack);
-        typeClass = item.data.type
-    } else if (dragData.id && dragData.type == "Actor") {
-        item = DSA5_Utility.findActorbyId(dragData.id);
-        typeClass = item.data.type
-    } else if (dragData.id) {
-        item = DSA5_Utility.findItembyId(dragData.id);
-        typeClass = item.data.type
-    } else {
-        item = dragData.data
-        typeClass = item.type
+    let selfTarget
+    if(dragData.type == "Actor"){
+        item = await Actor.implementation.fromDropData(dragData)
+        selfTarget = actorId === item.id
+    }else{
+        item = await Item.implementation.fromDropData(dragData)
+        selfTarget = actorId === item.parent?.uuid
+    }
+    let typeClass = item?.type
+    
+    if (toObject) {
+        item = item.toObject()
     }
 
-    //TODO might not need the creature filter here
-    // also might use ToObject(false)
-    if (typeof item.toObject === 'function' && typeClass != 'creature') {
-        item = item.toObject(true)
-    }
-
+    if(dragData.amount) item.system.quantity.value = Number(dragData.amount)
+    
     return { item, typeClass, selfTarget }
 }
 

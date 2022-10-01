@@ -20,7 +20,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
 
     get template() {
         if (this.merchantSheetActivated()) {
-            switch (getProperty(this.actor.data.data, "merchant.merchantType")) {
+            switch (getProperty(this.actor.system, "merchant.merchantType")) {
                 case "merchant":
                     return "systems/dsa5/templates/actors/merchant/merchant-limited.html";
                 case "loot":
@@ -36,16 +36,16 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     merchantSheetActivated() {
-        return this.showLimited() || (this.playerViewEnabled() && ["merchant", "loot", "epic"].includes(getProperty(this.actor.data.data, "merchant.merchantType")))
+        return this.showLimited() || (this.playerViewEnabled() && ["merchant", "loot", "epic"].includes(getProperty(this.actor.system, "merchant.merchantType")))
     }
 
     async allowMerchant(ids, allow) {
-        let curPermissions = duplicate(this.actor.data.permission)
+        let curPermissions = duplicate(this.actor.ownership)
         const newPerm = allow ? 1 : 0
         for (const id of ids) {
             curPermissions[id] = newPerm
         }
-        await this.actor.update({ permission: curPermissions }, { diff: false, recursive: false, noHook: true })
+        await this.actor.update({ ownership: curPermissions }, { diff: false, recursive: false, noHook: true })
     }
 
     activateListeners(html) {
@@ -66,7 +66,8 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         html.find('.item-tradeLock').click(ev => this.toggleTradeLock(ev))
         html.find('.randomGoods').click(ev => this.randomGoods(ev))
         html.find(".clearInventory").click(ev => this.clearInventory(ev))
-        html.find('.removeOtherTradeFriend').click(ev => this.removeOtherTradeFriend())
+        html.find('.removeOtherTradeFriend').click(() => this.removeOtherTradeFriend())
+        html.find('.choseTradefriend').click(() => this.choseTradefriend())
         html.find('.setCustomPrice').click(ev => $(ev.currentTarget).addClass("edit"))
         html.find('.customPriceTag').change(async ev => this.setCustomPrice(ev))
             .blur(ev => $(ev.currentTarget).closest('.setCustomPrice').removeClass("edit"))
@@ -82,23 +83,22 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         html.find('.item-external-edit').click(ev => {
             ev.preventDefault()
             let itemId = this._getItemId(ev);
-            const item = this.getTradeFriend().items.find(i => i.data._id == itemId)
+            const item = this.getTradeFriend().items.get(itemId)
             item.sheet.render(true);
         });
         html.find('.changeAmountAllItems').mousedown(ev => this.changeAmountAllItems(ev))
 
-        if (this.showLimited()) {
-            let ims = html.find('.content .item')
-            ims.each((i, li) => li.setAttribute("draggable", false))
-            ims.on('dragstart', null)
-        }
         html.find('.gearSearch').prop("disabled", false)
+    }
+
+    _canDragStart(selector) {
+        return !this.merchantSheetActivated() && this.isEditable;
     }
 
     async toggleTradeLock(ev) {
         const itemId = this._getItemId(ev);
         let item = this.actor.items.get(itemId)
-        this.actor.updateEmbeddedDocuments("Item", [{ _id: item.id, "data.tradeLocked": !item.data.data.tradeLocked }]);
+        this.actor.updateEmbeddedDocuments("Item", [{ _id: item.id, "system.tradeLocked": !item.system.tradeLocked }]);
     }
 
     async setCustomPrice(ev) {
@@ -114,6 +114,10 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         this.render(true)
     }
 
+    async choseTradefriend(){
+        (await SelectTradefriendDialog.getDialog(this)).render(true)
+    }
+
     async lockTradeSection(ev) {
         const updates = []
         const rule = this.filterRule(ev)
@@ -121,9 +125,9 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         for (let item of this.actor.items) {
             if (rule(item)) {
                 let upd = item.toObject()
-                if (newValue === undefined) newValue = !upd.data.tradeLocked
+                if (newValue === undefined) newValue = !upd.system.tradeLocked
 
-                upd.data.tradeLocked = newValue
+                upd.system.tradeLocked = newValue
                 updates.push(upd)
             }
         }
@@ -133,7 +137,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     filterRule(ev) {
         const filter = ev.currentTarget.dataset.type
         if (DSA5.equipmentTypes[filter]) {
-            return (item) => { return item.type == "equipment" && item.data.data.equipmentType.value == filter }
+            return (item) => { return item.type == "equipment" && item.system.equipmentType.value == filter }
         } else {
             return (item) => { return item.type == filter && DSA5.equipmentCategories.includes(item.type) }
         }
@@ -145,7 +149,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         for (let item of this.actor.items) {
             if (rule(item)) {
                 let upd = item.toObject()
-                RuleChaos.increment(ev, upd, "data.quantity.value", 0)
+                RuleChaos.increment(ev, upd, "system.quantity.value", 0)
                 updates.push(upd)
             }
         }
@@ -153,7 +157,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     playerViewEnabled() {
-        return getProperty(this.actor.data.data, "merchant.playerView")
+        return getProperty(this.actor.system, "merchant.playerView")
     }
 
     async buyItem(ev) {
@@ -186,21 +190,21 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     static transferTokenData(tokenData) {
-        let id = { actor: tokenData.data._id }
+        let id = { actor: tokenData.id }
         if (tokenData.token)
-            id["token"] = tokenData.token.data._id
+            id["token"] = tokenData.token.id
 
         return id
     }
 
     static async finishTransaction(source, target, price, itemId, buy, amount) {
         let item = source.items.get(itemId).toObject()
-        amount = Math.min(Number(item.data.quantity.value), amount)
-        if (Number(item.data.quantity.value) > 0) {
+        amount = Math.min(Number(item.system.quantity.value), amount)
+        if (Number(item.system.quantity.value) > 0) {
             const noNeedToPay = this.noNeedToPay(target, source, price)
             const hasPaid = noNeedToPay || DSA5Payment.payMoney(target, price, true)
             if (hasPaid) {
-                if (getProperty(item, "data.worn.value")) item.data.worn.value = false
+                if (getProperty(item, "system.worn.value")) item.system.worn.value = false
 
                 if (buy) {
                     await this.updateTargetTransaction(target, item, amount, source, price)
@@ -217,12 +221,12 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     static isTemporaryToken(target) {
-        return getProperty(target, "data.data.merchant.merchantType") == "loot" && getProperty(target, "data.data.merchant.temporary")
+        return getProperty(target.system, "merchant.merchantType") == "loot" && getProperty(target.system, "merchant.temporary")
     }
 
     static async selfDestruction(target) {
         if (this.isTemporaryToken(target)) {
-            const hasItemsLeft = target.items.some(x => DSA5.equipmentCategories.includes(x.type) || (x.type == "money" && x.data.data.quantity.value > 0))
+            const hasItemsLeft = target.items.some(x => DSA5.equipmentCategories.includes(x.type) || (x.type == "money" && x.system.quantity.value > 0))
             if (!hasItemsLeft) {
                 game.socket.emit("system.dsa5", {
                     type: "hideDeletedSheet",
@@ -244,7 +248,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
 
     static async transferNotification(item, source, target, buy, price, amount, noNeedToPay) {
         const notify = game.settings.get("dsa5", "merchantNotification")
-        if (notify == 0 || getProperty(item, "data.equipmentType.value") == "service") return
+        if (notify == 0 || getProperty(item, "system.equipmentType.value") == "service") return
 
         const notif = "MERCHANT." + (buy ? "buy" : "sell") + (noNeedToPay ? "Loot" : "") + "Notification"
         const template = game.i18n.format(notif, { item: item.name, source: source.name, target: target.name, amount, price, buy })
@@ -254,13 +258,13 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     static noNeedToPay(target, source, price) {
-        return price == 0 || getProperty(target.data.data, "merchant.merchantType") == "loot" || getProperty(source.data.data, "merchant.merchantType") == "loot"
+        return price == 0 || getProperty(target.system, "merchant.merchantType") == "loot" || getProperty(source.system, "merchant.merchantType") == "loot"
     }
 
     static async updateSourceTransaction(source, target, sourceItem, price, itemId, amount) {
         let item = duplicate(sourceItem)
-        if (Number(item.data.quantity.value) > amount || item.type == "money") {
-            item.data.quantity.value = Number(item.data.quantity.value) - amount
+        if (Number(item.system.quantity.value) > amount || item.type == "money") {
+            item.system.quantity.value = Number(item.system.quantity.value) - amount
             await source.updateEmbeddedDocuments("Item", [item])
         } else {
             await source.deleteEmbeddedDocuments("Item", [itemId])
@@ -270,13 +274,13 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
 
     static async updateTargetTransaction(target, sourceItem, amount, source, price) {
         let item = duplicate(sourceItem)
-        const isService = getProperty(item, "data.equipmentType.value") == "service"
+        const isService = getProperty(item, "system.equipmentType.value") == "service"
         if (isService) {
             const msg = game.i18n.format("MERCHANT.buyNotification", { item: item.name, amount, source: target.name, target: source.name, price })
             ChatMessage.create(DSA5_Utility.chatDataSetup(msg));
         } else {
-            let res = target.data.items.find(i => Itemdsa5.areEquals(item, i));
-            item.data.quantity.value = amount
+            let res = target.items.find(i => Itemdsa5.areEquals(item, i));
+            item.system.quantity.value = amount
             if (!res) {
                 await target.createEmbeddedDocuments("Item", [item]);
             } else {
@@ -311,7 +315,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     async _render(force = false, options = {}) {
-        if (!game.user.isGM && getProperty(this.actor.data.data, "merchant.merchantType") == "loot" && getProperty(this.actor.data.data, "merchant.locked")) {
+        if (!game.user.isGM && getProperty(this.actor.system, "merchant.merchantType") == "loot" && getProperty(this.actor.system, "merchant.locked")) {
             AudioHelper.play({ src: "sounds/lock.wav", loop: false }, false);
             return
         }
@@ -331,7 +335,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     _togglePlayerview(ev) {
-        this.actor.update({ "data.merchant.playerView": !getProperty(this.actor.data.data, "merchant.playerView") })
+        this.actor.update({ "system.merchant.playerView": !getProperty(this.actor.system, "merchant.playerView") })
     }
 
     async randomGoods(ev) {
@@ -398,7 +402,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         for (let cat of categories) {
             const randomItems = (await itemLibrary.getRandomItems(cat.name, cat.number)).map(x => {
                 const elem = x.toObject()
-                elem.data.quantity.value = cat.count
+                elem.system.quantity.value = cat.count
                 return elem
             })
 
@@ -407,9 +411,9 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
 
         let seen = {}
         items = items.filter(function(x) {
-            let domain = getProperty(x, "data.effect")
+            let domain = getProperty(x, "system.effect")
             domain = typeof domain === 'object' && domain !== null ? getProperty(domain, "attributes") || "" : ""
-            const price = Number(getProperty(x, "data.price.value")) || 0
+            const price = Number(getProperty(x, "system.price.value")) || 0
             if (domain != "" || price > 10000) return false
 
             let seeName = `${x.type}_${x.name}`
@@ -424,14 +428,14 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     async removeAllGoods(actor, ev) {
         let text = $(ev.currentTarget).text()
         $(ev.currentTarget).html(' <i class="fa fa-spin fa-spinner"></i>')
-        let ids = actor.items.filter(x => DSA5.equipmentCategories.includes(x.type) && !getProperty(x, "data.data.worn.value")).map(x => x.id)
+        let ids = actor.items.filter(x => DSA5.equipmentCategories.includes(x.type) && !getProperty(x, "worn.value")).map(x => x.id)
         await actor.deleteEmbeddedDocuments("Item", ids);
         $(ev.currentTarget).text(text)
     }
 
     async getData(options) {
         const data = await super.getData(options);
-        data["merchantType"] = getProperty(this.actor.data.data, "merchant.merchantType") || "none"
+        data["merchantType"] = getProperty(this.actor.system, "merchant.merchantType") || "none"
         data["merchantTypes"] = {
             none: game.i18n.localize("MERCHANT.typeNone"),
             merchant: game.i18n.localize("MERCHANT.typeMerchant"),
@@ -441,8 +445,8 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
         data["invName"] = data["merchantTypes"][data["merchantType"]]
         data["players"] = game.users.filter(x => !x.isGM).map(x => {
             x.allowedMerchant = this.actor.testUserPermission(x, "LIMITED", false)
-            x.buyingFactor = getProperty(this.actor.data.data, `merchant.factors.buyingFactor.${x.id}`)
-            x.sellingFactor = getProperty(this.actor.data.data, `merchant.factors.sellingFactor.${x.id}`)
+            x.buyingFactor = getProperty(this.actor.system, `merchant.factors.buyingFactor.${x.id}`)
+            x.sellingFactor = getProperty(this.actor.system, `merchant.factors.sellingFactor.${x.id}`)
             return x
         })
 
@@ -470,7 +474,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
 
     filterWornEquipment(data) {
         for (const [key, value] of Object.entries(data.actor.inventory)) {
-            value.items = value.items.filter(x => !getProperty(x, "data.worn.value"))
+            value.items = value.items.filter(x => !getProperty(x, "system.worn.value"))
         }
     }
 
@@ -479,7 +483,7 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
             for (const [key, value] of Object.entries(data.actor.inventory)) {
                 for (const item of value.items) {
                     item.defaultPrice = this.getItemPrice(item)
-                    item.calculatedPrice = Number(parseFloat(`${item.defaultPrice * (getProperty(this.actor.data.data, "merchant.sellingFactor") || 1)}`).toFixed(2)) * (getProperty(this.actor.data.data, `merchant.factors.sellingFactor.${game.user.id}`) || 1)
+                    item.calculatedPrice = Number(parseFloat(`${item.defaultPrice * (getProperty(this.actor.system, "merchant.sellingFactor") || 1)}`).toFixed(2)) * (getProperty(this.actor.system, `merchant.factors.sellingFactor.${game.user.id}`) || 1)
                     item.priceTag = ` / ${item.calculatedPrice}`
                 }
             }
@@ -502,14 +506,14 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
     }
 
     getItemPrice(item) {
-        return Number(getProperty(item, "flags.dsa5.customPriceTag")) || (Number(item.data.price.value) * (item.type == "consumable" ? (Number(item.data.QL) || 0) : 1))
+        return Number(getProperty(item, "flags.dsa5.customPriceTag")) || (Number(item.system.price.value) * (item.type == "consumable" ? (Number(item.system.QL) || 0) : 1))
     }
 
     prepareTradeFriend(data) {
         let friend = this.getTradeFriend()
         if (friend) {
             let tradeData = friend.prepareItems({ details: [] })
-            let factor = getProperty(this.actor.data.data, "merchant.merchantType") == "loot" ? 1 : (getProperty(this.actor.data.data, "merchant.buyingFactor") || 1) * (getProperty(this.actor.data.data, `merchant.factors.buyingFactor.${game.user.id}`) || 1)
+            let factor = getProperty(this.actor.system, "merchant.merchantType") == "loot" ? 1 : (getProperty(this.actor.system, "merchant.buyingFactor") || 1) * (getProperty(this.actor.system, `merchant.factors.buyingFactor.${game.user.id}`) || 1)
             let inventory = this.prepareSellPrices(tradeData.inventory, factor)
             if (inventory["misc"].items.length == 0) inventory["misc"].show = false
 
@@ -549,5 +553,36 @@ export const MerchantSheetMixin = (superclass) => class extends superclass {
             }
         }
         return inventory
+    }
+}
+
+class SelectTradefriendDialog extends Dialog{
+    static get defaultOptions() {
+        const options = super.defaultOptions;
+        mergeObject(options, {
+        });
+        return options;
+    }
+
+    static async getDialog(actor){
+        const users = await game.dsa5.apps.gameMasterMenu.getTrackedHeros()
+        const dialog = new SelectTradefriendDialog({
+            title: game.i18n.localize("DIALOG.setTargetToUser"),
+            content: await renderTemplate('systems/dsa5/templates/dialog/selectTradeFriend.html', { users }),
+            default: "yes",
+            buttons: {},
+        })
+        dialog.actor = actor
+        return dialog
+    }
+
+    activateListeners(html){
+        super.activateListeners(html)
+        html.find('.combatant').click(ev => this.setTargetToUser(ev))
+    }
+
+    setTargetToUser(ev){
+        this.actor.setTradeFriend({_id: ev.currentTarget.dataset.id})
+        this.close()
     }
 }

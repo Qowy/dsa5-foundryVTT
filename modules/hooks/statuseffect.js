@@ -1,69 +1,87 @@
 import DPS from "../system/derepositioningsystem.js";
-import actor from "./actor.js";
 
 export default function() {
     Token.prototype.drawEffects = async function() {
-        this.hud.effects.removeChildren().forEach(c => c.destroy());
-        const tokenEffects = this.data.effects;
+        this.effects.removeChildren().forEach(c => c.destroy());
+        this.effects.bg = this.effects.addChild(new PIXI.Graphics());
+        this.effects.overlay = null;
+
+        const tokenEffects = this.document.effects;
         const actorEffects = this.actor ? await this.actor.actorEffects() : []
 
         let overlay = {
-            src: this.data.overlayEffect,
+            src: this.document.overlayEffect,
             tint: null
         };
 
         if (tokenEffects.length || actorEffects.length) {
             const promises = [];
-            let w = Math.round(canvas.dimensions.size / 2 / 5) * 2;
-            let bg = this.hud.effects.addChild(new PIXI.Graphics()).beginFill(0x000000, 0.40).lineStyle(1.0, 0x000000);
-            let i = 0;
 
             for (let f of actorEffects) {
-                if (!f.data.icon) continue;
-                const tint = f.data.tint ? colorStringToHex(f.data.tint) : null;
+                if (!f.icon) continue;
+                const tint = Color.from(f.tint ?? null);
                 if (f.getFlag("core", "overlay")) {
-                    overlay = { src: f.data.icon, tint };
+                    overlay = { src: f.icon, tint };
                     continue;
                 }
-                promises.push(this._drawEffect(f.data.icon, i, bg, w, tint, getProperty(f, "data.flags.dsa5.value")));
-                i++;
+                promises.push(this._drawEffect(f.icon, tint, getProperty(f, "flags.dsa5.value"))) //, bg, w, i, getProperty(f, "flags.dsa5.value")));
             }
-
             for (let f of tokenEffects) {
-                promises.push(this._drawEffect(f, i, bg, w, null));
-                i++;
+                promises.push(this._drawEffect(f, null))//, bg, w, i));
             }
             await Promise.all(promises);
         }
-        return this._drawOverlay(overlay)
+        
+        this.effects.overlay = await this._drawOverlay(overlay.src, overlay.tint);
+        this._refreshEffects();
     }
 
-    Token.prototype._drawEffect = async function(src, i, bg, w, tint, value) {
-        let tex = await loadTexture(src);
-        let icon = this.hud.effects.addChild(new PIXI.Sprite(tex));
+    Token.prototype._refreshEffects = function() {
+        let i = 0;
+        const w = Math.round(canvas.dimensions.size / 2 / 5) * 2;
+        const rows = Math.floor(this.document.height * 5);
+        const bg = this.effects.bg.clear().beginFill(0x000000, 0.40).lineStyle(1.0, 0x000000);
+        for ( const effect of this.effects.children ) {
+          if ( effect === bg ) continue;
+          if ( effect.isCounter) continue
+    
+          // Overlay effect
+          if ( effect === this.effects.overlay ) {
+            const size = Math.min(this.w * 0.6, this.h * 0.6);
+            effect.width = effect.height = size;
+            effect.position.set((this.w - size) / 2, (this.h - size) / 2);
+          }
+    
+          // Status effect
+          else {
+            effect.width = effect.height = w;
+            effect.x = Math.floor(i / rows) * w;
+            effect.y = (i % rows) * w;
+            bg.drawRoundedRect(effect.x + 1, effect.y + 1, w - 2, w - 2, 2);
 
-        icon.width = icon.height = w;
-        icon.x = Math.floor(i / 5) * w;
-        icon.y = (i % 5) * w;
-
-        if (tint) icon.tint = tint;
-
-        try {
-            bg.drawRoundedRect(icon.x + 1, icon.y + 1, w - 2, w - 2, 2);
-        } catch {}
-
-        this.hud.effects.addChild(icon);
-
-        if (value) {
-            let textEffect = game.dsa5.config.effectTextStyle
-            let color = await game.settings.get("dsa5", "statusEffectCounterColor")
-            textEffect._fill = /^#[0-9A-F]+$/.test(color) ? color : "#000000"
-            let text = this.hud.effects.addChild(new PreciseText(value, textEffect))
-            text.x = icon.x;
-            text.y = icon.y;
-            this.hud.effects.addChild(text);
+            if(effect.counter > 1 && !effect.counterDrawn){
+                let textEffect = game.dsa5.config.effectTextStyle
+                let color = game.settings.get("dsa5", "statusEffectCounterColor")
+                textEffect._fill = /^#[0-9A-F]+$/.test(color) ? color : "#000000"
+                let text = this.effects.addChild(new PreciseText(effect.counter, textEffect))
+                text.x = effect.x;
+                text.y = effect.y;
+                text.isCounter = true
+                effect.counterDrawn = true
+            }
+            i++;
+          }
         }
-    }
+      }
+
+    Token.prototype._drawEffect = async function(src, tint, value) {
+        if ( !src ) return;
+        let tex = await loadTexture(src, {fallback: "icons/svg/hazard.svg"});
+        let icon = new PIXI.Sprite(tex);
+        if ( tint ) icon.tint = tint;
+        icon.counter = value
+        return this.effects.addChild(icon);
+     }
 
     TokenHUD.prototype._onToggleEffect = function(event, { overlay = false } = {}) {
         event.preventDefault();
@@ -82,7 +100,7 @@ export default function() {
 
     Token.prototype.incrementCondition = async function(effect, { active, overlay = false } = {}) {
         const existing = this.actor.effects.find(e => e.getFlag("core", "statusId") === effect.id);
-        if (!existing || Number.isNumeric(getProperty(existing, "data.flags.dsa5.value")))
+        if (!existing || Number.isNumeric(getProperty(existing, "flags.dsa5.value")))
             await this.actor.addCondition(effect.id, 1, false, false)
         else if (existing)
             await this.actor.removeCondition(effect.id, 1, false)
@@ -101,7 +119,7 @@ export default function() {
     const isMerchant = (actor) => {
         if (!actor) return false
 
-        return ["merchant", "loot"].includes(getProperty(actor.data.data, "merchant.merchantType"))
+        return ["merchant", "loot"].includes(getProperty(actor.system, "merchant.merchantType"))
     }
 
     Token.prototype._onClickLeft2 = function(event) {
@@ -112,61 +130,4 @@ export default function() {
 
         defaulTokenLeftClick2.call(this, event)
     }
-
-    const handleItemEffect = (actor, change) => {
-        return null
-
-        //TODO item effects
-        let update = null
-        const data = change.key.split(".")
-        let type = data.shift()
-        type = type.replace("@", "").toLowerCase()
-        const newKey = data.join(".")
-        const valueData = change.value.split(" ")
-        const value = valueData.pop()
-        const itemName = valueData.join(" ")
-            //Todo mode
-            //const effect = { mode: 2, key: newKey, value }
-            //console.log({ effect, data, newKey, value, itemName, type })
-        for (let item of actor.items.filter(x => x.type == type && (x.name == itemName || x.id == itemName))) {
-            //dummyEffect.apply(actor, effect)
-
-            const overrides = foundry.utils.flattenObject(item.itemOverrides || {});
-            overrides[newKey] = (overrides[newKey] || "") + value
-
-            item.itemOverrides = foundry.utils.expandObject(overrides);
-        }
-
-        return true
-    }
-
-    const applyCustomEffect = (elem, change) => {
-        let current = getProperty(elem.data, change.key) || null
-        if (current == null && /^data\.(vulnerabilities|resistances)/.test(change.key)) {
-            current = []
-            setProperty(elem.data, change.key, current)
-        }
-        const ct = getType(current)
-        let update = null
-        switch (ct) {
-            case "Array":
-                let newElems = []
-                const source = change.effect.data.label
-                for (let elem of `${change.value}`.split(/[;,]+/)) {
-                    let vals = elem.split(" ")
-                    const value = vals.pop()
-                    const target = vals.join(" ")
-                    newElems.push({ source, value, target })
-                }
-                update = current.concat(newElems)
-        }
-        if (update !== null) setProperty(elem.data, change.key, update)
-        return update
-    }
-
-    Hooks.on("applyActiveEffect", (actor, change) => {
-        //if (/^@/.test(change.key)) return handleItemEffect(actor, change)
-
-        return applyCustomEffect(actor, change)
-    })
 }

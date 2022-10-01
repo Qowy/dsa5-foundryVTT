@@ -1,5 +1,19 @@
 import DSA5_Utility from "../system/utility-dsa5.js";
 
+const modifierTypes = {
+    "": "Modifier",
+    "defenseMalus": "MODS.defenseMalus",
+    "FW": "MODS.FW",
+    "KaPCost": "CHAR.AsPCost",
+    "AsPCost": "CHAR.KapCost",
+    "FP": "MODS.FP",
+    "QL": "MODS.QS",
+    "dmg": "MODS.damage",
+    "damageBonus": "MODS.damage",
+    "armorPen": "MODS.armorPen",
+    "TPM": "MODS.partChecks"
+}
+
 export default function() {
     Handlebars.registerHelper({
         //DSA concat conflict with v9 concat helper
@@ -18,6 +32,14 @@ export default function() {
         replaceConditions: DSA5_Utility.replaceConditions,
         floor: (a) => Math.floor(Number(a)),
         hasElem: (a, b) => a.includes(b),
+        situationalTooltip: (mod) => {
+            const key = game.i18n.localize(modifierTypes[mod.type] || "Modifier")
+            let res = `${mod.name}<br/>${key}: ${mod.value}`
+            if(mod.source){
+                res += `<br/>${game.i18n.localize('source')}: ${mod.source}`
+            }
+            return res
+        },
         grouped_each: (every, context, options) => {
             let out = "",
                 subcontext = [],
@@ -34,6 +56,6 @@ export default function() {
             }
             return out;
         },
-        plantify: (a) => { return game.i18n.localize(`PLANT.avLevels.${a || 0}`)}
+        plantify: (a) => { return game.i18n.localize(`PLANT.avLevels.${a || 0}`) }
     })
 }

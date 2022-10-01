@@ -5,26 +5,29 @@ import DSA5_Utility from "./utility-dsa5.js"
 export default class RequestRoll {
     static async requestGC(category, name, messageId, modifier = 0) {
         const { actor, tokenId } = DSA5ChatAutoCompletion._getActor()
+        if (!actor) return
 
-        if (actor) {
-            game.user.updateTokenTargets([])
-            let options = { modifier, cummulative: messageId }
-            switch (category) {
-                case "attribute":
-                    break
-                default:
-                    const skill = actor.items.find((i) => i.name == name && i.type == category)
-                    actor.setupSkill(skill.data, options, tokenId).then(async(setupData) => {
-                        let result = await actor.basicTest(setupData)
-                        await RequestRoll.editGroupCheckRoll(messageId, result, name, category)
-                    })
-            }
+        game.user.updateTokenTargets([])
+        let options = { modifier, postFunction: { cummulative: messageId, functionName: "game.dsa5.apps.RequestRoll.autoEditGroupCheckRoll" } }
+        switch (category) {
+            case "attribute":
+                break
+            default:
+                const skill = actor.items.find((i) => i.name == name && i.type == category)
+                actor.setupSkill(skill, options, tokenId).then(async(setupData) => {
+                    let result = await actor.basicTest(setupData)
+                    await RequestRoll.editGroupCheckRoll(messageId, result, name, category)
+                })
         }
+    }
+
+    static async autoEditGroupCheckRoll(postFunction, result, source) {
+        await RequestRoll.editGroupCheckRoll(postFunction.cummulative, result, source.name, source.type)
     }
 
     static async editGroupCheckRoll(messageId, result, target, type) {
         let message = await game.messages.get(messageId)
-        const data = message.data.flags
+        const data = message.flags
         const isCrit = result.result.successLevel > 1
         const critMultiplier = isCrit ? 2 : 1
         data.botched = data.botched || result.result.successLevel < -1
@@ -69,7 +72,7 @@ export default class RequestRoll {
                     break
                 default:
                     let skill = actor.items.find((i) => i.name == name && i.type == category)
-                    actor.setupSkill(skill.data, options, tokenId).then((setupData) => {
+                    actor.setupSkill(skill, options, tokenId).then((setupData) => {
                         actor.basicTest(setupData)
                     })
             }
@@ -111,8 +114,6 @@ export default class RequestRoll {
         ChatMessage.create(DSA5_Utility.chatDataSetup(msg));
     }
 
-
-
     static async showGCMessage(target, modifier = 0, options = {}) {
         const type = DSA5ChatAutoCompletion.skills.find(x => x.name == target).type
         const data = {
@@ -152,7 +153,7 @@ export default class RequestRoll {
                     label: game.i18n.localize("ok"),
                     callback: async(dlg) => {
                         const message = game.messages.get(messageID)
-                        const data = message.data.flags
+                        const data = message.flags
                         data.rollOptions.push({
                             type: "skill",
                             modifier: dlg.find('[name="modifier"]').val(),
@@ -175,7 +176,7 @@ export default class RequestRoll {
         const elem = $(ev.currentTarget)
         const index = Number(ev.currentTarget.dataset.index)
         const message = game.messages.get(elem.parents(".message").attr("data-message-id"))
-        const data = message.data.flags
+        const data = message.flags
         data.results.splice(index, 1)
         RequestRoll.rerenderGC(message, data)
     }
@@ -183,7 +184,7 @@ export default class RequestRoll {
     static removeSkillFromGC(ev) {
         const elem = $(ev.currentTarget)
         const message = game.messages.get(elem.parents(".message").attr("data-message-id"))
-        const data = message.data.flags
+        const data = message.flags
         data.rollOptions = data.rollOptions.filter(x => !(x.type == ev.currentTarget.dataset.type && x.target == ev.currentTarget.dataset.name))
         data.results = data.results.filter(x => !(x.type == ev.currentTarget.dataset.type && x.target == ev.currentTarget.dataset.name))
         RequestRoll.rerenderGC(message, data)
@@ -193,7 +194,7 @@ export default class RequestRoll {
         const elem = $(ev.currentTarget)
         const index = Number(ev.currentTarget.dataset.index)
         const message = game.messages.get(elem.parents(".message").attr("data-message-id"))
-        const data = message.data.flags
+        const data = message.flags
         if (index) {
             data.results[index].qs = Number(elem.val())
         } else if (ev.currentTarget.dataset.name) {
@@ -203,6 +204,47 @@ export default class RequestRoll {
             data[ev.currentTarget.dataset.field] = Number(elem.val())
         }
         RequestRoll.rerenderGC(message, data)
+    }
+
+    static async updateInformationRoll(postFunction, result, source) {
+        const availableQs = result.result.qualityStep || 0
+        if (availableQs > 0) {
+            const item = await fromUuid(postFunction.uuid)
+            const msg = [`<p><b>${item.name}</b></p>`]
+            for (let i = 1; i <= availableQs; i++) {
+                const qs = `qs${i}`
+                if (item.system[qs]) {
+                    msg.push(`<p>${item.system[qs]}</p>`)
+                }
+            }
+            const chatData = DSA5_Utility.chatDataSetup(msg.join(""))
+            if (postFunction.recipients.length) chatData["whisper"] = postFunction.recipients
+
+            ChatMessage.create(chatData);
+        }
+    }
+
+    static async informationRequestRoll(ev) {
+        const modifier = ev.currentTarget.dataset.mod
+        const uuid = ev.currentTarget.dataset.uuid
+        const { actor, tokenId } = DSA5ChatAutoCompletion._getActor()
+        if (!actor) return
+
+        const recipientsTarget = game.settings.get("dsa5", "informationDistribution")
+        let recipients = []
+        if (recipientsTarget == 1) {
+            recipients = game.users.filter((user) => user.isGM).map((x) => x.id)
+            recipients.push(game.user.id)
+        } else if (recipientsTarget == 2) {
+            recipients = game.users.filter((user) => user.isGM).map((x) => x.id)
+        }
+        const optns = { modifier, postFunction: { functionName: "game.dsa5.apps.RequestRoll.updateInformationRoll", uuid, recipients } }
+        let skill = actor.items.find((i) => i.name == ev.currentTarget.dataset.skill && i.type == "skill")
+        actor.setupSkill(skill, optns, tokenId).then(async(setupData) => {
+            setupData.testData.opposable = false
+            const res = await actor.basicTest(setupData)
+            this.updateInformationRoll(optns.postFunction, res)
+        })
     }
 
     static chatListeners(html) {
@@ -223,5 +265,6 @@ export default class RequestRoll {
         html.on("click", ".removeGC", (ev) => RequestRoll.removeGCEntry(ev))
         html.on('click', '.removeSkillFromGC', ev => RequestRoll.removeSkillFromGC(ev))
         html.on('click', '.addSkillToGC', ev => RequestRoll.addSkillToGC(ev))
+        html.on('click', '.informationRequestRoll', ev => RequestRoll.informationRequestRoll(ev))
     }
 }

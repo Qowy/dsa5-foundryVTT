@@ -23,7 +23,7 @@ async function callMacro(packName, name, actor, item, qs, args = {}) {
         }
 
         if (documents.length) {
-            const body = `(async () => {${documents[0].data.command}})()`;
+            const body = `(async () => {${documents[0].command}})()`;
             const fn = Function("actor", "item", "qs", "automatedAnimation", "args", body);
             try {
                 args.result = result;
@@ -51,7 +51,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
     }
 
     static async onEffectRemove(actor, effect) {
-        const onRemoveMacro = getProperty(effect, "data.flags.dsa5.onRemove");
+        const onRemoveMacro = getProperty(effect, "flags.dsa5.onRemove");
         if (onRemoveMacro) {
             if (!game.user.can("MACRO_SCRIPT")) {
                 ui.notifications.warn(`You are not allowed to use JavaScript macros.`);
@@ -87,7 +87,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                     "meleeweapon",
                     "rangeweapon",
                 ].includes(itemType) ||
-                (["specialability"].includes(itemType) && getProperty(this.object, "parent.data.data.category.value") == "Combat"),
+                (["specialability"].includes(itemType) && getProperty(this.object, "parent.system.category.value") == "Combat"),
             hasDamageTransformation: ["ammunition"].includes(itemType),
         };
         if (effectConfigs.hasDamageTransformation) {
@@ -102,7 +102,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
             .find(".tabs")
             .append(`<a class="item" data-tab="advanced"><i class="fas fa-shield-alt"></i>${game.i18n.localize("advanced")}</a>`);
         let template = await renderTemplate("systems/dsa5/templates/status/advanced_effect.html", {
-            effect: this.object.data,
+            effect: this.object,
             advancedFunctions,
             effectConfigs,
             config,
@@ -110,7 +110,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
         elem.find('.tab[data-tab="effects"]').after($(template));
 
         elem.find(".advancedSelector").change((ev) => {
-            let effect = this.object.data;
+            let effect = this.object;
             effect.flags.dsa5.advancedFunction = $(ev.currentTarget).val();
 
             renderTemplate("systems/dsa5/templates/status/advanced_functions.html", { effect, config }).then((template) => {
@@ -123,8 +123,8 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
 
     async _onSubmit(event, { updateData = null, preventClose = false, preventRender = false } = {}) {
         const inActor =
-            getProperty(this.object, "data.document.parent.documentName") != "Actor" &&
-            getProperty(this.object, "data.document.parent.parent");
+            getProperty(this.object, "system.document.parent.documentName") != "Actor" &&
+            getProperty(this.object, "system.document.parent.parent");
         if (inActor) ui.notifications.error(game.i18n.localize("DSAError.nestedEffectNotSupported"));
         return await super._onSubmit(event, { updateData, preventClose, preventRender });
     }
@@ -180,7 +180,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                         mod: Math.round(Roll.safeEval(`${mod}`.replace(/q(l|s)/i, qs).replace("step", specStep))) || 0,
                         effect: ef,
                         target: actor,
-                        token: actor.token ? actor.token.data._id : undefined
+                        token: actor.token ? actor.token.id : undefined
                     });
                 } else {
                     effectApplied = true;
@@ -242,7 +242,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
         const actor = DSA5_Utility.getSpeaker(target)
         if (actor) {
             const skill = actor.items.find((x) => x.type == "skill" && x.name == data.skill);
-            actor.setupSkill(skill.data, { modifier: data.mod }, data.token).then(async(setupData) => {
+            actor.setupSkill(skill, { modifier: data.mod }, data.token).then(async(setupData) => {
                 setupData.testData.opposable = false;
                 const res = await actor.basicTest(setupData);
                 const availableQs = res.result.qualityStep || 0;
@@ -258,9 +258,9 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
 
     static async applyEffect(id, mode, targets, options = {}) {
         const message = game.messages.get(id);
-        const source = message.data.flags.data.preData.source;
-        const testData = message.data.flags.data.postData;
-        const speaker = message.data.speaker;
+        const source = message.flags.data.preData.source;
+        const testData = message.flags.data.postData;
+        const speaker = message.speaker;
 
         if (["poison", "disease"].includes(source.type)) {
             testData.qualityStep = testData.successLevel > 0 ? 2 : 1;
@@ -268,9 +268,9 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
 
         let attacker = DSA5_Utility.getSpeaker(speaker);
 
-        if (!attacker) attacker = game.actors.get(getProperty(message.data.flags, "data.preData.extra.actor.id"));
+        if (!attacker) attacker = game.actors.get(getProperty(message.flags, "data.preData.extra.actor.id"));
         let sourceActor = attacker;
-        let effects = await this._parseEffectDuration(source, testData, message.data.flags.data.preData, attacker);
+        let effects = await this._parseEffectDuration(source, testData, message.flags.data.preData, attacker);
         if (options.effectIds) effects = effects.filter(x => options.effectIds.includes(x._id))
         let actors = [];
         if (mode == "self") {
@@ -309,7 +309,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                     mode,
                     id,
                     actors: actors.map((x) => {
-                        return { token: x.token ? x.token.data._id : undefined, actor: x.data._id, scene: canvas.scene.id };
+                        return { token: x.token ? x.token.id : undefined, actor: x.id, scene: canvas.scene.id };
                     }),
                 },
             });
@@ -343,7 +343,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
             effects.push(...specEffects);
         }
 
-        let duration = getProperty(source, "data.duration.value") || "";
+        let duration = getProperty(source, "system.duration.value") || "";
         duration = duration.replace(" x ", " * ").replace(game.i18n.localize("CHARAbbrev.QS"), testData.qualityStep);
         try {
             const regexes = [
@@ -351,6 +351,9 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                 { regEx: new RegExp(game.i18n.localize("DSAREGEX.minutes"), "gi"), seconds: 60 },
                 { regEx: new RegExp(game.i18n.localize("DSAREGEX.hours"), "gi"), seconds: 3600 },
                 { regEx: new RegExp(game.i18n.localize("DSAREGEX.days"), "gi"), seconds: 3600 * 24 },
+                { regEx: new RegExp(game.i18n.localize("DSAREGEXmaintain.weeks"), "gi"), seconds: 3600 * 24 * 7 },
+                { regEx: new RegExp(game.i18n.localize("DSAREGEXmaintain.months"), "gi"), seconds: 3600 * 24 * 30 },
+                { regEx: new RegExp(game.i18n.localize("DSAREGEXmaintain.years"), "gi"), seconds: 3600 * 24 * 350 }
             ];
             for (const reg of regexes) {
                 if (reg.regEx.test(duration)) {
@@ -397,136 +400,136 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
         const miracle = `${game.i18n.localize('LocalizedIDs.miracle')}`
 
         let optns = [
-            { name: game.i18n.localize("protection"), val: "data.totalArmor", mode: 2, ph: "1" },
-            { name: game.i18n.localize("liturgyArmor"), val: "data.liturgyArmor", mode: 2, ph: "1" },
+            { name: game.i18n.localize("protection"), val: "system.totalArmor", mode: 2, ph: "1" },
+            { name: game.i18n.localize("liturgyArmor"), val: "system.liturgyArmor", mode: 2, ph: "1" },
             {
                 name: `${game.i18n.localize("resistanceModifier")} (${game.i18n.localize("condition")})`,
-                val: "data.resistances.effects",
+                val: "system.resistances.effects",
                 mode: 0,
                 ph: "inpain 1",
             },
-            { name: game.i18n.localize("spellArmor"), val: "data.spellArmor", mode: 2, ph: "1" },
-            { name: game.i18n.localize("carrycapacity"), val: "data.carryModifier", mode: 2, ph: "1" },
+            { name: game.i18n.localize("spellArmor"), val: "system.spellArmor", mode: 2, ph: "1" },
+            { name: game.i18n.localize("carrycapacity"), val: "system.carryModifier", mode: 2, ph: "1" },
             {
                 name: `${closeCombat} - ${game.i18n.localize("CHARAbbrev.AT")}`,
-                val: "data.meleeStats.attack",
+                val: "system.meleeStats.attack",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${closeCombat} - ${game.i18n.localize("CHARAbbrev.PA")}`,
-                val: "data.meleeStats.parry",
+                val: "system.meleeStats.parry",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${miracle} - ${game.i18n.localize("CHARAbbrev.AT")}`,
-                val: "data.miracle.attack",
+                val: "system.miracle.attack",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${miracle} - ${game.i18n.localize("CHARAbbrev.PA")}`,
-                val: "data.miracle.parry",
+                val: "system.miracle.parry",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${closeCombat} - ${game.i18n.localize("CHARAbbrev.damage")}`,
-                val: "data.meleeStats.damage",
+                val: "system.meleeStats.damage",
                 mode: 2,
                 ph: "1d6",
             },
             {
                 name: `${closeCombat} - ${game.i18n.localize("MODS.defenseMalus")}`,
-                val: "data.meleeStats.defenseMalus",
+                val: "system.meleeStats.defenseMalus",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: game.i18n.localize("MODS.creatureBonus"),
-                val: "data.creatureBonus",
+                val: "system.creatureBonus",
                 mode: 0,
                 ph: `${game.i18n.localize("CONJURATION.elemental")} 1`,
             },
             {
                 name: `${rangeCombat} - ${game.i18n.localize("CHARAbbrev.AT")}`,
-                val: "data.rangeStats.attack",
+                val: "system.rangeStats.attack",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${rangeCombat} - ${game.i18n.localize("CHARAbbrev.damage")}`,
-                val: "data.rangeStats.damage",
+                val: "system.rangeStats.damage",
                 mode: 2,
                 ph: "1d6",
             },
             {
                 name: `${rangeCombat} - ${game.i18n.localize("MODS.defenseMalus")}`,
-                val: "data.rangeStats.defenseMalus",
+                val: "system.rangeStats.defenseMalus",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${game.i18n.localize("spell")} - ${game.i18n.localize("CHARAbbrev.damage")}`,
-                val: "data.spellStats.damage",
+                val: "system.spellStats.damage",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${game.i18n.localize("liturgy")} - ${game.i18n.localize("CHARAbbrev.damage")}`,
-                val: "data.liturgyStats.damage",
+                val: "system.liturgyStats.damage",
                 mode: 2,
                 ph: "1",
             },
-            { name: KaPCost, val: "data.kapModifier", mode: 2, ph: "1" },
-            { name: AsPCost, val: "data.aspModifier", mode: 2, ph: "1" },
-            { name: `${skill} - ${FW}`, val: "data.skillModifiers.FW", mode: 0, ph: demo },
-            { name: `${skill} - ${FP}`, val: "data.skillModifiers.FP", mode: 0, ph: demo },
-            { name: `${skill} - ${stepValue}`, val: "data.skillModifiers.step", mode: 0, ph: demo },
-            { name: `${skill} - ${QS}`, val: "data.skillModifiers.QL", mode: 0, ph: demo },
-            { name: `${skill} - ${partChecks}`, val: "data.skillModifiers.TPM", mode: 0, ph: demo },
+            { name: KaPCost, val: "system.kapModifier", mode: 2, ph: "1" },
+            { name: AsPCost, val: "system.aspModifier", mode: 2, ph: "1" },
+            { name: `${skill} - ${FW}`, val: "system.skillModifiers.FW", mode: 0, ph: demo },
+            { name: `${skill} - ${FP}`, val: "system.skillModifiers.FP", mode: 0, ph: demo },
+            { name: `${skill} - ${stepValue}`, val: "system.skillModifiers.step", mode: 0, ph: demo },
+            { name: `${skill} - ${QS}`, val: "system.skillModifiers.QL", mode: 0, ph: demo },
+            { name: `${skill} - ${partChecks}`, val: "system.skillModifiers.TPM", mode: 0, ph: demo },
             {
                 name: `${game.i18n.localize("vulnerability")} - ${game.i18n.localize("combatskill")}`,
-                val: "data.vulnerabilities.combatskill",
+                val: "system.vulnerabilities.combatskill",
                 mode: 0,
                 ph: democs,
             },
 
-            { name: `${skill} - ${game.i18n.localize("MODS.global")}`, val: "data.skillModifiers.global", mode: 0, ph: "1" },
+            { name: `${skill} - ${game.i18n.localize("MODS.global")}`, val: "system.skillModifiers.global", mode: 0, ph: "1" },
             {
                 name: `${combatReg} - ${game.i18n.localize("wounds")}`,
-                val: "data.repeatingEffects.startOfRound.wounds",
+                val: "system.repeatingEffects.startOfRound.wounds",
                 mode: 0,
                 ph: "1d6",
             },
             {
                 name: `${combatReg} - ${game.i18n.localize("astralenergy")}`,
-                val: "data.repeatingEffects.startOfRound.astralenergy",
+                val: "system.repeatingEffects.startOfRound.astralenergy",
                 mode: 0,
                 ph: "1d6",
             },
             {
                 name: `${combatReg} - ${game.i18n.localize("karmaenergy")}`,
-                val: "data.repeatingEffects.startOfRound.karmaenergy",
+                val: "system.repeatingEffects.startOfRound.karmaenergy",
                 mode: 0,
                 ph: "1d6",
             },
             {
                 name: `${regenerate} - ${game.i18n.localize("wounds")}`,
-                val: "data.status.regeneration.LePgearmodifier",
+                val: "system.status.regeneration.LePgearmodifier",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${regenerate} - ${game.i18n.localize("astralenergy")}`,
-                val: "data.status.regeneration.AsPgearmodifier",
+                val: "system.status.regeneration.AsPgearmodifier",
                 mode: 2,
                 ph: "1",
             },
             {
                 name: `${regenerate} - ${game.i18n.localize("karmaenergy")}`,
-                val: "data.status.regeneration.KaPgearmodifier",
+                val: "system.status.regeneration.KaPgearmodifier",
                 mode: 2,
                 ph: "1",
             },

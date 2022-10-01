@@ -14,6 +14,7 @@ import * as migrateWorld from '../system/migrator.js'
 import * as initScene from './scene.js'
 import * as initKeybindings from './keybindings.js'
 import * as rollExtensions from './../system/dsarolls.js'
+import {setEnrichers} from './texteditor.js'
 import { connectHook } from "./itemDrop.js";
 
 import ActorSheetdsa5Character from "./../actor/character-sheet.js";
@@ -33,6 +34,9 @@ import CharacterMerchantSheetDSA5 from "../actor/character-merchant-sheet.js";
 import DPS from "../system/derepositioningsystem.js";
 import DSAIniTracker from "../system/dsa-ini-tracker.js";
 import { SelectUserDialog } from "../dialog/addTargetDialog.js";
+import DSAJournalSheet from "../journal/dsa_journal_sheet.js";
+import DSATour from "../tours/dsa_tour.js";
+import DSA5 from "../system/config-dsa5.js";
 
 
 export default function() {
@@ -93,7 +97,10 @@ Hooks.once("init", () => {
         "systems/dsa5/templates/actors/merchant/merchant-commerce.html",
         "systems/dsa5/templates/items/item-header.html",
         "systems/dsa5/templates/items/item-effects.html",
-        "systems/dsa5/templates/status/advanced_functions.html"
+        "systems/dsa5/templates/items/item-aoe.html",
+        "systems/dsa5/templates/items/traditionArtifact.html",
+        "systems/dsa5/templates/status/advanced_functions.html",
+        "systems/dsa5/templates/actors/parts/information.html"
     ]);
 
     Actors.unregisterSheet("core", ActorSheet);
@@ -104,10 +111,12 @@ Hooks.once("init", () => {
     Actors.registerSheet("dsa5", CreatureMerchantSheetDSA5, { types: ["creature"] })
     Actors.registerSheet("dsa5", CharacterMerchantSheetDSA5, { types: ["character"] })
     DocumentSheetConfig.registerSheet(ActiveEffect, "dsa5", DSAActiveEffectConfig, { makeDefault: true })
+    Journal.registerSheet("dsa5", DSAJournalSheet, {makeDefault: true})
 
     ItemSheetdsa5.setupSheets()
     configuration.default()
     DPS.initDoorMinDistance()
+    mergeObject(CONFIG.JournalEntry.noteIcons, DSA5.noteIcons)
 })
 
 Hooks.once('ready', () => {
@@ -115,13 +124,21 @@ Hooks.once('ready', () => {
     TokenHotbar2.registerTokenHotbar()
     connectHook()
     DSAIniTracker.connectHooks()
-
+    const hook = (dat) => {
+        if(dat.tabName == "settings") {
+            DSATour.travelAgency()
+            Hooks.off('changeSidebarTab', hook)
+        }
+    }
+    Hooks.on('changeSidebarTab', hook)
+    
+    setEnrichers()
 })
 
 Hooks.once('setup', () => {
     if (!["de", "en"].includes(game.i18n.lang)) {
         console.warn(`DSA5 - ${game.i18n.lang} is not a supported language. Falling back to default language.`)
-        game.settings.set("core", "language", "de")
+        game.settings.set("core", "language", "de").then(()=> foundry.utils.debouncedReload())
     }
     const forceLanguage = game.settings.get("dsa5", "forceLanguage")
     if (["de", "en"].includes(forceLanguage) && game.i18n.lang != forceLanguage) {
@@ -152,7 +169,10 @@ const showWrongLanguageDialog = (forceLanguage) => {
             ok: {
                 icon: '<i class="fa fa-check"></i>',
                 label: game.i18n.localize("ok"),
-                callback: () => { game.settings.set("core", "language", forceLanguage) }
+                callback: async() => { 
+                    await game.settings.set("core", "language", forceLanguage) 
+                    foundry.utils.debouncedReload()
+                }
             },
             cancel: {
                 icon: '<i class="fas fa-times"></i>',
@@ -183,21 +203,19 @@ function setupKnownEquipmentModifiers() {
 }
 
 class DaylightIlluminationShader extends AdaptiveIlluminationShader {
-    static fragmentShader = `
-    precision mediump float;
-    uniform float time;
-    uniform float intensity;
-    uniform float alpha;
-    uniform float ratio;
-    uniform vec3 colorDim;
-    uniform vec3 colorBright;
-    varying vec2 vUvs;
-    const float MU_TWOPI = 0.1591549431;
+    static fragmentShader =  `
+    ${this.SHADER_HEADER}
+    ${this.PERCEIVED_BRIGHTNESS}
 
     void main() {
-      float dist = distance(vUvs, vec2(0.5)) * 2.0;
-      vec3 color = mix(colorDim, colorBright, smoothstep(clamp(0.8 - ratio, 0.0, 1.0), clamp(1.2 - ratio, 0.0, 1.0),1.0 - dist));
-      vec3 fcolor = mix(color, max(color, smoothstep( 0.1, 1.0, color ) * 10.0), 1.0 - dist) * alpha;
-      gl_FragColor = vec4(fcolor, 1.0);
-    }`;
+        ${this.FRAGMENT_BEGIN}
+        ${this.TRANSITION}
+       
+        // Darkness
+        framebufferColor = max(framebufferColor, colorBackground);        
+        // Elevation
+        finalColor = mix(finalColor, max(finalColor, smoothstep( 0.1, 1.0, finalColor ) * 10.0), 1.0) * depth;        
+        // Final
+        gl_FragColor = vec4(finalColor, 1.0);
+      }`;
 }

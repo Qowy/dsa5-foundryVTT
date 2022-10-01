@@ -4,10 +4,12 @@ import SpecialabilityRulesDSA5 from "./specialability-rules-dsa5.js"
 import DSA5_Utility from "./utility-dsa5.js"
 
 export default class RuleChaos {
+    static regex2h = /\(2H/;
+
     static multipleDefenseValue(actor, item) {
         let multipleDefense = -3
 
-        if ((item.type == "dodge" || getProperty(item, "data.combatskill.value") == game.i18n.localize("LocalizedIDs.wrestle")) && SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.masterfulDodge")))
+        if ((item.type == "dodge" || getProperty(item, "system.combatskill.value") == game.i18n.localize("LocalizedIDs.wrestle")) && SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.masterfulDodge")))
             multipleDefense = -2
         else if (SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.mightyMasterfulParry")))
             multipleDefense = -1
@@ -43,6 +45,24 @@ export default class RuleChaos {
         }
     }
 
+    //todo this should not be necessary
+    static ensureNumber(source){
+        source.system.AsPCost.value = Number(source.system.AsPCost.value) || source.system.AsPCost.value
+    }
+
+    static isYieldedTwohanded(item){
+        const twoHanded = this.regex2h.test(item.name)
+        const wrongGrip = item.system.worn.wrongGrip
+        return (twoHanded && !wrongGrip) || (!twoHanded && wrongGrip)
+    }
+
+    static obfuscateDropData(item, obfuscations){
+        if(obfuscations) {
+            for(let section of obfuscations) 
+                mergeObject(item, { system: {obfuscation: { [section]: true} } } )
+        }
+    }
+
     static _buildDuration(rounds) {
         const update = {
             duration: {
@@ -68,7 +88,7 @@ export default class RuleChaos {
         if (!actor) return
 
         const skill = actor.items.find(i => i.name == game.i18n.localize('LocalizedIDs.selfControl') && i.type == "skill");
-        actor.setupSkill(skill.data, {}, data.token).then(async(setupData) => {
+        actor.setupSkill(skill, {}, data.token).then(async(setupData) => {
             const result = await actor.basicTest(setupData)
 
             if (result.result.successLevel < 2) {
@@ -107,7 +127,7 @@ export default class RuleChaos {
     static magicalImprovement(actor, creationData) {
         for (let item of actor.items) {
             if (["ritual", "spell"].includes(item.type)) {
-                item.data.talentValue.value += 4
+                item.system.talentValue.value += 4
             }
         }
     }

@@ -3,16 +3,15 @@ import ADVANCEDFILTERS from "./itemlibrary_advanced_filters.js"
 
 //TODO merge existing index with advanced details
 //TODO create index with getIndex(fields)
+//TODO check if we can use the uuid right from the start
 
 class SearchDocument {
     constructor(item, pack = {}) {
-        let filterType = item.documentName || getProperty(item, "type")
+        let filterType = item.documentName || item.type
         switch (item.documentName) {
+            case 'Actor':
             case 'Item':
                 filterType = item.type
-                break
-            case 'Actor':
-                filterType = item.data.type
                 break
         }
         let data = ""
@@ -21,13 +20,13 @@ class SearchDocument {
                 case "creature":
                 case "npc":
                 case "character":
-                    data = getProperty(item, "data.description.value")
+                    data = getProperty(item, "system.description.value")
                     break
                 case 'JournalEntry':
-                    data = getProperty(item, "data.content")
+                    data = getProperty(item, "system.content")
                     break
                 default:
-                    data = getProperty(item, "data.data.description.value")
+                    data = getProperty(item, "description.value")
             }
         }
 
@@ -37,8 +36,8 @@ class SearchDocument {
             data: $("<div>").html(data).text(),
             id: item.id || item._id,
             visible: item.visible ? item.visible : true,
-            compendium: item.compendium ? item.compendium.metadata.package : (pack.package || ""),
-            pack: item.pack || (pack.package ? `${pack.package}.${pack.name}` : undefined),
+            compendium: item.compendium ? item.compendium.metadata.packageName : (pack.packageName || ""),
+            pack: item.pack || (pack.packageName ? pack.id : undefined),
             img: item.img
         }
     }
@@ -51,9 +50,9 @@ class SearchDocument {
                 case "character":
                 case "creature":
                 case "npc":
-                    return `JournalEntry.${this.id}`
-                case "JournalEntry":
                     return `Actor.${this.id}`
+                case "JournalEntry":
+                    return `JournalEntry.${this.id}`
                 default:
                     return `Item.${this.id}`
             }
@@ -101,7 +100,7 @@ class AdvancedSearchDocument extends SearchDocument {
         for (let attr of attrs) {
             this[attr.attr] = attr.attr.split(".").reduce((prev, cure) => {
                 return prev[cure] === undefined ? {} : prev[cure]
-            }, item.data.data)
+            }, item.system)
         }
     }
 }
@@ -354,7 +353,7 @@ export default class DSA5ItemLibrary extends Application {
     async executeAdvancedFilter(search, index, selectSearches, textSearches, booleanSearches, rangeSearches = []) {
         const selFnct = (x) => {
             for (let k of selectSearches) {
-                if (x[k[0]] != k[1]) return false
+                if (x[2] ? (x[k[0]] != k[1]) : (x[k[0]].indexOf(k[1]) == -1)) return false
             }
             return true
         }
@@ -407,7 +406,7 @@ export default class DSA5ItemLibrary extends Application {
         for (let elem of dataFilters.find('select')) {
             let val = $(elem).val()
             if (val != "") {
-                sels.push([$(elem).attr("name"), val])
+                sels.push([$(elem).attr("name"), val, elem.dataset.notstrict != "true"])
             }
         }
         for (let elem of dataFilters.find('input[type="text"]:not(.manualFilter)')) {
@@ -482,8 +481,7 @@ export default class DSA5ItemLibrary extends Application {
                     let item = index.find($(li).attr("data-item-id"))
                     event.originalEvent.dataTransfer.setData("text/plain", JSON.stringify({
                         type: itemType,
-                        pack: item.compendium ? item.document.pack : "",
-                        id: item.id
+                        uuid: item.uuid
                     }))
                 })
             })
@@ -532,27 +530,35 @@ export default class DSA5ItemLibrary extends Application {
     async _createIndex(category, document, worldStuff) {
         if (this[`${category}Build`]) return
 
+        SceneNavigation.displayProgressBar({label: game.i18n.format('Library.loading', {item: ""}), pct: 0})
         const target = $(this._element).find(`*[data-tab="${category}"]`)
         this.showLoading(target, category)
         const packs = game.packs.filter(p => p.documentName == document && (game.user.isGM || !p.private))
-        let promise
-        let metadata = packs.map(p => p.metadata)
+        const percentage = 100 / (packs.length + 1)
+        let count = percentage
+        const actorFields = ["name", "system.type", "system.description.value", "img"]
+        let func
         if (document == "Actor") {
-            const fields = ["name", "data.type", "data.description.value", "img"]
-            promise = packs.map(p => p.getIndex({ fields }))
+            func = (p) => { return p.getIndex({actorFields})}
         } else if (document == "JournalEntry") {
-            promise = packs.map(p => p.getDocuments())
+            func = (p) => { return p.getDocuments()}
         } else {
-            promise = packs.map(p => p.getDocuments({ type: { $in: game.system.documentTypes.Item } }))
+            func = (p) => {return p.getDocuments({type: { $in: game.system.documentTypes.Item }})}
         }
+        const items = this.indexWorldItems(worldStuff, category)
+        SceneNavigation.displayProgressBar({label: game.i18n.format('Library.loading', {item: "world items"}), pct: Math.round(percentage)})
+
+        let promise = packs.map(async(p) => {
+            const index = await func(p)
+            count += percentage
+            SceneNavigation.displayProgressBar({label: game.i18n.format('Library.loading', {item: `${p.metadata.label} (${p.metadata.id})`}), pct: Math.round(count)})
+            items.push(...index.map(x => new SearchDocument(x, p.metadata)))
+        })
 
         return Promise.all(promise).then(indexes => {
-            const items = this.indexWorldItems(worldStuff, category)
-            indexes.forEach((index, idx) => {
-                items.push(...index.map(x => new SearchDocument(x, metadata[idx])))
-            })
             this[`${category}Index`].add(items)
             this[`${category}Build`] = true
+            SceneNavigation.displayProgressBar({label: game.i18n.format('Library.loading', {item: ""}), pct: 100})
             this.hideLoading(target, category)
         })
     }
@@ -594,7 +600,7 @@ export default class DSA5ItemLibrary extends Application {
 
             const { index, itemType } = this.selectIndex(category)
             const worldStuff = itemType == "Item" ? game.items : game.actors
-            let items = worldStuff.filter(x => x.visible && x.data.type == subcategory).map(x => new AdvancedSearchDocument(x, subcategory))
+            let items = worldStuff.filter(x => x.visible && x.type == subcategory).map(x => new AdvancedSearchDocument(x, subcategory))
 
             const result = index.search(subcategory, { field: ["itemType"] })
             const pids = {}

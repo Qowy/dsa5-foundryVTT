@@ -177,7 +177,7 @@ DSA5.statusEffects = [{
         icon: "icons/svg/bones.svg",
         description: "CONDITIONDESCRIPTION.bloodrush",
         changes: [
-            { key: "data.skillModifiers.step", mode: 0, value: "Kraftakt 2;Feat of Strength 2" }
+            { key: "system.skillModifiers.step", mode: 0, value: "Kraftakt 2;Feat of Strength 2" }
         ],
         flags: {
             dsa5: {
@@ -294,7 +294,7 @@ DSA5.statusEffects = [{
         icon: "icons/svg/terror.svg",
         description: "CONDITIONDESCRIPTION.minorSpirits",
         changes: [
-            { key: "data.skillModifiers.global", mode: 0, value: -1 }
+            { key: "system.skillModifiers.global", mode: 0, value: -1 }
         ],
         duration: { seconds: 600 },
         flags: {
@@ -355,21 +355,6 @@ DSA5.weaponStabilities = {
     "Whips": 4
 }
 
-DSA5.localizedCompendiums = {
-    de: [
-        "dsa5.skills",
-        "dsa5.combatskills",
-        "dsa5.species",
-        "dsa5.patzer"
-    ],
-    en: [
-        "dsa5.skillsen",
-        "dsa5.combatskillsen",
-        "dsa5.speciesen",
-        "dsa5.botch"
-    ]
-}
-
 DSA5.combatSkillSubCategories = {
     "0": "COMBATSKILLCATEGORY.0",
     "1": "COMBATSKILLCATEGORY.1",
@@ -377,7 +362,6 @@ DSA5.combatSkillSubCategories = {
     "3": "COMBATSKILLCATEGORY.3",
     "4": "COMBATSKILLCATEGORY.4"
 }
-
 
 DSA5.effectTextStyle = CONFIG.canvasTextStyle.clone();
 DSA5.effectTextStyle.fontSize = "30";
@@ -391,7 +375,7 @@ DSA5.defaultWeapon = {
     name: "default",
     type: "meleeweapon",
     effects: [],
-    data: {
+    system: {
         type: "meleeweapon",
         crit: 1,
         botch: 20,
@@ -458,6 +442,14 @@ DSA5.systemTables = [
     { name: "Spell", attrs: "", roll: "botch-roll", pack: { de: "dsa5.patzer", en: "dsa5.botch" }, setting: { module: "", key: "" } },
 ]
 
+DSA5.morePackages = {
+    packages: {},
+    names: {
+        de: [],
+        en: []
+    }
+ }
+
 DSA5.narrowSpaceModifiers = {
     "weaponshort": {
         "attack": 0,
@@ -491,11 +483,39 @@ DSA5.narrowSpaceModifiers = {
     }
 }
 
+DSA5.traditionArtifacts = {
+    "Animistenwaffe": 15,
+    "Bannschwert": 15,
+    "Druidendolch": 15,
+    "Druidensichel": 12,
+    "Zauberkleidung": 15,
+    "Magierkugel": 12,
+    "Zauberinstrument": 15,
+    "Narrenkappe": 15,
+    "Hexenkessel": 15,
+    "Krallenkette": 12,
+    "Lebensring": 12,
+    "Alchimistenschale": 15,
+    "Scharlatanische Zauberkugel": 15,
+    "Sippenchronik": 15,
+    "Schelmenspielzeug": 12,
+    "Zauberstecken": 0,
+    "Magierstab": 18,
+    "Trinkhorn": 0
+}
+
 DSA5.moneyNames = {
     "D": "Money-D",
     "S": "Money-S",
     "H": "Money-H",
     "K": "Money-K"
+}
+
+DSA5.areaTargetTypes = {
+    cube: "rect",
+    line: "ray",
+    sphere: "circle",
+    cone: "cone"
 }
 
 DSA5.rangeMods = {
@@ -874,6 +894,15 @@ DSA5.StFs = {
     "B": "B",
     "C": "C",
     "D": "D"
+}
+
+DSA5.noteIcons = {
+    "Griffin Shield": "systems/dsa5/icons/thirdparty/griffinshield.svg",
+    "At Sea": "systems/dsa5/icons/thirdparty/at-sea.svg",
+    "Medieval Gate": "systems/dsa5/icons/thirdparty/medieval-gate.svg",
+    "Position Marker": "systems/dsa5/icons/thirdparty/position-marker.svg",
+    "River": "systems/dsa5/icons/thirdparty/river.svg",
+    "Trail": "systems/dsa5/icons/thirdparty/trail.svg",
 }
 
 CONFIG.time.roundTime = 5

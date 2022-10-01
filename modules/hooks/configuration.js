@@ -45,6 +45,19 @@ export default function() {
             "4": "+4",
         }
     });
+    game.settings.register("dsa5", "informationDistribution", {
+        name: "DSASETTINGS.informationDistribution",
+        hint: "DSASETTINGS.informationDistributionHint",
+        scope: "world",
+        config: true,
+        default: "0",
+        type: String,
+        choices: {
+            0: game.i18n.localize('DSASETTINGS.information0'),
+            1: game.i18n.localize('DSASETTINGS.information1'),
+            2: game.i18n.localize('DSASETTINGS.information2')
+        }
+    });
     game.settings.register("dsa5", "enableItemDropToCanvas", {
         name: "DSASETTINGS.enableItemDropToCanvas",
         hint: "DSASETTINGS.enableItemDropToCanvasHint",
@@ -68,7 +81,7 @@ export default function() {
         hint: "migrationVersion",
         scope: "world",
         config: false,
-        default: 17,
+        default: 20,
         type: Number
     })
     game.settings.register("dsa5", "firstTimeStart", {
@@ -251,13 +264,27 @@ export default function() {
         hint: "DSASETTINGS.tokenhotbarLayoutHint",
         scope: "client",
         config: true,
-        default: "0",
+        default: 0,
         type: Number,
         choices: {
             0: game.i18n.localize('DSASETTINGS.tokenhotbarLayout0'),
             2: game.i18n.localize('DSASETTINGS.tokenhotbarLayout1'),
             1: game.i18n.localize('DSASETTINGS.tokenhotbarLayout2'),
             3: game.i18n.localize('DSASETTINGS.tokenhotbarLayout3')
+        }
+    });
+
+    game.settings.register("dsa5", "selfControlOnPain", {
+        name: "DSASETTINGS.selfControlOnPain",
+        hint: "DSASETTINGS.selfControlOnPainHint",
+        scope: "world",
+        config: true,
+        default: 1,
+        type: Number,
+        choices: {
+            0: game.i18n.localize('DSASETTINGS.selfControlOnPain0'),
+            1: game.i18n.localize('DSASETTINGS.selfControlOnPain1'),
+            2: game.i18n.localize('DSASETTINGS.selfControlOnPain2')
         }
     });
 
@@ -444,8 +471,10 @@ export default function() {
         type: String,
         choices: {
             "0": game.i18n.localize('no'),
-            "1": game.i18n.localize('yes'),
-            "2": game.i18n.localize('DSASETTINGS.rename'),
+            "1": game.i18n.localize('DSASETTINGS.yesNumbered'),
+            "2": game.i18n.localize('DSASETTINGS.renameNumbered'),
+            "3": game.i18n.localize('yes'),
+            "4": game.i18n.localize('DSASETTINGS.rename')
         }
     });
 

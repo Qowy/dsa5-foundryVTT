@@ -24,14 +24,14 @@ export default function() {
             let actor
             const reaction = html.find(".chat-button-target")
             if (reaction.length) {
-                actor = DialogReactDSA5.getTargetActor({ data: msg.message })
+                actor = DialogReactDSA5.getTargetActor(msg.message)
                 if (actor && actor.actor && !actor.actor.isOwner) reaction.remove()
             }
 
             const speaker = DSA5_Utility.getSpeaker(msg.message.speaker)
             if (speaker && !speaker.isOwner) {
                 html.find(".selfButton").remove()
-                html.find('.d20').attr('title', '')
+                html.find('.d20').data('tooltip', '')
             }
 
             const onlyTarget = html.find(".onlyTarget")
@@ -47,6 +47,8 @@ export default function() {
             html.find(".hideData").remove()
             const hiddenForMe = getProperty(msg.message, `flags.dsa5.userHidden.${game.user.id}`)
             if (hiddenForMe) { html.find(".payButton").remove() }
+        }else{
+            html.find(".chat-button-player").remove()
         }
         if (game.settings.get("dsa5", "expandChatModifierlist")) {
             html.find('.expand-mods i').toggleClass("fa-minus fa-plus")

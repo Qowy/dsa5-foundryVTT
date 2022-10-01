@@ -1,4 +1,5 @@
 import Actordsa5 from '../actor/actor-dsa5.js';
+import { conditionsMatcher } from '../hooks/texteditor.js';
 import DSA5 from './config-dsa5.js'
 
 export default class DSA5_Utility {
@@ -29,7 +30,7 @@ export default class DSA5_Utility {
 
         let result = []
         let items
-        await pack.getDocuments().then(content => items = content.filter(i => i.data.type == itemType));
+        await pack.getDocuments().then(content => items = content.filter(i => i.type == itemType));
         for (let i of items) {
             result.push(i.toObject())
         }
@@ -44,28 +45,41 @@ export default class DSA5_Utility {
     }
 
     static calcTokenSize(actorData, data) {
-        let tokenSize = game.dsa5.config.tokenSizeCategories[actorData.data.status.size.value]
+        let tokenSize = game.dsa5.config.tokenSizeCategories[actorData.system.status.size.value]
         if (tokenSize) {
             if (tokenSize < 1) {
-                data.scale = tokenSize;
-                data.width = data.height = 1;
+                mergeObject(data, {
+                    texture: {
+                        scaleX: tokenSize,
+                        scaleY: tokenSize
+                    },
+                    width: 1,
+                    height: 1
+                })
             } else {
                 const int = Math.floor(tokenSize);
-                data.width = data.height = int;
-                data.scale = Math.max(tokenSize / int, 0.25);
+                const scale = Math.max(tokenSize / int, 0.25)
+                mergeObject(data, {
+                    width: int,
+                    height: int,
+                    texture: {
+                        scaleX: scale,
+                        scaleY: scale
+                    }
+                })
             }
         }
     }
 
     static async allMoneyItems() {
         let items = (await this.getCompendiumEntries("dsa5.money", "money")).map(i => {
-            i.data.quantity.value = 0
+            i.system.quantity.value = 0
             return i
         });
 
         return items.filter(t => Object.values(DSA5.moneyNames)
                 .map(n => n.toLowerCase()).includes(t.name.toLowerCase()))
-            .sort((a, b) => (a.data.price.value > b.data.price.value) ? -1 : 1)
+            .sort((a, b) => (a.system.price.value > b.system.price.value) ? -1 : 1)
     }
 
     static async allSkillsList() {
@@ -73,7 +87,42 @@ export default class DSA5_Utility {
     }
 
     static async allCombatSkillsList(weapontype) {
-        return ((await this.allCombatSkills()).filter(x => x.data.weapontype.value == weapontype) || []).map(x => x.name).sort((a, b) => a.localeCompare(b));
+        return ((await this.allCombatSkills()).filter(x => x.system.weapontype.value == weapontype) || []).map(x => x.name).sort((a, b) => a.localeCompare(b));
+    }
+
+    static async callItemTransformationMacro(macroName, source, effect, args = {}) {
+        const parts = macroName.split(".")
+        const pack = game.packs.get(`${parts[0]}.${parts[1]}`);
+        if(!pack) {
+            console.warn(`Pack ${pack} not found`);
+            return {}
+        }
+
+        let documents = await pack.getDocuments({ name: parts[2] });
+        let result = {};
+        if (documents.length) {
+            const document = documents[0]
+            const body = `(async () => {${document.command}})()`;
+            const fn = Function("args", "source", "effect", body);
+            try {
+                args.result = result;
+                await fn.call(this, args, source, effect);
+            } catch (err) {
+                ui.notifications.error(`There was an error in your macro syntax. See the console (F12) for details`);
+                console.error(err);
+                result.error = true;
+            }
+        } else {
+            ui.notifications.error(game.i18n.format("DSAError.macroNotFound", { name: macroName }));
+        }
+        return result;
+    }
+
+    static isActiveGM(){
+        //Prevent double update with multiple GMs, still unsafe
+        const activeGM = game.users.find((u) => u.active && u.isGM);
+        
+        return activeGM && game.user.id == activeGM.id
     }
 
     static parseAbilityString(ability) {
@@ -106,25 +155,7 @@ export default class DSA5_Utility {
         return chatData;
     }
 
-    static findItembyId(id) {
-        return game.items.contents.find(x => x.id == id);
-    }
-
-    static findActorbyId(id) {
-        return game.actors.contents.find(x => x.id == id);
-    }
-
-    static async findItembyIdAndPack(id, packMan) {
-        const pack = game.packs.get(packMan)
-        let item
-        await pack.getDocuments().then(content => item = content.find(i => i.id == id));
-        return item
-    }
-
     static getSpeaker(speaker) {
-        /*if (!speaker.scene) {
-            console.trace()
-        }*/
         let actor = ChatMessage.getSpeakerActor(speaker)
         if (!actor && canvas.tokens) {
             let token = canvas.tokens.get(speaker.token)
@@ -144,20 +175,20 @@ export default class DSA5_Utility {
         if (group)
             return game.settings.get("dsa5", "groupschips").split("/").map(x => Number(x))[0] > 0
 
-        return actor.data.data.status.fatePoints.value > 0
+        return actor.system.status.fatePoints.value > 0
     }
 
     static _calculateAdvCost(currentAdvances, type, modifier = 1) {
         return DSA5.advancementCosts[type][Number(currentAdvances) + modifier]
     }
 
-    static async getFolderForType(documentType, parent = null, folderName = null, sort = 0, color = "") {
-        let folder = await game.folders.contents.find(x => x.name == folderName && x.type == documentType && x.data.parent == parent)
+    static async getFolderForType(documentType, parent = null, folderName = null, sort = 0, color = "", sorting = undefined) {
+        let folder = await game.folders.contents.find(x => x.name == folderName && x.type == documentType && x.folder?.id == parent)
         if (!folder) {
             folder = await Folder.create({
                 name: folderName,
                 type: documentType,
-                sorting: documentType == "JournalEntry" ? "a" : "m",
+                sorting: sorting || (documentType == "JournalEntry" ? "a" : "m"),
                 color,
                 sort,
                 parent
@@ -174,7 +205,7 @@ export default class DSA5_Utility {
         new ImagePopout(img, {
             title: hide ? (isOwner ? name : "-") : name,
             shareable: true,
-            uuid: uuid
+            uuid
         }).render(true)
     }
 
@@ -229,24 +260,6 @@ export default class DSA5_Utility {
         })
     }
 
-    static customEntityLinks(content) {
-        if (!content) return content
-        const regex = /@(Rq|Gc|Ch)\[[a-zA-zöüäÖÜÄ&; -]+ (-|\+)?\d+\]/g
-        const rolls = { "@Rq": "roll", "@Gc": "GC", "@Ch": "CH" }
-        const icons = { "@Rq": "dice", "@Gc": "dice", "@Ch": "user-shield" }
-        const titles = { "@Rq": "", "@Gc": `${game.i18n.localize("HELP.groupcheck")} `, "@Ch": "" }
-        const rqRegex = /^@(Rq|Gc|Ch)/
-        const modRegex = /(-|\+)?\d+/
-        const replaceRegex = /\[[a-zA-zöüäÖÜÄ&; -]+/
-        const replaceRegex2 = /[\[\]]/g
-        return content.replace(regex, function(str) {
-            const type = str.match(rqRegex)[0]
-            const mod = Number(str.match(modRegex)[0])
-            const skill = str.replace(mod, "").match(replaceRegex)[0].replace(replaceRegex2, "").trim()
-            return `<a class="roll-button request-${rolls[type]}" data-type="skill" data-modifier="${mod}" data-name="${skill}"><em class="fas fa-${icons[type]}"></em>${titles[type]}${skill} ${mod}</a>`
-        })
-    }
-
     static escapeRegex(input) {
         const source = typeof input === 'string' || input instanceof String ? input : '';
         return source.replace(/[-[/\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -254,22 +267,8 @@ export default class DSA5_Utility {
 
     static replaceConditions(content) {
         if (!content) return content
-        if (!DSA5.statusRegex) {
-            let effects = DSA5.statusEffects.map(x => game.i18n.localize(x.label).toLowerCase())
-            let keywords = ["status", "condition", "level", "levels"].map(x => game.i18n.localize(x)).join("|")
-            DSA5.statusRegex = {
-                effects: effects,
-                regex: new RegExp(`(${keywords}) (${effects.join('|')})`, 'gi')
-            }
-        }
 
-        return content.replace(DSA5.statusRegex.regex, function(str) {
-            let parts = str.split(" ")
-            let elem = parts.shift()
-            parts = parts.join(" ")
-            let cond = DSA5.statusEffects[DSA5.statusRegex.effects.indexOf(parts.toLowerCase())]
-            return `${elem} <a class="chatButton chat-condition" data-id="${cond.id}"><img src="${cond.icon}"/>${parts}</a>`
-        })
+        return content.replace(DSA5.statusRegex.regex, (str) => conditionsMatcher([str]))
     }
 
     static experienceDescription(experience) {
@@ -292,7 +291,7 @@ export default class DSA5_Utility {
             name: "Alrik",
             type: "npc",
             items: [],
-            data: {
+            system: {
                 status: { wounds: { value: 50 }, fatePoints: {} },
                 characteristics: {
                     mu: { initial: attrs[0] },

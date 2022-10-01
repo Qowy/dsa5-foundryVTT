@@ -14,6 +14,7 @@ import EquipmentDamage from "./equipment-damage.js"
 import EquipmentDamageDialog from "../dialog/dialog-equipmentdamage.js"
 import DSATables from "../tables/dsatables.js"
 import RequestRoll from "./request-roll.js"
+import { MeasuredTemplateDSA } from "./measuretemplate.js"
 
 export default class DiceDSA5 {
     static async setupDialog({ dialogOptions, testData, cardOptions }) {
@@ -82,6 +83,7 @@ export default class DiceDSA5 {
 
     static async getDefenseCount(testData) {
         if (game.combat) return await game.combat.getDefenseCount(testData.extra.speaker)
+        
         return 0
     }
 
@@ -102,12 +104,12 @@ export default class DiceDSA5 {
         let botch = 20
         let crit = 1
         if (testData.source.type == "meleeweapon") {
-            botch = Math.min(testData.extra.actor.data.meleeStats.botch, testData.source.data.botch)
-            crit = Math.max(testData.extra.actor.data.meleeStats.crit, testData.source.data.crit)
+            botch = Math.min(testData.extra.actor.system.meleeStats.botch, testData.source.system.botch)
+            crit = Math.max(testData.extra.actor.system.meleeStats.crit, testData.source.system.crit)
         }
         if (testData.source.type == "rangeweapon") {
-            botch = Math.min(testData.extra.actor.data.rangeStats.botch, testData.source.data.botch)
-            crit = Math.max(testData.extra.actor.data.rangeStats.crit, testData.source.data.crit)
+            botch = Math.min(testData.extra.actor.system.rangeStats.botch, testData.source.system.botch)
+            crit = Math.max(testData.extra.actor.system.rangeStats.crit, testData.source.system.crit)
         }
         if (/(\(|,)( )?i\)$/.test(testData.source.name)) {
             if (!SpecialabilityRulesDSA5.hasAbility(
@@ -219,9 +221,10 @@ export default class DiceDSA5 {
                 extra: {},
             }
 
-            let attrs = ["LeP"]
-            if (testData.extra.actor.isMage) attrs.push("AsP")
-            if (testData.extra.actor.isPriest) attrs.push("KaP")
+            const attrs = []
+            if (testData.regenerateLeP) attrs.push("LeP")
+            if (testData.extra.actor.system.isMage && testData.regenerateAsP) attrs.push("AsP")
+            if (testData.extra.actor.system.isPriest && testData.regenerateKaP) attrs.push("KaP")
             let index = 0
 
             const isSick = testData.extra.actor.effects.some((x) => getProperty(x, "flags.core.statusId") == "sick")
@@ -290,7 +293,7 @@ export default class DiceDSA5 {
         let roll = testData.roll || await new Roll("1d20").evaluate({ async: true })
         let result = await this._rollSingleD20(
             roll,
-            testData.source.data.max,
+            testData.source.system.max,
             testData.extra.statusId,
             this._situationalModifiers(testData),
             testData,
@@ -320,7 +323,7 @@ export default class DiceDSA5 {
         this._appendSituationalModifiers(testData, game.i18n.localize("Difficulty"), testData.testDifficulty)
         let result = await this._rollSingleD20(
             roll,
-            testData.source.data.value,
+            testData.source.system.value,
             testData.extra.characteristicId,
             this._situationalModifiers(testData),
             testData,
@@ -337,23 +340,23 @@ export default class DiceDSA5 {
         if (testData.source.type == "meleeweapon") {
             const skill = Actordsa5._calculateCombatSkillValues(
                 testData.extra.actor.items.find(
-                    (x) => x.type == "combatskill" && x.name == testData.source.data.combatskill.value
+                    (x) => x.type == "combatskill" && x.name == testData.source.system.combatskill.value
                 ),
-                testData.extra.actor
+                testData.extra.actor.system
             )
             weapon = Actordsa5._prepareMeleeWeapon(testData.source, [skill], testData.extra.actor)
         } else if (testData.source.type == "rangeweapon") {
             const skill = Actordsa5._calculateCombatSkillValues(
                 testData.extra.actor.items.find(
-                    (x) => x.type == "combatskill" && x.name == testData.source.data.combatskill.value
+                    (x) => x.type == "combatskill" && x.name == testData.source.system.combatskill.value
                 ),
-                testData.extra.actor
+                testData.extra.actor.system
             )
             weapon = Actordsa5._prepareRangeWeapon(testData.source, [], [skill], testData.extra.actor)
         } else {
-            weapon = testData.source.data
+            weapon = testData.source.system
         }
-        return testData.source.data.damage.value.replace(/[Ww]/g, "d") + `+${weapon.extraDamage || 0}`
+        return testData.source.system.damage.value.replace(/[Ww]/g, "d") + `+${weapon.extraDamage || 0}`
     }
 
     static async rollDamage(testData) {
@@ -427,20 +430,20 @@ export default class DiceDSA5 {
     static _getNarrowSpaceModifier(weapon, testData) {
         if (!testData.narrowSpace) return 0
 
-        if (game.i18n.localize("LocalizedIDs.Shields") == weapon.data.combatskill.value) {
-            return DSA5.narrowSpaceModifiers["shield" + weapon.data.reach.shieldSize][testData.mode]
+        if (game.i18n.localize("LocalizedIDs.Shields") == weapon.system.combatskill.value) {
+            return DSA5.narrowSpaceModifiers["shield" + weapon.system.reach.shieldSize][testData.mode]
         } else {
-            return DSA5.narrowSpaceModifiers["weapon" + weapon.data.reach.value][testData.mode]
+            return DSA5.narrowSpaceModifiers["weapon" + weapon.system.reach.value][testData.mode]
         }
     }
 
     static async rollCombatTrait(testData) {
         let roll = testData.roll || await new Roll("1d20").evaluate({ async: true })
-        let source = testData.source.data.data == undefined ? testData.source : testData.source.data
-        const isMelee = source.data.traitType.value == "meleeAttack"
+        let source = testData.source //.system == undefined ? testData.source : testData.source.system
+        const isMelee = source.system.traitType.value == "meleeAttack"
         const isAttack = testData.mode == "attack"
         if (isMelee) {
-            let weapon = { data: { combatskill: { value: "-" }, reach: { value: source.data.reach.value } } }
+            let weapon = { system: { combatskill: { value: "-" }, reach: { value: source.system.reach.value } } }
 
             this._appendSituationalModifiers(
                 testData,
@@ -461,7 +464,7 @@ export default class DiceDSA5 {
         }
         let result = await this._rollSingleD20(
             roll,
-            isAttack ? Number(source.data.at.value) : Number(source.data.pa),
+            isAttack ? Number(source.system.at.value) : Number(source.system.pa),
             testData.mode,
             this._situationalModifiers(testData),
             testData,
@@ -506,10 +509,10 @@ export default class DiceDSA5 {
     }
 
     static async evaluateDamage(testData, result, weapon, isRangeWeapon, doubleDamage) {
-        let rollFormula = weapon.data.damage.value.replace(/[Ww]/g, "d")
+        let rollFormula = weapon.system.damage.value.replace(/[Ww]/g, "d")
         let overrideDamage = []
-        let dmgMultipliers = []
-        let damageBonusDescription = []
+        let dmgMultipliers = weapon.dmgMultipliers || []
+        let damageBonusDescription = dmgMultipliers.map( x => `${x.name} *${x.val}`)
         let armorPen = []
         let bonusDmg = 0
         for(let val of testData.situationalModifiers){
@@ -587,9 +590,9 @@ export default class DiceDSA5 {
                 damage += rangeDamageMod
                 if (rangeDamageMod != 0) damageBonusDescription.push(game.i18n.localize("distance") + " " + rangeDamageMod)
 
-                status = testData.extra.actor.data.rangeStats.damage
+                status = testData.extra.actor.system.rangeStats.damage
             } else {
-                status = testData.extra.actor.data.meleeStats.damage
+                status = testData.extra.actor.system.meleeStats.damage
             }
 
             const statusDmg = await DiceDSA5._stringToRoll(status, testData)
@@ -607,7 +610,7 @@ export default class DiceDSA5 {
             damage = damage * el.val
         }
         result["armorPen"] = armorPen
-        result["damagedescription"] = damageBonusDescription.join("\n")
+        result["damagedescription"] = damageBonusDescription.join(", ")
         result["damage"] = Math.round(damage)
         result["damageRoll"] = duplicate(damageRoll)
     }
@@ -617,11 +620,11 @@ export default class DiceDSA5 {
         let weapon
 
         let source = testData.source
-        const combatskill = source.data.combatskill.value
+        const combatskill = source.system.combatskill.value
 
         let skill = Actordsa5._calculateCombatSkillValues(
             testData.extra.actor.items.find((x) => x.type == "combatskill" && x.name == combatskill),
-            testData.extra.actor
+            testData.extra.actor.system
         )
 
         const isMelee = source.type == "meleeweapon"
@@ -675,7 +678,7 @@ export default class DiceDSA5 {
 
     static async detailedWeaponResult(result, testData, source) {
         const isAttack = testData.mode == "attack"
-        const isMelee = source.type == "meleeweapon" || getProperty(source, "data.traitType.value") == "meleeAttack"
+        const isMelee = source.type == "meleeweapon" || getProperty(source, "system.traitType.value") == "meleeAttack"
         switch (result.successLevel) {
             case 3:
                 if (isAttack) {
@@ -698,7 +701,7 @@ export default class DiceDSA5 {
                 }
                 break
             case -3:
-                const isWeaponless = getProperty(source, "data.combatskill.value") == game.i18n.localize("LocalizedIDs.wrestle") || source.type == "trait"
+                const isWeaponless = getProperty(source, "system.combatskill.value") == game.i18n.localize("LocalizedIDs.wrestle") || source.type == "trait"
                 if (isAttack && isMelee && await DSATables.tableEnabledFor("Melee"))
                     result.description += DSATables.rollCritBotchButton("Melee", isWeaponless)
                 else if (isAttack && await DSATables.tableEnabledFor("Range"))
@@ -730,11 +733,10 @@ export default class DiceDSA5 {
 
     static async rollCombatskill(testData) {
         let roll = testData.roll ? testData.roll : await new Roll("1d20").evaluate({ async: true })
-        let weaponSource = testData.source.data.data == undefined ? testData.source : testData.source.data
-        let source = Actordsa5._calculateCombatSkillValues(weaponSource, testData.extra.actor)
+        let source = Actordsa5._calculateCombatSkillValues(testData.source, testData.extra.actor.system)
         let result = await this._rollSingleD20(
             roll,
-            source.data[testData.mode].value,
+            source.system[testData.mode].value,
             testData.mode,
             this._situationalModifiers(testData),
             testData,
@@ -762,9 +764,9 @@ export default class DiceDSA5 {
 
                 let template = await renderTemplate("systems/dsa5/templates/dialog/manualroll-dialog.html", {
                     dice: dice,
-                    description: description,
-                })
-                ;[result, form] = await new Promise((resolve, reject) => {
+                    description,
+                });
+                [result, form] = await new Promise((resolve, reject) => {
                     new DSA5Dialog({
                         title: game.i18n.localize(options.cheat ? "DIALOG.cheat" : "DSASETTINGS.allowPhysicalDice"),
                         content: template,
@@ -805,7 +807,7 @@ export default class DiceDSA5 {
     }
 
     static parseEffect(source) {
-        const effectString = source.data.effect ? source.data.effect.value : undefined
+        const effectString = source.system.effect ? source.system.effect.value : undefined
         const result = []
         if (effectString) {
             const regex = /^[a-z]+\|[öäüÖÄÜa-zA-z ]+$/
@@ -816,9 +818,9 @@ export default class DiceDSA5 {
                     if (split[0] == "condition") {
                         const effect = CONFIG.statusEffects.find((x) => x.id == split[1])
                         result.push(
-                            `<a class="chat-condition chatButton" data-id="${effect.id}"><img src="${
-                                effect.icon
-                            }"/>${game.i18n.localize(effect.label)}</a>`
+                            `<a class="chat-condition chatButton" data-id="${effect.id}">
+                            <img src="${effect.icon}"/>${game.i18n.localize(effect.label)}
+                            </a>`
                         )
                     } else
                         result.push(
@@ -850,7 +852,7 @@ export default class DiceDSA5 {
         if(res.successLevel < 0){
             const traditions = ["traditionWitch", "traditionFjarning", "braniborian"].map(x => game.i18n.localize(`LocalizedIDs.${x}`))
             const factor = testData.extra.actor.items.some(x => x.type == "specialability" && traditions.includes(x.name)) ? 3 : 2
-            res.preData.calculatedSpellModifiers.finalcost = Math.round(res.preData.calculatedSpellModifiers.cost / factor)
+            res.preData.calculatedSpellModifiers.finalcost = Math.round(res.preData.calculatedSpellModifiers.finalcost / factor)
         }
 
         if (isClerical) {
@@ -875,7 +877,7 @@ export default class DiceDSA5 {
             },
             {
                 name: `${game.i18n.localize("statuseffects")} (${game.i18n.localize("CHARAbbrev." + globalMod.name)})`,
-                value: testData.extra.actor.data[globalMod.val] + this._situationalModifiers(testData, feature)
+                value: testData.extra.actor.system[globalMod.val] + this._situationalModifiers(testData, feature)
             }
         )
         costModifiers = costModifiers.filter((x) => x.value != 0)
@@ -884,6 +886,9 @@ export default class DiceDSA5 {
             1,
             Number(res.preData.calculatedSpellModifiers.finalcost) + costModifiers.reduce((b, a) => {return b + a.value}, 0)
         )
+        if (res.successLevel > 0 && res.preData.calculatedSpellModifiers.maintainCost != 0)
+            res.preData.calculatedSpellModifiers.finalcost += Number(res.preData.calculatedSpellModifiers.maintainCost.split(" ")[0])
+        
     }
 
     static async rollSpell(testData) {
@@ -939,7 +944,7 @@ export default class DiceDSA5 {
                 }
                 const damageBonusDescription = []
                 const statusDmg = await DiceDSA5._stringToRoll(
-                    testData.extra.actor.data[isClerical ? "liturgyStats" : "spellStats"].damage,
+                    testData.extra.actor.system[isClerical ? "liturgyStats" : "spellStats"].damage,
                     testData
                 )
                 if (statusDmg != 0) {
@@ -976,12 +981,12 @@ export default class DiceDSA5 {
         this._appendSituationalModifiers(testData, game.i18n.localize("Difficulty"), testData.testDifficulty)
         let modifiers = this._situationalModifiers(testData)
 
-        let fws = testData.source.data.talentValue.value + testData.advancedModifiers.fws + this._situationalModifiers(testData, "FW")
+        let fws = testData.source.system.talentValue.value + testData.advancedModifiers.fws + this._situationalModifiers(testData, "FW")
         const pcms = this._situationalPartCheckModifiers(testData, "TPM")
 
         let tar = [1, 2, 3].map(
             (x) =>
-                testData.extra.actor.data.characteristics[testData.source.data[`characteristic${x}`].value].value +
+                testData.extra.actor.system.characteristics[testData.source.system[`characteristic${x}`].value].value +
                 modifiers +
                 testData.advancedModifiers.chars[x - 1] +
                 pcms[x - 1]
@@ -994,8 +999,8 @@ export default class DiceDSA5 {
             for (let k of res) if (k > 0) fws -= k
 
 
-        let crit = testData.extra.actor.data.skillModifiers.crit
-        let botch = testData.extra.actor.data.skillModifiers.botch
+        let crit = testData.extra.actor.system.skillModifiers.crit
+        let botch = testData.extra.actor.system.skillModifiers.botch
         if (
             (testData.source.type == "spell" || testData.source.type == "ritual") &&
             AdvantageRulesDSA5.hasVantage(testData.extra.actor, game.i18n.localize("LocalizedIDs.wildMagic"))
@@ -1070,7 +1075,7 @@ export default class DiceDSA5 {
             result: fws,
             characteristics: [0, 1, 2].map((x) => {
                 return {
-                    char: testData.source.data[`characteristic${x + 1}`].value,
+                    char: testData.source.system[`characteristic${x + 1}`].value,
                     res: roll.terms[x * 2].results[0].result,
                     suc: res[x] <= 0,
                     tar: tar[x],
@@ -1111,8 +1116,8 @@ export default class DiceDSA5 {
         let roll = testData.roll || await new Roll("1d20+1d20+1d20").evaluate({ async: true })
         let description = []
         let modifier = this._situationalModifiers(testData)
-        let fws = Number(testData.source.data.step.value)
-        let tar = [1, 2, 3].map((x) => 10 + Number(testData.source.data.step.value) + modifier)
+        let fws = Number(testData.source.system.step.value)
+        let tar = [1, 2, 3].map((x) => 10 + Number(testData.source.system.step.value) + modifier)
         let res = [0, 1, 2].map((x) => roll.terms[x * 2].results[0].result - tar[x])
         for (let k of res) {
             if (k > 0) fws -= k
@@ -1143,14 +1148,14 @@ export default class DiceDSA5 {
         }
         switch (testData.source.type) {
             case "poison":
-                let dur = testData.source.data.duration.value.split(" / ").map((x) => x.trim())
-                let effect = testData.source.data.effect.value.split(" / ").map((x) => x.trim())
+                let dur = testData.source.system.duration.value.split(" / ").map((x) => x.trim())
+                let effect = testData.source.system.effect.value.split(" / ").map((x) => x.trim())
                 result.duration = dur.length > 1 ? (result.successLevel > 0 ? dur[0] : dur[1]) : dur[0]
                 result.effect = effect.length > 1 ? (result.successLevel > 0 ? effect[0] : effect[1]) : effect[0]
                 break
             case "disease":
-                let dmg = testData.source.data.damage.value.split(" / ").map((x) => x.trim())
-                let duration = testData.source.data.duration.value.split(" / ").map((x) => x.trim())
+                let dmg = testData.source.system.damage.value.split(" / ").map((x) => x.trim())
+                let duration = testData.source.system.duration.value.split(" / ").map((x) => x.trim())
                 result.damageeffect = dmg.length > 1 ? (result.successLevel > 0 ? dmg[0] : dmg[1]) : dmg[0]
                 result.duration = duration.length > 1 ? (result.successLevel > 0 ? duration[0] : duration[1]) : duration[0]
                 break
@@ -1208,7 +1213,7 @@ export default class DiceDSA5 {
     static _compareWeaponReach(weapon, testData) {
         //TODO move this to roll dialog
         let circumvent = testData.situationalModifiers.find((x) => x.name == game.i18n.localize("LocalizedIDs.circumvent"))
-        const attacker = DSA5.meleeRangesArray.indexOf(weapon.data.reach.value)
+        const attacker = DSA5.meleeRangesArray.indexOf(weapon.system.reach.value)
         const defender = DSA5.meleeRangesArray.indexOf(testData.opposingWeaponSize)
         if (circumvent && defender > attacker) circumvent.value = Math.min(circumvent.step, defender - attacker) * 2
 
@@ -1227,20 +1232,22 @@ export default class DiceDSA5 {
                 case "skill":
                     roll = await new Roll(`1d20+1d20+1d20`).evaluate({ async: true })
 
-                    mergeObject(roll.dice[0].options, d3dColors(testData.source.data.characteristic1.value))
-                    mergeObject(roll.dice[1].options, d3dColors(testData.source.data.characteristic2.value))
-                    mergeObject(roll.dice[2].options, d3dColors(testData.source.data.characteristic3.value))
+                    mergeObject(roll.dice[0].options, d3dColors(testData.source.system.characteristic1.value))
+                    mergeObject(roll.dice[1].options, d3dColors(testData.source.system.characteristic2.value))
+                    mergeObject(roll.dice[2].options, d3dColors(testData.source.system.characteristic3.value))
                     break
                 case "regenerate":
-                    const leDie = [game.settings.get("dsa5", "lessRegeneration") ? "1d3" : "1d6"]
+                    const leDie = []
 
-                    if (testData.extra.actor.isMage) leDie.push("1d6")
-                    if (testData.extra.actor.isPriest) leDie.push("1d6")
+                    if (testData.regenerateLeP ) leDie.push([game.settings.get("dsa5", "lessRegeneration") ? "1d3" : "1d6"])
+                    if (testData.extra.actor.isMage && testData.regenerateAsP) leDie.push("1d6")
+                    if (testData.extra.actor.isPriest && testData.regenerateKaP) leDie.push("1d6")
 
                     roll = await new Roll(leDie.join("+")).evaluate({ async: true })
-                    mergeObject(roll.dice[0].options, d3dColors("mu"))
-                    if (testData.extra.actor.isMage) mergeObject(roll.dice[1].options, d3dColors("ge"))
-                    if (testData.extra.actor.isPriest) mergeObject(roll.dice[leDie.length - 1].options, d3dColors("in"))
+                    if (testData.regenerateLeP ) mergeObject(roll.dice[0].options, d3dColors("mu"))
+                    if (testData.extra.actor.isMage && testData.regenerateAsP) mergeObject(roll.dice[leDie.length - 1].options, d3dColors("ge"))
+                    if (testData.extra.actor.isPriest && testData.regenerateKaP) mergeObject(roll.dice[leDie.length - 1].options, d3dColors("in"))
+                    if (testData.extra.actor.isMage && testData.regenerateAsP && testData.extra.actor.isPriest && testData.regenerateKaP) mergeObject(roll.dice[leDie.length - 2].options, d3dColors("ge"))
                     break
                 case "meleeweapon":
                 case "rangeweapon":
@@ -1270,7 +1277,7 @@ export default class DiceDSA5 {
                     break
                 default:
                     roll = await new Roll(`1d20`).evaluate({ async: true })
-                    mergeObject(roll.dice[0].options, d3dColors(testData.source.data.label.split(".")[1].toLowerCase()))
+                    mergeObject(roll.dice[0].options, d3dColors(testData.source.system.label.split(".")[1].toLowerCase()))
             }
             roll = await DiceDSA5.manualRolls(roll, testData.source.type, testData.extra.options)
             await this.showDiceSoNice(roll, cardOptions.rollMode)
@@ -1287,10 +1294,10 @@ export default class DiceDSA5 {
             switch (rollMode) {
                 case "blindroll":
                     blind = true
-                    whisper = game.users.filter((user) => user.isGM).map((x) => x.data._id)
+                    whisper = game.users.filter((user) => user.isGM).map((x) => x.id)
                     break
                 case "gmroll":
-                    whisper = game.users.filter((user) => user.isGM).map((x) => x.data._id)
+                    whisper = game.users.filter((user) => user.isGM).map((x) => x.id)
                     break
                 case "selfroll":
                     whisper = []
@@ -1322,11 +1329,13 @@ export default class DiceDSA5 {
     static async renderRollCard(chatOptions, testData, rerenderMessage) {
         const applyEffect = this.addApplyEffectData(testData)
         const preData = deepClone(testData.preData)
-        const hideDamage = rerenderMessage ? rerenderMessage.data.flags.data.hideDamage : preData.mode == "attack"
+        const hideDamage = rerenderMessage ? rerenderMessage.flags.data.hideDamage : preData.mode == "attack"
         await Hooks.call("postProcessDSARoll", chatOptions, testData, rerenderMessage, hideDamage)
         delete preData.extra.actor
         delete testData.actor
         delete testData.preData
+
+        const hasAreaTemplate = testData.successLevel > 0 && preData.source.system.target && (preData.source.system.target.type in game.dsa5.config.areaTargetTypes)
 
         let chatData = {
             title: chatOptions.title,
@@ -1336,6 +1345,7 @@ export default class DiceDSA5 {
             hideDamage,
             modifierList: preData.situationalModifiers.filter((x) => x.value != 0),
             applyEffect,
+            hasAreaTemplate,
             showDamageToGear: await EquipmentDamage.showDamageToGear(preData, testData),
         }
 
@@ -1352,7 +1362,7 @@ export default class DiceDSA5 {
         }
 
         if (["gmroll", "blindroll"].includes(chatOptions.rollMode))
-            chatOptions["whisper"] = game.users.filter((user) => user.isGM).map((x) => x.data._id)
+            chatOptions["whisper"] = game.users.filter((user) => user.isGM).map((x) => x.id)
         if (chatOptions.rollMode === "blindroll") chatOptions["blind"] = true
         else if (chatOptions.rollMode === "selfroll") chatOptions["whisper"] = [game.user.id]
 
@@ -1360,8 +1370,8 @@ export default class DiceDSA5 {
             preData.mode,
             preData.source,
             testData.successLevel,
-            chatOptions["whisper"],
-            chatOptions["blind"]
+            chatOptions.whisper,
+            chatOptions.blind
         )
 
         chatOptions["flags.data"] = {
@@ -1380,30 +1390,28 @@ export default class DiceDSA5 {
             chatOptions["content"] = await renderTemplate(chatOptions.template, chatData)
             return await ChatMessage.create(chatOptions, false)
         } else {
-            return renderTemplate(chatOptions.template, chatData).then((html) => {
+            const html = await renderTemplate(chatOptions.template, chatData)
                 //Seems to be a foundry bug, after edit inline rolls are not converted anymore
-                const actor =
-                    ChatMessage.getSpeakerActor(rerenderMessage.data.speaker) ||
-                    game.users.get(rerenderMessage.data.user).character
-                const rollData = actor ? actor.getRollData() : {}
-                chatOptions["content"] = TextEditor.enrichHTML(html, rollData)
+            const actor =
+                ChatMessage.getSpeakerActor(rerenderMessage.speaker) ||
+                game.users.get(rerenderMessage.user).character
+            const rollData = actor ? actor.getRollData() : {}
+            const enriched = await TextEditor.enrichHTML(html, {rollData, async: true})
+            chatOptions["content"] = enriched
 
-                const cummulative = getProperty(rerenderMessage, "data.flags.data.preData.extra.options.cummulative")
-                if(cummulative){
-                    testData.messageId = rerenderMessage.id
-                    RequestRoll.editGroupCheckRoll(cummulative, { result: testData }, preData.source.name, preData.source.type)
-                }
+            const postFunction = getProperty(rerenderMessage, "flags.data.preData.extra.options.postFunction")
+            if(postFunction){
+                testData.messageId = rerenderMessage.id;
+                eval(postFunction.functionName)(postFunction, { result: testData }, preData.source)
+            }
 
-                return rerenderMessage
-                    .update({
-                        content: chatOptions["content"],
-                        ["flags.data"]: chatOptions["flags.data"],
-                    })
-                    .then((newMsg) => {
-                        ui.chat.updateMessage(newMsg)
-                        return newMsg
-                    })
-            })
+            const newMsg = await rerenderMessage.update({
+                    content: chatOptions["content"],
+                    ["flags.data"]: chatOptions["flags.data"],
+                })
+                
+            ui.chat.updateMessage(newMsg)
+            return newMsg
         }
     }
 
@@ -1411,19 +1419,19 @@ export default class DiceDSA5 {
         let input = $(ev.currentTarget),
             messageId = input.parents(".message").attr("data-message-id"),
             message = game.messages.get(messageId),
-            speaker = message.data.speaker,
+            speaker = message.speaker,
             category = input.attr("data-type"),
             name = input.attr("data-name")
 
         let actor = DSA5_Utility.getSpeaker(speaker)
 
         if (actor) {
-            const source = actor.data.items.find((x) => x.name == name && x.type == category)
+            const source = actor.items.find((x) => x.name == name && x.type == category)
             if (source) {
                 const item = new Itemdsa5(source.toObject(), { temporary: true })
                 const removeCharge = input.attr("data-removecharge") ? input.attr("data-removecharge") == "true" : false
                 if (removeCharge) {
-                    if (item.data.data.quantity.value < 1) {
+                    if (item.system.quantity.value < 1) {
                         ui.notifications.error(game.i18n.localize("DSAError.NotEnoughCharges"))
                         return
                     }
@@ -1431,7 +1439,7 @@ export default class DiceDSA5 {
 
                 item.setupEffect().then(async (setupData) => {
                     await item.itemTest(setupData)
-                    if (removeCharge) await source.update({ "data.quantity.value": source.data.data.quantity.value - 1 })
+                    if (removeCharge) await source.update({ "system.quantity.value": source.system.quantity.value - 1 })
                 })
             } else {
                 ui.notifications.error(game.i18n.format("DSAError.notFound", { category: category, name: name }))
@@ -1444,7 +1452,7 @@ export default class DiceDSA5 {
             messageId = input.parents(".message").attr("data-message-id"),
             message = game.messages.get(messageId)
 
-        let data = message.data.flags.data
+        let data = message.flags.data
         let newTestData = data.preData
         newTestData.extra.actor = DSA5_Utility.getSpeaker(newTestData.extra.speaker).toObject(false)
         if(newTestData.extra.options.cheat) delete newTestData.extra.options.cheat
@@ -1482,12 +1490,12 @@ export default class DiceDSA5 {
             template: data.template,
             rollMode: data.rollMode,
             title: data.title,
-            speaker: message.data.speaker,
-            user: message.user.data._id,
+            speaker: message.speaker,
+            user: message.user.id,
         }
 
         if (["gmroll", "blindroll"].includes(chatOptions.rollMode))
-            chatOptions["whisper"] = game.users.filter((user) => user.isGM).map((x) => x.data._id)
+            chatOptions["whisper"] = game.users.filter((user) => user.isGM).map((x) => x.id)
 
         if (chatOptions.rollMode === "blindroll") chatOptions["blind"] = true
 
@@ -1497,7 +1505,7 @@ export default class DiceDSA5 {
                 { rerenderMessage: message }
             )
         } else {
-            const speaker = DSA5_Utility.getSpeaker(message.data.speaker)
+            const speaker = DSA5_Utility.getSpeaker(message.speaker)
             speaker[`${data.postData.postFunction}`](
                 { testData: newTestData, cardOptions: chatOptions },
                 { rerenderMessage: message }
@@ -1515,6 +1523,13 @@ export default class DiceDSA5 {
         }
     }
 
+    static async rollResistPain(ev){
+        const data = ev.currentTarget.dataset;
+        const target = { token: data.token, actor: data.actor, scene: canvas.id }
+        const actor = DSA5_Utility.getSpeaker(target)
+        if(actor) actor.finishResistPainRoll()
+    }
+
     static async chatListeners(html) {
         html.on("click", ".expand-mods", (event) => {
             event.preventDefault()
@@ -1529,8 +1544,7 @@ export default class DiceDSA5 {
         html.on("click", ".botch-roll", (ev) => DSATables.showBotchCard(ev.currentTarget.dataset))
         html.on("click", ".roll-item", (ev) => DiceDSA5._itemRoll(ev))
         html.on("click", ".gearDamaged", async (ev) => DiceDSA5.gearDamaged(ev))
-        html.on("change", ".roll-edit", (ev) => DiceDSA5._rollEdit(ev)
-        )
+        html.on("change", ".roll-edit", (ev) => DiceDSA5._rollEdit(ev))
         html.on("click", ".applyEffect", async(ev) => {
             const elem = $(ev.currentTarget)
             if(elem.hasClass("locked")) return
@@ -1547,16 +1561,18 @@ export default class DiceDSA5 {
             }, 2000)
             
         })
+        html.on("click", ".placeTemplate", async(ev)=>  MeasuredTemplateDSA.placeTemplateFromChat(ev))
         html.on("click", ".message-delete", (ev) => {
             let message = game.messages.get($(ev.currentTarget).parents(".message").attr("data-message-id"))
-            let targeted = message.data.flags.unopposeData
+            let targeted = message.flags.unopposeData
 
             if (!targeted) return
 
-            let target = canvas.tokens.get(message.data.flags.unopposeData.targetSpeaker.token)
+            let target = canvas.tokens.get(message.flags.unopposeData.targetSpeaker.token)
             OpposedDsa5.clearOpposed(target.actor)
         })
         html.on("click", ".resistEffect", (ev) => DSAActiveEffectConfig.resistEffect(ev))
+        html.on("click", ".resistPain", ev => DiceDSA5.rollResistPain(ev))
         RequestRoll.chatListeners(html)
     }
 }

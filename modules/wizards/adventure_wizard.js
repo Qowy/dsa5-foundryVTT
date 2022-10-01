@@ -38,7 +38,7 @@ export default class BookWizard extends Application {
         Hooks.on("renderSidebarTab", (app, html) => {
             if (app.options.id == "journal") {
                 let div = $('<div class="header-actions action-buttons flexrow"></div>')
-                let button = $(`<button><i class="fa fa-book"></i>${game.i18n.localize("Book.Wizard")}</button>`)
+                let button = $(`<button id="openJournalBrowser"><i class="fa fa-book"></i>${game.i18n.localize("Book.Wizard")}</button>`)
                 button.click(() => { BookWizard.wizard.render(true) })
                 div.append(button)
                 html.find(".header-actions:first-child").after(div)
@@ -49,9 +49,10 @@ export default class BookWizard extends Application {
     _getHeaderButtons() {
         let buttons = super._getHeaderButtons();
         buttons.unshift({
+            label: "Library",
             class: "library",
             icon: `fas fa-book`,
-            onclick: async ev => this._showBooks(ev)
+            onclick: async ev => this._showBooks()
         })
         return buttons
     }
@@ -59,7 +60,7 @@ export default class BookWizard extends Application {
     async _render(force = false, options = {}) {
         await super._render(force, options)
 
-        $(this._element).find('.library').attr("title", game.i18n.localize("Book.home"))
+        $(this._element).find('.library').attr("data-tooltip", game.i18n.localize("Book.home"))
     }
 
     _showBooks() {
@@ -77,15 +78,31 @@ export default class BookWizard extends Application {
         this.loadPage(this._element)
     }
 
+    async toggleBookVisibility(id, type, toggle){
+        const config = game.settings.get("dsa5", "expansionPermissions")
+        config[id] = toggle
+        await game.settings.set("dsa5", "expansionPermissions", config)
+
+        let book = this[type].find(x => x.id == id)
+        const json = await (await fetch(book.path)).json()
+        const keys = ["actors","journal","scenes"]
+        for(const key of keys){
+            if(!json[key]) continue
+
+            let pack = game.packs.get(json[key]);
+            await pack.configure({private: !toggle});
+        }
+        this.render()
+    }
+
     activateListeners(html) {
         super.activateListeners(html)
 
         html.on('click', '.toggleVisibility', async(ev) => {
             const id = ev.currentTarget.dataset.itemid
-            const config = game.settings.get("dsa5", "expansionPermissions")
-            config[id] = $(ev.currentTarget).find('i').hasClass("fa-toggle-off")
-            await game.settings.set("dsa5", "expansionPermissions", config)
-            this.render()
+            const type = ev.currentTarget.dataset.type
+            const toggle = $(ev.currentTarget).find('i').hasClass("fa-toggle-off")
+            this.toggleBookVisibility(id, type, toggle)
         })
 
         html.on('click', '.showMapNote', ev => {
@@ -176,10 +193,10 @@ export default class BookWizard extends Application {
     }
 
     async loadJournal(name) {
-        this.showJournal(this.journals.find(x => x.name == name && x.data.flags.dsa5.parent == this.selectedChapter ))
+        await this.showJournal(this.journals.find(x => x.name == name && x.flags.dsa5.parent == this.selectedChapter ))
     }
     async loadJournalById(id) {
-        this.showJournal(this.journals.find(x => x.id == id))
+        await this.showJournal(this.journals.find(x => x.id == id))
     }
 
     async resaveBreadCrumbs(target) {
@@ -212,7 +229,6 @@ export default class BookWizard extends Application {
                             }
                         });
                         await this.journalIndex.add(this.journals.map(x => new JournalSearch(x)))
-
                     }
                     result = await this.journalIndex.search(val)
                 } else {
@@ -231,24 +247,23 @@ export default class BookWizard extends Application {
         }
     }
 
-    tryShowImportedActor(ev) {
-
-    }
-
-    showJournal(journal) {
-        let content = journal.data.content
-        if (!content) content = `<img src="${journal.data.img}"/>`
-
+    async showJournal(journal) {
+        let content = ""
+        for(let page of journal.pages){
+            if(page.type == "text") content += page.text.content
+            else if(page.type == "image") content += `<img src="${page.src}"/>`
+            else ui.notifications.warn(`Page type ${page.type} not supported by the journal browser yet`)
+        }
         const pinIcon = this.findSceneNote(journal.getFlag("dsa5", "initId"))
-
-        this.content = `<div><h1 class="journalHeader" data-uuid="${journal.uuid}">${journal.name}<div class="jrnIcons">${pinIcon}<a class="pinJournal"><i class="fas fa-thumbtack"></i></a><a class="showJournal"><i class="fas fa-eye"></i></a></div></h1>${TextEditor.enrichHTML(content)}`
+        const enriched = await TextEditor.enrichHTML(content, {secrets: true, async: true})
+        this.content = `<div><h1 class="journalHeader" data-uuid="${journal.uuid}">${journal.name}<div class="jrnIcons">${pinIcon}<a class="pinJournal"><i class="fas fa-thumbtack"></i></a><a class="showJournal"><i class="fas fa-eye"></i></a></div></h1>${enriched}`
         const chapter = $(this._element).find('.chapter')
         chapter.html(this.content)
         bindImgToCanvasDragStart(chapter)
         chapter.find('.documentName-link, .entity-link').click(ev => {
             const elem = $(ev.currentTarget)
             if (this.bookData && elem.attr("data-pack") == this.bookData.journal) {
-                ev.stopPropagation()
+                ev.stopPropagation()    
                 this.loadJournalById(elem.attr("data-id"))
             }
         })
@@ -296,22 +311,25 @@ export default class BookWizard extends Application {
         if (!chapter.actors) return []
 
         let result = []
-        const head = await game.folders.contents.find(x => x.name == game.i18n.localize(`${this.bookData.moduleName}.name`) && x.type == "Actor" && x.data.parent == null)
-        const folder = head ? await game.folders.contents.find(x => x.name == chapter.name && x.type == "Actor" && x.data.parent == head.id) : undefined
+        const head = await game.folders.contents.find(x => x.name == game.i18n.localize(`${this.bookData.moduleName}.name`) && x.type == "Actor" && x.folder == null)
+        const folderids = head ? await game.folders.contents.filter(x => x.type == "Actor" && x.folder?.id == head.id).map(x => x.id) : undefined
         for (let k of chapter.actors) {
-            let actor = folder ? game.actors.contents.find(x => x.name == k && x.data.folder == folder.id) : undefined
+            let actor = folderids?.length ? game.actors.contents.find(x => x.name == k && folderids.includes(x.folder?.id)) : undefined
             let pack = undefined
-            let id = actor ? actor.id : undefined
+            let id = actor?.id
+            let uuid = actor?.uuid
             if (!actor) {
                 actor = this.actors.find(x => x.name == k)
                 pack = this.bookData.actors
-                id = actor ? actor._id : undefined
+                id = actor?._id
+                uuid = actor ? `Compendium.${pack}.${id}` : undefined
             }
             result.push({
                 name: k,
                 actor,
                 pack,
-                id
+                id,
+                uuid
             })
         }
         return result
@@ -323,7 +341,7 @@ export default class BookWizard extends Application {
     }
 
     async showSzene(name, mode = "activate") {
-        let scene = game.scenes.contents.find(x => x.data.name == name)
+        let scene = game.scenes.contents.find(x => x.name == name)
         if (!scene)
             return ui.notifications.error(game.i18n.localize("DSAError.sceneNotInitialized"))
 
@@ -335,7 +353,7 @@ export default class BookWizard extends Application {
                 scene.view()
                 break
             case "toggle":
-                scene.update({ navigation: !scene.data.navigation })
+                scene.update({ navigation: !scene.navigation })
                 break
         }
     }
@@ -391,8 +409,8 @@ export default class BookWizard extends Application {
     }
 
     getSubChapters() {
-        return this.journals.filter(x => x.data.flags.dsa5.parent == this.selectedChapter)
-        .sort((a, b) => a.data.flags.dsa5.sort > b.data.flags.dsa5.sort ? 1 : -1)
+        return this.journals.filter(x => x.flags.dsa5.parent == this.selectedChapter)
+        .sort((a, b) => a.flags.dsa5.sort > b.flags.dsa5.sort ? 1 : -1)
         .map(x => {return {name: x.name, id: x.id}})
     }
 
@@ -436,9 +454,9 @@ export default class BookWizard extends Application {
         return data
     }
 
-    async pinJournal(uuid, name) {
+    async pinJournal(uuid, name = undefined) {
         let breadcrumbs = this.readBreadCrumbs()
-        if (!name) name = (await fromUuid(uuid)).name
+        if (!name) name = (await fromUuid(uuid))?.name || ""
         breadcrumbs[uuid] = name
         game.settings.set("dsa5", "breadcrumbs", JSON.stringify(breadcrumbs))
         this.render(true)
@@ -479,7 +497,7 @@ export default class BookWizard extends Application {
 
     renderBreadcrumbs() {
         const breadcrumbs = this.readBreadCrumbs()
-        const btns = Object.entries(breadcrumbs).map(x => `<div title="${x[1]}" data-uuid="${x[0]}" class="openPin item">${x[1]}</div>`)
+        const btns = Object.entries(breadcrumbs).map(x => `<div data-tooltip="${x[1]}" data-uuid="${x[0]}" class="openPin item">${x[1]}</div>`)
 
         if (btns.length > 0) return `<div id"breadcrumbs" class="breadcrumbs wrap row-section">${btns.join("")}</div>`
 
@@ -499,7 +517,7 @@ class InitializerForm extends FormApplication {
 
 class JournalSearch {
     constructor(item) {
-        let data = getProperty(item, "data.content")
+        const data = item.pages.find(x => true).text.content
         this.document = {
             name: item.name,
             data: $("<div>").html(data).text(),

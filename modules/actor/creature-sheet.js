@@ -1,4 +1,3 @@
-import DSA5_Utility from "../system/utility-dsa5.js";
 import DSA5 from "../system/config-dsa5.js"
 import ActorSheetDsa5 from "./actor-sheet.js";
 import TraitRulesDSA5 from "../system/trait-rules-dsa5.js"
@@ -16,16 +15,19 @@ export default class ActorSheetdsa5Creature extends ActorSheetDsa5 {
     }
 
     async getData(options) {
-        const data = await super.getData(options);
-        data["sizeCategories"] = DSA5.sizeCategories
+        const data = await super.getData(options);        
+        data.enrichedDescription = await TextEditor.enrichHTML(getProperty(this.actor.system, "description.value"), {secrets: true, async: true})
+        data.enrichedBehaviour = await TextEditor.enrichHTML(getProperty(this.actor.system, "behaviour.value"), {secrets: true, async: true})
+        data.enrichedFlight = await TextEditor.enrichHTML(getProperty(this.actor.system, "flight.value"), {secrets: true, async: true})
+        data.enrichedSpecialrules = await TextEditor.enrichHTML(getProperty(this.actor.system, "specialRules.value"), {secrets: true, async: true})
         return data;
     }
 
     async _cleverDeleteItem(itemId) {
-        let item = this.actor.data.items.find(x => x.id == itemId)
+        let item = this.actor.items.find(x => x.id == itemId)
         switch (item.type) {
             case "trait":
-                await this._updateAPs(item.data.data.APValue.value * -1)
+                await this._updateAPs(item.system.APValue.value * -1)
                 break;
         }
         await super._cleverDeleteItem(itemId)
@@ -34,22 +36,15 @@ export default class ActorSheetdsa5Creature extends ActorSheetDsa5 {
     async _addTrait(item) {
         let res = this.actor.items.find(i => i.type == "trait" && i.name == item.name);
         if (!res) {
-            await this._updateAPs(item.data.APValue.value)
+            await this._updateAPs(item.system.APValue.value)
             await TraitRulesDSA5.traitAdded(this.actor, item)
             await this.actor.createEmbeddedDocuments("Item", [item]);
         }
     }
 
-    async _handleDragData(dragData, originalEvent, { item, typeClass, selfTarget }) {
-        if (!item) return
+    async _onDropItemCreate(itemData) {
+        if(itemData.type == "trait") return this._addTrait(itemData)
 
-        switch (typeClass) {
-            case "trait":
-                await this._addTrait(item)
-                break;
-            default:
-                super._handleDragData(dragData, originalEvent, { item, typeClass, selfTarget })
-        }
+        return super._onDropItemCreate(itemData)
     }
-
 }

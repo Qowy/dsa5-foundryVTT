@@ -14,11 +14,11 @@ export default class SpecialabilityRulesDSA5 extends ItemRulesDSA5 {
         if (DSA5.removeAbilityRules[item.name]) {
             DSA5.removeAbilityRules[item.name](actor, item)
         }
-        let xpCost = item.data.data.APValue.value * item.data.data.step.value
-        if (/;/.test(item.data.data.APValue.value)) {
-            let steps = item.data.data.APValue.value.split(";").map(x => Number(x.trim()))
+        let xpCost = item.system.APValue.value * item.system.step.value
+        if (/;/.test(item.system.APValue.value)) {
+            let steps = item.system.APValue.value.split(";").map(x => Number(x.trim()))
             xpCost = 0
-            for (let i = 0; i < item.data.data.step.value; i++)
+            for (let i = 0; i < item.system.step.value; i++)
                 xpCost += steps[i]
         }
         xpCost = await SpecialabilityRulesDSA5.refundFreelanguage(item, actor, xpCost)
@@ -32,31 +32,32 @@ export default class SpecialabilityRulesDSA5 extends ItemRulesDSA5 {
 
         if (adoption != null) {
             //Different Apval for multiple same vantages
-            if (/,/.test(item.data.APValue.value)) {
+            if (/,/.test(item.system.APValue.value)) {
                 let name = `${item.name.replace(' ()', '')} (${adoption.name}`
-                item.data.APValue.value = item.data.APValue.value.split(",")[actor.items.filter(x => x.type == item.type && x.name.includes(name)).length].trim()
+                item.system.APValue.value = item.system.APValue.value.split(",")[actor.items.filter(x => x.type == item.type && x.name.includes(name)).length].trim()
             }
             SpecialabilityRulesDSA5.simpleAdoption(item, adoption, item.name, DSA5.AbilitiesNeedingAdaption)
 
             item.name = `${item.name.replace(' ()', '')} (${adoption.name}${adoption.customEntry ? ", " + adoption.customEntry : ''})`
-            if (adoption.data && adoption.data.data.StF?.value && /\//.test(item.data.APValue.value))
-                item.data.APValue.value = item.data.APValue.value.split("/")[adoption.data.data.StF.value.charCodeAt(0) - 65].trim()
+            
+            if (adoption.data && adoption.system.StF?.value && /\//.test(item.system.APValue.value))
+                item.system.APValue.value = item.system.APValue.value.split("/")[adoption.system.StF.value.charCodeAt(0) - 65].trim()
         }
-        let res = actor.data.items.find(i => {
+        let res = actor.items.find(i => {
             return i.type == typeClass && i.name == item.name
         });
 
         if (res) {
             let vantage = duplicate(res)
-            let xpCost = await SpecialabilityRulesDSA5.isFreeLanguage(item, actor, /;/.test(vantage.data.APValue.value) ? vantage.data.APValue.value.split(';').map(x => Number(x.trim()))[vantage.data.step.value] : vantage.data.APValue.value)
-            if (vantage.data.step.value + 1 <= vantage.data.maxRank.value && await actor.checkEnoughXP(xpCost)) {
-                vantage.data.step.value += 1
+            let xpCost = await SpecialabilityRulesDSA5.isFreeLanguage(item, actor, /;/.test(vantage.system.APValue.value) ? vantage.system.APValue.value.split(';').map(x => Number(x.trim()))[vantage.system.step.value] : vantage.system.APValue.value)
+            if (vantage.system.step.value + 1 <= vantage.system.maxRank.value && await actor.checkEnoughXP(xpCost)) {
+                vantage.system.step.value += 1
                 await actor._updateAPs(xpCost)
                 await actor.updateEmbeddedDocuments("Item", [vantage]);
                 await SpecialabilityRulesDSA5.abilityAdded(actor, vantage)
             }
         } else {
-            let xpCost = await SpecialabilityRulesDSA5.isFreeLanguage(item, actor, item.data.APValue.value.split(';').map(x => x.trim())[0])
+            let xpCost = await SpecialabilityRulesDSA5.isFreeLanguage(item, actor, item.system.APValue.value.split(';').map(x => x.trim())[0])
             if (await actor.checkEnoughXP(xpCost)) {
                 await SpecialabilityRulesDSA5.abilityAdded(actor, item)
                 await actor._updateAPs(xpCost)
@@ -66,24 +67,24 @@ export default class SpecialabilityRulesDSA5 extends ItemRulesDSA5 {
     }
 
     static async refundFreelanguage(item, actor, xpCost) {
-        if (item.data.data.category.value == "language" && actor.data.data.freeLanguagePoints) {
-            let freePoints = Number(actor.data.data.freeLanguagePoints.value)
-            let languageCost = actor.data.items.filter(x => x.type == "specialability" && x.data.data.category.value == "language").reduce((a, b) => { return a + Number(b.data.data.step.value) * Number(b.data.data.APValue.value) }, 0)
+        if (item.system.category.value == "language" && actor.system.freeLanguagePoints) {
+            let freePoints = Number(actor.system.freeLanguagePoints.value)
+            let languageCost = actor.items.filter(x => x.type == "specialability" && x.system.category.value == "language").reduce((a, b) => { return a + Number(b.system.step.value) * Number(b.system.APValue.value) }, 0)
             let usedPoints = Math.min(freePoints, languageCost - Number(xpCost))
             let remainingFreepoints = Math.max(0, freePoints - usedPoints)
-            await actor.update({ "data.freeLanguagePoints.used": Math.min(freePoints, Number(usedPoints)) })
+            await actor.update({ "system.freeLanguagePoints.used": Math.min(freePoints, Number(usedPoints)) })
             xpCost = Math.max(0, xpCost - remainingFreepoints)
         }
         return xpCost
     }
 
     static async isFreeLanguage(item, actor, xpCost) {
-        if (item.data.category.value == "language" && actor.data.data.freeLanguagePoints) {
-            let freePoints = Number(actor.data.data.freeLanguagePoints.value)
-            let languageCost = actor.data.items.filter(x => x.type == "specialability" && x.data.data.category.value == "language").reduce((a, b) => { return a + Number(b.data.data.step.value) * Number(b.data.data.APValue.value) }, 0)
+        if (item.system.category.value == "language" && actor.system.freeLanguagePoints) {
+            let freePoints = Number(actor.system.freeLanguagePoints.value)
+            let languageCost = actor.items.filter(x => x.type == "specialability" && x.system.category.value == "language").reduce((a, b) => { return a + Number(b.system.step.value) * Number(b.system.APValue.value) }, 0)
             let usedPoints = Math.min(freePoints, languageCost)
             let remainingFreepoints = Math.max(0, freePoints - usedPoints)
-            await actor.update({ "data.freeLanguagePoints.used": Math.min(freePoints, Number(usedPoints) + Number(xpCost)) })
+            await actor.update({ "system.freeLanguagePoints.used": Math.min(freePoints, Number(usedPoints) + Number(xpCost)) })
             xpCost = Math.max(0, xpCost - remainingFreepoints)
         }
         return xpCost

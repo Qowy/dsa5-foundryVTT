@@ -33,12 +33,12 @@ export default class CultureWizard extends WizardDSA5 {
 
     getData(options) {
         const data = super.getData(options);
-        let advantages = this.parseToItem(this.culture.data.recommendedAdvantages.value, ["advantage"])
-        let disadvantages = this.parseToItem(this.culture.data.recommendedDisadvantages.value, ["disadvantage"])
-        let writings = this.culture.data.writing.value == "" ? [] : this.parseToItem(this.culture.data.writing.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.literacy")} (${x.trim()})`).join(", "), ["specialability"])
-        let languages = this.culture.data.language.value == "" ? [] : this.parseToItem(this.culture.data.language.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.language")} (${x.trim()}) 3`).join(", "), ["specialability"])
+        let advantages = this.parseToItem(this.culture.system.recommendedAdvantages.value, ["advantage"])
+        let disadvantages = this.parseToItem(this.culture.system.recommendedDisadvantages.value, ["disadvantage"])
+        let writings = this.culture.system.writing.value == "" ? [] : this.parseToItem(this.culture.system.writing.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.literacy")} (${x.trim()})`).join(", "), ["specialability"])
+        let languages = this.culture.system.language.value == "" ? [] : this.parseToItem(this.culture.system.language.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.language")} (${x.trim()}) 3`).join(", "), ["specialability"])
 
-        let baseCost = Number(this.culture.data.APValue.value)
+        let baseCost = Number(this.culture.system.APValue.value)
         mergeObject(data, {
             title: game.i18n.format("WIZARD.addItem", { item: `${game.i18n.localize("culture")} ${this.culture.name}` }),
             culture: this.culture,
@@ -74,9 +74,9 @@ export default class CultureWizard extends WizardDSA5 {
             return false
         }
         const selectOnlyOne = parent.find('.selectOnlyOne')
-        if(selectOnlyOne.length){
+        if (selectOnlyOne.length) {
             const options = selectOnlyOne.find('.optional:checked')
-            if(options.length != 1){
+            if (options.length != 1) {
                 ui.notifications.error(game.i18n.localize("DSAError.MissingChoices"))
                 WizardDSA5.flashElem(selectOnlyOne)
                 let tabElem = selectOnlyOne.closest('.tab').attr("data-tab")
@@ -92,25 +92,25 @@ export default class CultureWizard extends WizardDSA5 {
         parent.find("button.ok i").toggleClass("fa-check fa-spinner fa-spin")
 
         let apCost = Number(parent.find('.apCost').text())
-        if (!this._validateInput($(this._element)) || !(await this.actor.checkEnoughXP(apCost)) || await this.alreadyAdded(this.actor.data.data.details.culture.value, "culture")) {
+        if (!this._validateInput($(this._element)) || !(await this.actor.checkEnoughXP(apCost)) || await this.alreadyAdded(this.actor.system.details.culture.value, "culture")) {
             parent.find("button.ok i").toggleClass("fa-check fa-spinner fa-spin")
             return
         }
 
-        let update = { "data.details.culture.value": this.culture.name }
+        let update = { "system.details.culture.value": this.culture.name }
 
         let localKnowledge = this.items.find(x => x.name == `${game.i18n.localize('LocalizedIDs.localKnowledge')} ()` && x.type == "specialability")
         if (localKnowledge) {
             localKnowledge = duplicate(localKnowledge)
             localKnowledge.name = `${game.i18n.localize('LocalizedIDs.localKnowledge')} (${parent.find(".localKnowledge").val()})`
-            localKnowledge.data.APValue.value = 0
+            localKnowledge.system.APValue.value = 0
             await this.actor.createEmbeddedDocuments("Item", [localKnowledge])
         }
 
         await this.addSelections(parent.find('.optional:checked'))
         await this.actor.update(update);
         await this.actor._updateAPs(apCost)
-        await this.updateSkill(this.culture.data.skills.value.split(","), "skill")
+        await this.updateSkill(this.culture.system.skills.value.split(","), "skill")
 
         this.finalizeUpdate()
     }

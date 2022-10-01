@@ -4,6 +4,7 @@ import OpposedDsa5 from "../system/opposed-dsa5.js";
 import RuleChaos from "../system/rule_chaos.js";
 import TraitRulesDSA5 from "../system/trait-rules-dsa5.js";
 import DSA5_Utility from "../system/utility-dsa5.js";
+import { PlayerMenuSubApp } from './player_menu_subapps.js'
 
 //TODO magical weapon resistance
 
@@ -11,16 +12,17 @@ export default class PlayerMenu extends Application {
     constructor(app) {
         super(app)
         this.entityAbilities = []
+
         game.dsa5.apps.PlayerMenuSubApp = PlayerMenuSubApp
         this.summoningModifiers = [{
                 id: 1,
                 name: 'CONJURATION.offensiveImprovement',
                 descr: "CONJURATION.offensiveImprovementDescr",
                 changes: [
-                    { key: "data.meleeStats.attack", mode: 2, value: 2 },
-                    { key: "data.meleeStats.damage", mode: 2, value: 4 },
-                    { key: "data.rangeStats.attack", mode: 2, value: 2 },
-                    { key: "data.rangeStats.damage", mode: 2, value: 4 }
+                    { key: "system.meleeStats.attack", mode: 2, value: 2 },
+                    { key: "system.meleeStats.damage", mode: 2, value: 4 },
+                    { key: "system.rangeStats.attack", mode: 2, value: 2 },
+                    { key: "system.rangeStats.damage", mode: 2, value: 4 }
                 ]
             },
             {
@@ -28,9 +30,9 @@ export default class PlayerMenu extends Application {
                 name: 'CONJURATION.defensiveImprovement',
                 descr: "CONJURATION.defensiveImprovementDescr",
                 changes: [
-                    { key: "data.meleeStats.parry", mode: 2, value: 2 },
-                    { key: "data.totalArmor", mode: 2, value: 2 },
-                    { key: "data.status.wounds.gearmodifier", mode: 2, value: 10 }
+                    { key: "system.meleeStats.parry", mode: 2, value: 2 },
+                    { key: "system.totalArmor", mode: 2, value: 2 },
+                    { key: "system.status.wounds.gearmodifier", mode: 2, value: 10 }
                 ]
             },
             {
@@ -38,8 +40,8 @@ export default class PlayerMenu extends Application {
                 name: 'CONJURATION.speedImprovement',
                 descr: "CONJURATION.speedImprovementDescr",
                 changes: [
-                    { key: "data.status.speed.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.status.dodge.gearmodifier", mode: 2, value: 2 }
+                    { key: "system.status.speed.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.status.dodge.gearmodifier", mode: 2, value: 2 }
                 ]
             },
             { id: 4, name: 'CONJURATION.magicalImprovement', descr: "CONJURATION.magicalImprovementDescr", changes: [], fun: RuleChaos.magicalImprovement },
@@ -48,8 +50,8 @@ export default class PlayerMenu extends Application {
                 name: 'CONJURATION.resistanceImprovement',
                 descr: "CONJURATION.resistanceImprovementDescr",
                 changes: [
-                    { key: "data.status.soulpower.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.status.toughness.gearmodifier", mode: 2, value: 2 }
+                    { key: "system.status.soulpower.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.status.toughness.gearmodifier", mode: 2, value: 2 }
                 ]
             },
             {
@@ -57,10 +59,10 @@ export default class PlayerMenu extends Application {
                 name: 'CONJURATION.mentalImprovement',
                 descr: "CONJURATION.mentalImprovementDescr",
                 changes: [
-                    { key: "data.characteristics.mu.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.characteristics.kl.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.characteristics.in.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.characteristics.ch.gearmodifier", mode: 2, value: 2 }
+                    { key: "system.characteristics.mu.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.characteristics.kl.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.characteristics.in.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.characteristics.ch.gearmodifier", mode: 2, value: 2 }
                 ]
             },
             {
@@ -68,45 +70,45 @@ export default class PlayerMenu extends Application {
                 name: 'CONJURATION.physicalImprovement',
                 descr: "CONJURATION.physicalImprovementDescr",
                 changes: [
-                    { key: "data.characteristics.ff.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.characteristics.ge.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.characteristics.ko.gearmodifier", mode: 2, value: 2 },
-                    { key: "data.characteristics.kk.gearmodifier", mode: 2, value: 2 }
+                    { key: "system.characteristics.ff.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.characteristics.ge.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.characteristics.ko.gearmodifier", mode: 2, value: 2 },
+                    { key: "system.characteristics.kk.gearmodifier", mode: 2, value: 2 }
                 ]
             }
         ]
 
         this.conjurationData = {
-            qs: 0,
-            consumedQS: 0,
-            packageModifier: 0,
-            selectedIds: [],
-            selectedEntityIds: [],
-            selectedPackageIds: [],
-            conjurationTypes: {
-                1: game.i18n.localize("CONJURATION.demon"),
-                2: game.i18n.localize("CONJURATION.elemental")
+                qs: 0,
+                consumedQS: 0,
+                packageModifier: 0,
+                selectedIds: [],
+                selectedEntityIds: [],
+                selectedPackageIds: [],
+                conjurationTypes: {
+                    1: game.i18n.localize("CONJURATION.demon"),
+                    2: game.i18n.localize("CONJURATION.elemental")
+                },
+                rules: {
+                    1: { de: { pack: "dsa5-core.corerules", name: "Beschwörungen" }, en: { pack: "dsa5-core.coreenrules", name: "Summoning" } },
+                    2: { de: { pack: "dsa5-core.corerules", name: "Beschwörungen" }, en: { pack: "dsa5-core.coreenrules", name: "Summoning" } }
+                },
+                conjurationType: 1,
+                skills: {
+                    1: ["invocatioMinima", "invocatioMinor", "invocatioMaior"].map(x => game.i18n.localize(`LocalizedIDs.${x}`)),
+                    2: ["manifesto", "elementalServant", "callDjinn"].map(x => game.i18n.localize(`LocalizedIDs.${x}`))
+                },
+                modifiers: {
+                    1: this.summoningModifiers,
+                    2: this.summoningModifiers
+                },
+                moreModifiers: {},
+                postFunction: {}
             },
-            rules: {
-                1: { de: { pack: "dsa5-core.corerules", name: "Beschwörungen" }, en: { pack: "dsa5-core.coreenrules", name: "Summoning" } },
-                2: { de: { pack: "dsa5-core.corerules", name: "Beschwörungen" }, en: { pack: "dsa5-core.coreenrules", name: "Summoning" } }
-            },
-            conjurationType: 1,
-            skills: {
-                1: ["invocatioMinima", "invocatioMinor", "invocatioMaior"].map(x => game.i18n.localize(`LocalizedIDs.${x}`)),
-                2: ["manifesto", "elementalServant", "callDjinn"].map(x => game.i18n.localize(`LocalizedIDs.${x}`))
-            },
-            modifiers: {
-                1: this.summoningModifiers,
-                2: this.summoningModifiers
-            },
-            moreModifiers: {},
-            postFunction: {}
-        },
-        this.subApps = []
+            this.subApps = []
     }
 
-    registerSubApp(app){
+    registerSubApp(app) {
         this.subApps.push(app)
     }
 
@@ -114,9 +116,9 @@ export default class PlayerMenu extends Application {
         if (!this.conjuration) return ui.notifications.warn(game.i18n.localize("CONJURATION.dragConjuration"))
 
         const itemId = $(ev.currentTarget).closest('.item').attr("data-item-id")
-        const skill = this.actor.items.find(i => i.data._id == itemId);
+        const skill = this.actor.items.get(itemId);
         const moreModifiers = [
-            { name: game.i18n.localize("conjuringDifficulty"), value: getProperty(this.conjuration.data, "data.conjuringDifficulty.value") || 0, selected: true }
+            { name: game.i18n.localize("conjuringDifficulty"), value: getProperty(this.conjuration, "system.conjuringDifficulty.value") || 0, selected: true }
         ]
         if (this.conjurationData.packageModifier)
             moreModifiers.push({ name: game.i18n.localize("summoningPackage"), value: this.conjurationData.packageModifier, selected: true })
@@ -128,9 +130,9 @@ export default class PlayerMenu extends Application {
             }
         }
 
-        this.actor.setupSkill(skill.data, { moreModifiers, subtitle: ` (${this.conjuration.name})` }, undefined).then(async(setupData) => {
+        this.actor.setupSkill(skill, { moreModifiers, subtitle: ` (${this.conjuration.name})` }, undefined).then(async(setupData) => {
             const res = await this.actor.basicTest(setupData)
-            this.conjurationData.qs = res.result.qualityStep
+            this.conjurationData.qs = res.result.qualityStep || 0
             this.render(true)
         })
     }
@@ -144,9 +146,7 @@ export default class PlayerMenu extends Application {
 
             if (elem.attr("data-refresh")) this.render()
         })
-        html.find('.skill-select').click(ev => {
-            this.rollConjuration(ev)
-        })
+        html.find('.skill-select').click(ev => this.rollConjuration(ev))
         html.find('.initLibrary').click(async(ev) => {
             $(ev.currentTarget).html('<i class="fas fa-spin fa-spinner"></i>')
             await game.dsa5.itemLibrary.buildEquipmentIndex()
@@ -154,12 +154,12 @@ export default class PlayerMenu extends Application {
         })
         html.find('.item-edit').click(ev => {
             const itemId = $(ev.currentTarget).closest('.item').attr("data-item-id")
-            const item = this.actor.items.find(i => i.data._id == itemId)
+            const item = this.actor.items.get(itemId)
             item.sheet.render(true);
         })
         html.find('.selectableRow').click(ev => this.selectImprovement(ev))
         html.find('.finalizeConjuration').click(() => this.finalizeConjuration())
-        html.find('.ruleLink').click(() => this.openRules())
+        html.find('.ruleLink').click((ev) => this.openRules(ev))
         html.find('.showEntity').click(ev => {
             ev.stopPropagation()
             const fun = async() => {
@@ -172,13 +172,14 @@ export default class PlayerMenu extends Application {
             mod.selected = $(ev.currentTarget).val()
         })
 
-        for(let app of this.subApps){
+        for (let app of this.subApps) {
             app.activateListeners(html)
         }
     }
 
-    async openRules() {
-        const rule = this.conjurationData.rules[this.conjurationData.conjurationType][game.i18n.lang]
+    async openRules(ev) {
+        const subapp = ev.currentTarget.dataset.subapp
+        const rule = (subapp ? this.subApps.find(x => x.constructor.name == subapp).constructor.rulePath : this.conjurationData.rules[this.conjurationData.conjurationType])[game.i18n.lang]
         const fun = async() => {
             const pack = game.packs.get(rule.pack)
             const docs = await pack.getDocuments({ name: rule.name })
@@ -254,7 +255,7 @@ export default class PlayerMenu extends Application {
         ]
         mergeObject(options, {
             classes: options.classes.concat(["dsa5", "largeDialog", "playerMenu"]),
-            width: 470,
+            width: 500,
             height: 740,
             title: game.i18n.localize("PLAYER.title"),
             dragDrop: [{ dragSelector: null, dropSelector: null }]
@@ -272,20 +273,21 @@ export default class PlayerMenu extends Application {
         let data;
         try {
             data = JSON.parse(event.dataTransfer.getData('text/plain'));
+            data = await Actor.implementation.fromDropData(data)
         } catch (err) {
             return false;
         }
-        if (data.type == "Actor") {
+        if (data.documentName == "Actor") {
             const actor = game.actors.get(data.id)
 
-            if (actor.data.type == "creature" || $(event.target).closest('.summoningArea').length > 0) {
+            if (actor.type == "creature" || $(event.target).closest('.summoningArea').length > 0) {
                 this.conjuration = actor
                 this.conjurationData.selectedIds = []
                 this.conjurationData.selectedEntityIds = []
                 this.conjurationData.selectedPackageIds = []
-                if (actor.data.type == "creature") {
+                if (actor.type == "creature") {
                     for (const key of Object.keys(this.conjurationData.conjurationTypes)) {
-                        if (actor.data.data.creatureClass.value.includes(this.conjurationData.conjurationTypes[key])) {
+                        if (actor.system.creatureClass.value.includes(this.conjurationData.conjurationTypes[key])) {
                             this.conjurationData.conjurationType = key
                             break
                         }
@@ -308,11 +310,11 @@ export default class PlayerMenu extends Application {
             let entitySet = new Set()
             let packageSet = new Set()
             for (const x of items) {
-                if (x.data.data.distribution && entitiesToSearch.some(y => x.data.data.distribution.includes(y))) {
-                    if (x.data.data.traitType.value == "entity" && !entitySet.has(x.name)) {
+                if (x.system.distribution && entitiesToSearch.some(y => x.system.distribution.includes(y))) {
+                    if (x.system.traitType.value == "entity" && !entitySet.has(x.name)) {
                         entitySet.add(x.name)
                         data.entityAbilities.push(x)
-                    } else if (x.data.data.traitType.value == "summoning" && !packageSet.has(x.name)) {
+                    } else if (x.system.traitType.value == "summoning" && !packageSet.has(x.name)) {
                         packageSet.add(x.name)
                         data.entityPackages.push(x)
                     }
@@ -358,33 +360,10 @@ export default class PlayerMenu extends Application {
         return data
     }
 
-    async prepareSubApps(data){
+    async prepareSubApps(data) {
         data.subApps = []
-        for(let app of this.subApps){
+        for (let app of this.subApps) {
             data.subApps.push(await app.prepareApp(data))
-        }
-    }
-}
-
-class PlayerMenuSubApp{
-    static template = ""
-    async getData(data){
-        return {}
-    }
-    
-    activateListeners(html){}
-
-    async renderData(data){
-        const renderData = await this.getData(data)
-        mergeObject(renderData, data)
-        const template = await renderTemplate(this.constructor.template, renderData)
-        return template
-    }
-
-    async prepareApp(data){
-        return {
-            name: game.i18n.localize(`PLAYER.${this.constructor.name}`),
-            view: await this.renderData(data)
         }
     }
 }
@@ -489,8 +468,8 @@ class ConjurationRequest extends DSA5Dialog {
             await game.dsa5.apps.playerMenu.conjurationData.postFunction[this.creationData.type](this.conjuration, this.creationData.qs - this.creationData.consumedQS, this.creationData.type)
         }
 
-        if (this.conjuration.type == "creature" && !(this.conjuration.data.creatureClass.value.includes(this.creationData.typeName))) {
-            this.conjuration.data.creatureClass.value += `, ${this.creationData.typeName}`
+        if (this.conjuration.type == "creature" && !(this.conjuration.system.creatureClass.value.includes(this.creationData.typeName))) {
+            this.conjuration.system.creatureClass.value += `, ${this.creationData.typeName}`
         }
 
         this.actor = await Actordsa5.create(this.conjuration)
@@ -504,7 +483,7 @@ class ConjurationRequest extends DSA5Dialog {
         for (let item of entityAbilities)
             await TraitRulesDSA5.traitAdded(this.actor, item)
 
-        await this.actor.update({ "data.status.wounds.value": this.actor.data.data.status.wounds.max })
+        await this.actor.update({ "system.status.wounds.value": this.actor.system.status.wounds.max })
 
         const chatmsg = await renderTemplate("systems/dsa5/templates/system/conjuration/chat.html", {
             actor: this.actor,
@@ -540,7 +519,7 @@ class ConjurationRequest extends DSA5Dialog {
         html.on("dragstart", ".newNPC", event => {
             event.stopPropagation();
             const a = event.currentTarget;
-            let dragData = { type: "Actor", id: a.dataset.id };
+            let dragData = { type: "Actor", uuid: a.dataset.uuid };
             event.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         })
         html.find('.showEntity').click(ev => {

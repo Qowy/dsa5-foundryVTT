@@ -7,16 +7,17 @@ export default class ItemRulesDSA5 {
     static getTalentBonus(actor, talent, types) {
         let modifier = []
         let selected = game.settings.get("dsa5", "talentModifierEnabled")
-        for (let k of actor.items.filter(x => { return types.includes(x.type) && x.data.data.effect.value.includes(talent) })) {
-            for (let m of k.data.data.effect.value.split(/;|,/)) {
+        for (let k of actor.items.filter(x => { return types.includes(x.type) && x.system.effect.value.includes(talent) })) {
+            for (let m of k.system.effect.value.split(/;|,/)) {
                 if (m.includes(talent)) {
                     let parsed = DSA5_Utility.parseAbilityString(m.trim())
                     if (parsed.name == talent) {
                         modifier.push({
                             name: k.name,
-                            value: parsed.step * (k.data.data.step ? k.data.data.step.value : 1),
+                            value: parsed.step * (k.system.step ? k.system.step.value : 1),
                             type: parsed.type,
-                            selected: selected
+                            selected: selected,
+                            source: k.name
                         })
                     }
                 }
@@ -25,10 +26,9 @@ export default class ItemRulesDSA5 {
         return modifier
     }
 
-
     static simpleAdoption(item, adoption, name, source) {
         if (source[name].effect) {
-            item.data.effect.value = `${adoption.name} ${source[name].effect}`
+            item.system.effect.value = `${adoption.name} ${source[name].effect}`
         }
         if (source[name].activeEffect) {
             const change = duplicate(source[name].activeEffect)
@@ -63,7 +63,7 @@ export default class ItemRulesDSA5 {
             if (elem[parsed.name]) {
                 let adoption = actor.items.find(x => elem[parsed.name].items.includes(x.type) && x.name == parsed.special)
                 if (adoption) {
-                    item.data.APValue.value = item.data.APValue.value.split("/")[adoption.data.data.StF.value.charCodeAt(0) - 65]
+                    item.system.APValue.value = item.system.APValue.value.split("/")[adoption.system.StF.value.charCodeAt(0) - 65]
                     ItemRulesDSA5.simpleAdoption(item, adoption, parsed.name, elem)
                 }
                 break
@@ -79,7 +79,7 @@ export default class ItemRulesDSA5 {
     static itemStep(actorData, name, types) {
         let item = actorData.items.find(x => types.includes(x.type) && x.name == name)
         if (item) {
-            return Number(item.data.data == undefined ? item.data.step.value : item.data.data.step.value)
+            return Number(item.system == undefined ? item.system.step.value : item.system.step.value)
         } else {
             return 0
         }
@@ -92,8 +92,9 @@ export default class ItemRulesDSA5 {
         if (item) {
             res.push({
                 name: item.name,
-                value: Number(item.data.data == undefined ? item.data.step.value : item.data.data.step.value) * factor,
-                selected
+                value: Number(item.system == undefined ? item.system.step.value : item.system.step.value) * factor,
+                selected,
+                source: item.name
             })
         }
         return res
