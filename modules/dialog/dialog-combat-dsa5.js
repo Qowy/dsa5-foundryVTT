@@ -174,6 +174,10 @@ export default class DSA5CombatDialog extends DialogShared {
                         level = Math.max(0, level - darkSightLevel);
                         if (SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.traditionBoron")))
                             level = Math.max(0, level - 1);
+                        if (SpecialabilityRulesDSA5.hasAbility(actor, game.i18n.localize("LocalizedIDs.traditionMarbo")))
+                            level = Math.max(0, level - 1);
+
+
                         level = Math.min(
                             4,
                             level + AdvantageRulesDSA5.vantageStep(actor, game.i18n.localize("LocalizedIDs.nightBlind"))
@@ -263,7 +267,7 @@ export default class DSA5CombatDialog extends DialogShared {
         if (this.dialogData.mode == "damage") return
 
         const source = this.dialogData.source
-        const isMelee = source.type == "trait" && getProperty(source, "system.traitType.value") || source.type == "meleeweapon"
+        const isMelee = (source.type == "trait" && getProperty(source, "system.traitType.value") == "meleeAttack") || source.type == "meleeweapon"
         const testData = { source: this.dialogData.source, extra: { options: {} } }
         const actor = DSA5_Utility.getSpeaker(this.dialogData.speaker)
         isMelee ? DSA5CombatDialog.resolveMeleeDialog(testData, {}, this.element, actor, {}, -3, this.dialogData.mode) :
@@ -300,6 +304,10 @@ export default class DSA5CombatDialog extends DialogShared {
             }, {
                 name: game.i18n.localize("advantageousPosition"),
                 value: data.advantageousPosition ? 2 : 0,
+            },
+            {
+                name: game.i18n.localize("sizeCategory"),
+                value: DSA5.meleeSizeModifier[data.size],
             },
             ...Itemdsa5.getSpecAbModifiers(html, mode),
             ...this.assassinationModifiers(testData, data)
@@ -347,7 +355,8 @@ export default class DSA5CombatDialog extends DialogShared {
                 name: game.i18n.localize("sight"),
                 value: Number(data.vision || 0),
             },
-            ...Itemdsa5.getSpecAbModifiers(html, "attack"), {
+            ...Itemdsa5.getSpecAbModifiers(html, "attack"), 
+            {
                 name: game.i18n.localize("sizeCategory"),
                 value: DSA5.rangeSizeModifier[data.size],
             }

@@ -32,7 +32,7 @@
 
                     </div>
                 </div>
-                <div class="row-section lineheight" data-tooltip="{{localize 'MASTER.sightautomationTooltip'}}">
+                <div class="row-section lineheight" data-tooltip="MASTER.sightautomationTooltip">
                     <div class="col fourty">
                         <label>{{localize "MASTER.threshold"}}</label>
                     </div>
@@ -59,7 +59,7 @@
             <div class="groupbox">
                 <h2>{{localize 'MASTER.automation'}}</h2>
 
-                <div class="row-section lineheight" data-tooltip="{{localize 'DSASETTINGS.enableDPSHint'}}">
+                <div class="row-section lineheight" data-tooltip="DSASETTINGS.enableDPSHint">
                     <div class="col fourty table-title">
                         <label>{{localize "DSASETTINGS.enableDPS"}}</label>
                     </div>
@@ -91,10 +91,10 @@
         </div>
         <div class="tab main" data-tab="main">
             <div class="row-section">
-                <div class="col ten lineheight center" data-tooltip="{{localize 'groupFatePoints'}}">
-                    {{{localize 'CHARAbbrev.groupFatePoints'}}}
+                <div class="col third lineheight center" data-tooltip="groupFatePoints">
+                    <b>{{{localize 'CHARAbbrev.groupFatePoints'}}}</b>
                 </div>
-                <div class="col eighty center" data-tooltip="{{localize 'fatePoints'}}">
+                <div class="col sixty center" data-tooltip="fatePoints">
                     {{#each groupschips as |item i|}}
                     <a class="schip groupschip {{item.cssClass}}" data-val="{{item.value}}"></a>
                     {{/each}}
@@ -105,17 +105,12 @@
                 </div>
             </div>
             <div class="row-section">
-                <div class="col ten"></div>
-                <div class="col five">
-
+                
+                
+                <div class="col third lineheight center">
+                    <b>{{localize "skill"}}</b>
                 </div>
-                <div class="col ten">
-
-                </div>
-                <div class="col ten lineheight">
-                    <label>{{localize "skill"}}</label>
-                </div>
-                <div class="col five">
+                <div class="col sixty">
                     <select name="data.skill" class="skillSelektor select2" data-dtype="String">
                         {{#select lastSkill}}
                         {{#each abilities as |ch|}}
@@ -124,11 +119,15 @@
                         {{/select}}
                     </select>
                 </div>
+         
+                <div class="col ten lineheight center">
+                    <a class="requestRoll" data-tooltip="HELP.request"><i class="fas fa-dice-two"></i></a>
+                </div>
             </div>
             <div class="row-section skills table-title">
-                <div class="col ten"><a class="dragEveryone" data-tooltip="{{localize 'MASTER.dragEveryone'}}"><i class="fas fa-grip-vertical"></i></a></div>
+                <div class="col ten"><a class="dragEveryone" data-tooltip="MASTER.dragEveryone"><i class="fas fa-grip-vertical"></i></a></div>
                 <div class="col five">
-                    {{localize 'Name'}} <a class="randomPlayer" data-tooltip="{{localize 'MASTER.randomPlayer'}}"><i
+                    {{localize 'Name'}} <a class="randomPlayer" data-tooltip="MASTER.randomPlayer"><i
                             class="fas fa-dice-six"></i></a>
                 </div>
                 <div class="col ten">
@@ -137,11 +136,11 @@
                     <input type="checkbox" class="selectAll" name="selectAll" value="1">
                 </div>
                 <div class="col five">
-                    <a class="rollAll" data-tooltip="{{localize 'CHAT.RollBlind'}}"><i class="fas fa-dice"></i></a>
-                    <a class="getPaidAll" data-tooltip="{{localize 'PAYMENT.wage'}}"><i class="fas fa-piggy-bank"></i></a>
-                    <a class="payAll" data-tooltip="{{localize 'MASTER.payTT'}}"><i class="fas fa-coins"></i></a>
-                    <a class="expAll" data-tooltip="{{localize 'MASTER.awardXP'}}"><i class="fas fa-trophy"></i></a>
-                    <a class="groupCheck" data-tooltip="{{localize 'HELP.groupcheck'}}"><i class="fas fa-users-cog"></i></a>
+                    <a class="rollAll" data-tooltip="CHAT.RollBlind"><i class="fas fa-dice"></i></a>
+                    <a class="getPaidAll" data-tooltip="PAYMENT.wage"><i class="fas fa-piggy-bank"></i></a>
+                    <a class="payAll" data-tooltip="MASTER.payTT"><i class="fas fa-coins"></i></a>
+                    <a class="expAll" data-tooltip="MASTER.awardXP"><i class="fas fa-trophy"></i></a>
+                    <a class="groupCheck" data-tooltip="HELP.groupcheck"><i class="fas fa-users-cog"></i></a>
                 </div>
             </div>
             <div class="heros">
@@ -161,13 +160,13 @@
                             </div>
                         </div>
                         <div class="col ten verticalFlex barRight">
-                            <div class="bar LeP" style="--a: {{hero.status.wounds.value}}; --b: {{hero.status.wounds.max}}">
+                            <div class="bar LeP" style="--a: {{hero.system.status.wounds.value}}; --b: {{hero.system.status.wounds.max}}">
                             </div>
                             {{#if hero.system.isMage}}
-                            <div class="bar AsP" style="--a: {{hero.status.astralenergy.value}}; --b: {{hero.status.astralenergy.max}}">
+                            <div class="bar AsP" style="--a: {{hero.system.status.astralenergy.value}}; --b: {{hero.system.status.astralenergy.max}}">
                             </div>
                             {{/if}} {{#if hero.system.isPriest}}
-                            <div class="bar KaP" style="--a: {{hero.status.karmaenergy.value}}; --b: {{hero.status.karmaenergy.max}}">
+                            <div class="bar KaP" style="--a: {{hero.system.status.karmaenergy.value}}; --b: {{hero.system.status.karmaenergy.max}}">
                             </div>
                             {{/if}}
                         </div>
@@ -175,17 +174,17 @@
                             <input type="checkbox" class="heroSelector" name="heroSelector" value="1" {{checked hero.gmSelected}}>
                         </div>
                         <div class="col five">
-                            <a class="rollChar" data-tooltip="{{localize 'CHAT.RollBlind'}}"><i class="fas fa-dice"></i></a>
-                            <a class="getPaid" data-tooltip="{{localize 'PAYMENT.wage'}}"><i class="fas fa-piggy-bank"></i></a>
-                            <a class="pay" data-tooltip="{{localize 'MASTER.payTT'}}"><i class="fas fa-coins"></i></a>
-                            <a class="exp" data-tooltip="{{localize 'MASTER.awardXP'}}"><i class="fas fa-trophy"></i></a>
+                            <a class="rollChar" data-tooltip="CHAT.RollBlind"><i class="fas fa-dice"></i></a>
+                            <a class="getPaid" data-tooltip="PAYMENT.wage"><i class="fas fa-piggy-bank"></i></a>
+                            <a class="pay" data-tooltip="MASTER.payTT"><i class="fas fa-coins"></i></a>
+                            <a class="exp" data-tooltip="MASTER.awardXP"><i class="fas fa-trophy"></i></a>
                         </div>
                     </div>
                     <div class="row-section lineheight expandDetails col">
                         <div class="col">
                             <ul>
                                 <li><b>{{localize "purse"}}</b>: {{{hero.purse}}}</li>
-                                <li><b>{{localize "Experience"}}</b>: {{hero.details.experience.spent}}/{{hero.details.experience.total}}</li>
+                                <li><b>{{localize "Experience"}}</b>: {{hero.system.details.experience.spent}}/{{hero.system.details.experience.total}}</li>
                                 <li><b>{{localize "advantages"}}</b>: {{#each hero.advantages as |ad i|}}<a class="actorItem" data-uuid="{{ad.uuid}}">{{ad.name}}</a>{{/each}}</li>
                                 <li><b>{{localize "disadvantages"}}</b>: {{#each hero.disadvantages as |ad i|}}<a class="actorItem" data-uuid="{{ad.uuid}}">{{ad.name}}</a>{{/each}}</li>
                             </ul>

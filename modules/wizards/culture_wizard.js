@@ -1,17 +1,9 @@
 import WizardDSA5 from "./dsa5_wizard.js"
 
 export default class CultureWizard extends WizardDSA5 {
-
-    constructor(app) {
-        super(app)
-        this.actor = null
-        this.culture = null
-        this.dataTypes = ["advantage", "disadvantage", "specialability", "combatskill"]
-    }
-
     static get defaultOptions() {
         const options = super.defaultOptions;
-        options.title = game.i18n.format("WIZARD.addItem", { item: `${game.i18n.localize("culture")}` })
+        options.title = game.i18n.format("WIZARD.addItem", { item: `${game.i18n.localize("ITEM.TypeCulture")}` })
         options.template = 'systems/dsa5/templates/wizard/add-culture-wizard.html'
         return options;
     }
@@ -31,12 +23,12 @@ export default class CultureWizard extends WizardDSA5 {
         })
     }
 
-    getData(options) {
-        const data = super.getData(options);
-        let advantages = this.parseToItem(this.culture.system.recommendedAdvantages.value, ["advantage"])
-        let disadvantages = this.parseToItem(this.culture.system.recommendedDisadvantages.value, ["disadvantage"])
-        let writings = this.culture.system.writing.value == "" ? [] : this.parseToItem(this.culture.system.writing.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.literacy")} (${x.trim()})`).join(", "), ["specialability"])
-        let languages = this.culture.system.language.value == "" ? [] : this.parseToItem(this.culture.system.language.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.language")} (${x.trim()}) 3`).join(", "), ["specialability"])
+    async getData(options) {
+        const data = await super.getData(options);
+        let advantages = await this.parseToItem(this.culture.system.recommendedAdvantages.value, ["advantage"])
+        let disadvantages = await this.parseToItem(this.culture.system.recommendedDisadvantages.value, ["disadvantage"])
+        let writings = this.culture.system.writing.value == "" ? [] : await this.parseToItem(this.culture.system.writing.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.literacy")} (${x.trim()})`).join(", "), ["specialability"])
+        let languages = this.culture.system.language.value == "" ? [] : await this.parseToItem(this.culture.system.language.value.split(",").map(x => `${game.i18n.localize("LocalizedIDs.language")} (${x.trim()}) 3`).join(", "), ["specialability"])
 
         let baseCost = Number(this.culture.system.APValue.value)
         mergeObject(data, {
@@ -61,7 +53,6 @@ export default class CultureWizard extends WizardDSA5 {
     async addCulture(actor, item) {
         this.actor = actor
         this.culture = duplicate(item)
-        await this._loadCompendiae()
     }
 
     _validateInput(parent) {
@@ -99,7 +90,7 @@ export default class CultureWizard extends WizardDSA5 {
 
         let update = { "system.details.culture.value": this.culture.name }
 
-        let localKnowledge = this.items.find(x => x.name == `${game.i18n.localize('LocalizedIDs.localKnowledge')} ()` && x.type == "specialability")
+        let localKnowledge = await this.findCompendiumItem(`${game.i18n.localize('LocalizedIDs.localKnowledge')} ()`, [ "specialability"])
         if (localKnowledge) {
             localKnowledge = duplicate(localKnowledge)
             localKnowledge.name = `${game.i18n.localize('LocalizedIDs.localKnowledge')} (${parent.find(".localKnowledge").val()})`

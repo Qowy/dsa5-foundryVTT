@@ -87,7 +87,9 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                     "meleeweapon",
                     "rangeweapon",
                 ].includes(itemType) ||
-                (["specialability"].includes(itemType) && getProperty(this.object, "parent.system.category.value") == "Combat"),
+                (["specialability"].includes(itemType) && getProperty(this.object, "parent.system.category.value") == "Combat") ||
+                (itemType == "trait" && ["meleeAttack", "rangeAttack"].includes(getProperty(this.object, "parent.system.traitType.value")))
+                ,
             hasDamageTransformation: ["ammunition"].includes(itemType),
         };
         if (effectConfigs.hasDamageTransformation) {
@@ -247,7 +249,8 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                 const res = await actor.basicTest(setupData);
                 const availableQs = res.result.qualityStep || 0;
                 //this.automatedAnimation(res.result.successLevel);
-                if (availableQs <= 0) {
+
+                if (availableQs < 1) {
                     await this.applyEffect(data.message, data.mode, [target], { effectIds: [data.effect], skipResistRolls: true })
                 }
             });
@@ -266,9 +269,10 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
             testData.qualityStep = testData.successLevel > 0 ? 2 : 1;
         }
 
-        let attacker = DSA5_Utility.getSpeaker(speaker);
+        const attacker = DSA5_Utility.getSpeaker(speaker) || 
+            DSA5_Utility.getSpeaker(getProperty(message.flags, "data.preData.extra.speaker")) || 
+            game.actors.get(getProperty(message.flags, "data.preData.extra.actor.id"))
 
-        if (!attacker) attacker = game.actors.get(getProperty(message.flags, "data.preData.extra.actor.id"));
         let sourceActor = attacker;
         let effects = await this._parseEffectDuration(source, testData, message.flags.data.preData, attacker);
         if (options.effectIds) effects = effects.filter(x => options.effectIds.includes(x._id))
@@ -294,7 +298,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
                     options.skipResistRolls || false
                 );
                 if (effectApplied) {
-                    const appliedEffect = game.i18n.format("ActiveEffects.appliedEffect", { target: actor.name, source: effectNames.join(", ") });
+                    const appliedEffect = game.i18n.format("ActiveEffects.appliedEffect", { target: actor.token?.name || actor.name, source: effectNames.join(", ") });
                     const infoMsg = `${appliedEffect}${msg || ""}`;
                     await ChatMessage.create(DSA5_Utility.chatDataSetup(infoMsg));
                 }
@@ -383,6 +387,7 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
     dropDownMenu() {
         const FW = game.i18n.localize("MODS.FW");
         const skill = game.i18n.localize("skill");
+        const regenerate = game.i18n.localize("regenerate")
         const FP = game.i18n.localize("MODS.FP");
         const stepValue = game.i18n.localize("stepValue");
         const QS = game.i18n.localize("MODS.QS");
@@ -391,10 +396,9 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
         const democs = `${game.i18n.localize("LocalizedIDs.wrestle")} 1`;
         const closeCombat = game.i18n.localize("closeCombatAttacks");
         const rangeCombat = game.i18n.localize("rangeCombatAttacks");
-        const combatReg = `${game.i18n.localize("regenerate")} (${game.i18n.localize("CHARAbbrev.CR")})`;
+        const combatReg = `${regenerate} (${game.i18n.localize("CHARAbbrev.CR")})`;
         const AsPCost = game.i18n.localize("AsPCost");
         const KaPCost = game.i18n.localize("KaPCost");
-        const regenerate = game.i18n.localize("regenerate")
         const feature = `${game.i18n.localize("Healing")} 1`
         const descriptor = `${game.i18n.localize("Description")} 1`
         const miracle = `${game.i18n.localize('LocalizedIDs.miracle')}`
@@ -535,25 +539,25 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
             },
             {
                 name: `${game.i18n.localize("feature")} - ${AsPCost}`,
-                val: `data.skillModifiers.feature.AsPCost`,
+                val: `system.skillModifiers.feature.AsPCost`,
                 mode: 0,
                 ph: feature,
             },
             {
                 name: `${game.i18n.localize("advanced")} - ${AsPCost}`,
-                val: `data.skillModifiers.conditional.AsPCost`,
+                val: `system.skillModifiers.conditional.AsPCost`,
                 mode: 0,
                 ph: descriptor,
             },
             {
                 name: `${game.i18n.localize("feature")} - ${KaPCost}`,
-                val: `data.skillModifiers.feature.KaPCost`,
+                val: `system.skillModifiers.feature.KaPCost`,
                 mode: 0,
                 ph: feature,
             },
             {
                 name: `${game.i18n.localize("advanced")} - ${KaPCost}`,
-                val: `data.skillModifiers.conditional.KaPCost`,
+                val: `system.skillModifiers.conditional.KaPCost`,
                 mode: 0,
                 ph: descriptor,
             },
@@ -562,20 +566,19 @@ export default class DSAActiveEffectConfig extends ActiveEffectConfig {
         for (const k of models) {
             let key = k == "skill" ? "skillglobal" : k;
             const el = game.i18n.localize(key);
-            optns.push({ name: `${el} - ${FW}`, val: `data.skillModifiers.${k}.FW`, mode: 0, ph: demo }, { name: `${el} - ${FP}`, val: `data.skillModifiers.${k}.FP`, mode: 0, ph: demo }, { name: `${el} - ${stepValue}`, val: `data.skillModifiers.${k}.step`, mode: 0, ph: demo }, { name: `${el} - ${QS}`, val: `data.skillModifiers.${k}.QL`, mode: 0, ph: demo }, { name: `${el} - ${partChecks}`, val: `data.skillModifiers.${k}.TPM`, mode: 0, ph: demo });
+            optns.push({ name: `${el} - ${FW}`, val: `system.skillModifiers.${k}.FW`, mode: 0, ph: demo }, { name: `${el} - ${FP}`, val: `system.skillModifiers.${k}.FP`, mode: 0, ph: demo }, { name: `${el} - ${stepValue}`, val: `system.skillModifiers.${k}.step`, mode: 0, ph: demo }, { name: `${el} - ${QS}`, val: `system.skillModifiers.${k}.QL`, mode: 0, ph: demo }, { name: `${el} - ${partChecks}`, val: `system.skillModifiers.${k}.TPM`, mode: 0, ph: demo });
         }
 
-        const attrs = ["mu", "kl", "in", "ch", "ff", "ge", "ko", "kk"];
-        for (const k of attrs)
+        for (const k of Object.keys(DSA5.characteristics))
             optns.push({
                 name: game.i18n.localize(`CHAR.${k.toUpperCase()}`),
-                val: `data.characteristics.${k}.gearmodifier`,
+                val: `system.characteristics.${k}.gearmodifier`,
                 mode: 2,
                 ph: "1",
             });
 
         for (const k of DSA5.gearModifyableCalculatedAttributes)
-            optns.push({ name: game.i18n.localize(k), val: `data.status.${k}.gearmodifier`, mode: 2, ph: "1" });
+            optns.push({ name: game.i18n.localize(k), val: `system.status.${k}.gearmodifier`, mode: 2, ph: "1" });
 
         optns = optns.sort((a, b) => {
             return a.name.localeCompare(b.name);

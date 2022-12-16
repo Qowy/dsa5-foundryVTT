@@ -4,7 +4,7 @@ import DSA5_Utility from "./utility-dsa5.js"
 export default class DSA5Initializer extends Dialog {
     constructor(title, content, module, lang = "") {
         let data = {
-            title: title,
+            title,
             content: content,
             buttons: {
                 initialize: {
@@ -116,7 +116,7 @@ export default class DSA5Initializer extends Dialog {
                     }
                 }
                 
-                await Playlist.create(itemsToCreate, {keepId: true})
+                await Playlist.create(itemsToCreate, { keepId: true })
                 await Playlist.updateDocuments(itemsToUpdate)
             }
             if (json.scenes) {
@@ -139,7 +139,7 @@ export default class DSA5Initializer extends Dialog {
                             new Dialog({
                                 title: game.i18n.localize("Book.sceneReset"),
                                 content: game.i18n.format("Book.sceneResetDescription", { name: entry.name }),
-                                default: 'yes',
+                                default: 'Yes',
                                 buttons: {
                                     Yes: {
                                         icon: '<i class="fa fa-check"></i>',

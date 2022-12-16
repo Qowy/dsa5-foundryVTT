@@ -1,4 +1,3 @@
-import Itemdsa5 from "../item/item-dsa5.js"
 import DSA5StatusEffects from "../status/status_effects.js"
 import SpecialabilityRulesDSA5 from "./specialability-rules-dsa5.js"
 import DSA5_Utility from "./utility-dsa5.js"
@@ -43,6 +42,18 @@ export default class RuleChaos {
                 scene: canvas.scene ? canvas.scene.id : null
             })
         }
+    }
+
+    static getGroupSchips(){
+        const schipSetting = game.settings.get("dsa5", "groupschips").split("/").map(x => Number(x))
+        const groupschips = []
+        for (let i = 1; i <= schipSetting[1]; i++) {
+            groupschips.push({
+                value: i,
+                cssClass: i <= schipSetting[0] ? "fullSchip" : "emptySchip"
+            })
+        }
+        return groupschips
     }
 
     //todo this should not be necessary

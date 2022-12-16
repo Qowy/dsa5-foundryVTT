@@ -1,11 +1,20 @@
 <div class="tab description active" data-tab="description">
     <div>
-        {{editor enrichedDescription target="system.description.value" button=true owner=owner editable=editable}} 
+        <div class="row-section">
+            <div class="col {{#unless system.description.value}}item-box{{/unless}}">
+                {{editor enrichedDescription target="system.description.value" button=true owner=owner editable=editable}} 
+            </div>
+        </div>
     </div>
     {{#if isGM}}
-    <div style="min-height: 200px;margin-top: 20px;">
-        <h3 class="note-section label">{{localize "GM Notes"}}</h3>
-        {{editor enrichedGmdescription target="system.gmdescription.value" button=true owner=owner editable=editable}} 
+    <div class="row-section" style="margin-top:20px">
+        <div class="col maskfield">
+            <div class="row-section" data-tooltip="TT.onlyGM">
+                <div class="col {{#unless system.gmdescription.value}}item-box{{/unless}}">
+                    {{editor enrichedGmdescription target="system.gmdescription.value" button=true owner=owner editable=editable}} 
+                </div>
+            </div>
+        </div>
     </div>
     {{/if}}
 </div>

@@ -8,6 +8,14 @@ import RequestRoll from "../system/request-roll.js";
 import DSAActiveEffectConfig from "../status/active_effects.js";
 import DSA5_Utility from "../system/utility-dsa5.js";
 import { dropToGround } from "./itemDrop.js";
+import { setEnrichers } from './texteditor.js'
+import { connectHook } from "./itemDrop.js";
+import Actordsa5 from "../actor/actor-dsa5.js";
+import DidYouKnow from "../system/didyouknow.js";
+import TokenHotbar2 from "../system/tokenHotbar2.js";
+import DSAIniTracker from "../system/dsa-ini-tracker.js";
+import DSATour from "../tours/dsa_tour.js";
+import { initImagePopoutTochat } from "./imagepopouttochat.js";
 
 export default function() {
     Hooks.on("ready", async() => {
@@ -111,6 +119,9 @@ export default function() {
                     case "updateHits":
                     case "hideResistButton":
                         break
+                    case "reduceGroupSchip":
+                        Actordsa5.reduceGroupSchip()
+                        break
                     case "summonCreature":
                         PlayerMenu.createConjuration(data.payload)
                         break
@@ -126,6 +137,7 @@ export default function() {
             await game.settings.set("vtta-tokenizer", "default-frame-neutral", "[data] systems/dsa5/icons/backgrounds/token_blue.webp")
             await game.settings.set("dsa5", "tokenizerSetup", true)
         }
+
         if (DSA5_Utility.moduleEnabled("dice-so-nice") && !(await game.settings.get("dsa5", "diceSetup")) && game.user.isGM) {
             await game.settings.set("dice-so-nice", "immediatelyDisplayChatMessages", true)
             await game.settings.set("dsa5", "diceSetup", true)
@@ -134,5 +146,20 @@ export default function() {
         await DSA5Tutorial.firstTimeMessage()
 
         Itemdsa5.setupSubClasses()
+
+        DidYouKnow.showOneMessage()
+        TokenHotbar2.registerTokenHotbar()
+        connectHook()
+        DSAIniTracker.connectHooks()
+        const hook = (dat) => {
+            if(dat.tabName == "settings") {
+                DSATour.travelAgency()
+                Hooks.off('changeSidebarTab', hook)
+            }
+        }
+        Hooks.on('changeSidebarTab', hook)
+        
+        setEnrichers()
+        initImagePopoutTochat()
     });
 }

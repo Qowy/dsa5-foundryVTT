@@ -26,8 +26,8 @@ export default class ItemSheetdsa5 extends ItemSheet {
 
     static get defaultOptions() {
         const options = super.defaultOptions;
-        options.tabs = [{ navSelector: ".tabs", contentSelector: ".content" }]
         mergeObject(options, {
+            tabs: [{ navSelector: ".tabs", contentSelector: ".content" }],
             classes: options.classes.concat(["dsa5", "item"]),
             width: 450,
             height: 500,
@@ -107,8 +107,7 @@ export default class ItemSheetdsa5 extends ItemSheet {
     }
 
     get template() {
-        let type = this.item.type;
-        return `systems/dsa5/templates/items/item-${type}-sheet.html`;
+        return `systems/dsa5/templates/items/item-${this.item.type}-sheet.html`;
     }
 
     _getItemId(ev) {
@@ -174,11 +173,7 @@ export default class ItemSheetdsa5 extends ItemSheet {
         })
 
         DSA5ChatAutoCompletion.bindRollCommands(html)
-
         DSA5StatusEffects.bindButtons(html)
-        html.on('click', '.chat-condition', ev => {
-            DSA5ChatListeners.postStatus($(ev.currentTarget).attr("data-id"))
-        })
 
         let toObserve = html.find(".item-header")
         if (toObserve.length) {
@@ -244,7 +239,6 @@ export default class ItemSheetdsa5 extends ItemSheet {
         data.item = this.item
         data.armorAndWeaponDamage = game.settings.get("dsa5", "armorAndWeaponDamage")
         data.isGM = game.user.isGM
-
         data.enrichedDescription = await TextEditor.enrichHTML(getProperty(this.item.system, "description.value"), {secrets: true, async: true})
         data.enrichedGmdescription = await TextEditor.enrichHTML(getProperty(this.item.system, "gmdescription.value"), {secrets: true, async: true})
         return data;
@@ -487,7 +481,9 @@ class Enchantable extends ItemSheetdsa5 {
 class InformationSheet extends ItemSheetdsa5 {
     async getData(options) {
         const data = await super.getData(options)
-        data["allSkills"] = await DSA5_Utility.allSkillsList()
+        mergeObject(data, {
+            allSkills: await DSA5_Utility.allSkillsList()
+        })
         return data
     }
 }
@@ -495,7 +491,6 @@ class InformationSheet extends ItemSheetdsa5 {
 class AmmunitionSheet extends Enchantable {
     constructor(item, options) {
         super(item, options);
-        this.mce = null;
         this.isPoisonable = true
     }
     async getData(options) {
@@ -509,12 +504,15 @@ class AmmunitionSheet extends Enchantable {
 class EquipmentSheet extends ItemSheetObfuscation(Enchantable) {
     async getData(options) {
         const data = await super.getData(options);
-        data['equipmentTypes'] = DSA5.equipmentTypes;
-        data['domains'] = this.prepareDomains()
-        data.canOnUseEffect = game.user.isGM || await game.settings.get("dsa5", "playerCanEditSpellMacro")
+        mergeObject(data, {
+            equipmentTypes: DSA5.equipmentTypes,
+            domains: this.prepareDomains(),
+            canOnUseEffect: game.user.isGM || await game.settings.get("dsa5", "playerCanEditSpellMacro")
+        })
         if (this.isBagWithContents()) {
             let weightSum = 0
-            data['containerContent'] = this.item.actor.items
+            mergeObject(data, {
+                containerContent: this.item.actor.items
                 .filter(x => DSA5.equipmentCategories.includes(x.type) && x.system.parent_id == this.item.id)
                 .map(x => {
                     x.weight = parseFloat((x.system.weight.value * x.system.quantity.value).toFixed(3));
@@ -526,10 +524,11 @@ class EquipmentSheet extends ItemSheetObfuscation(Enchantable) {
                         x.enchantClass = "common"
                     }
                     return x
-                })
-            data['weightSum'] = parseFloat(weightSum.toFixed(3))
-            data['weightWidth'] = `style="width: ${Math.min(this.item.system.capacity ? weightSum / this.item.system.capacity * 100 : 0, 100)}%"`
-            data['weightExceeded'] = weightSum > Number(this.item.system.capacity) ? "exceeded" : ""
+                }),
+                weightSum: parseFloat(weightSum.toFixed(3)),
+                weightWidth: `style="width: ${Math.min(this.item.system.capacity ? weightSum / this.item.system.capacity * 100 : 0, 100)}%"`,
+                weightExceeded: weightSum > Number(this.item.system.capacity) ? "exceeded" : ""
+            })
         }
         return data
     }
@@ -704,10 +703,11 @@ class RangeweaponSheet extends ItemSheetObfuscation(Enchantable) {
         }
         return buttons
     }
+
     async getData(options) {
         const data = await super.getData(options)
-        data.canOnUseEffect = game.user.isGM || await game.settings.get("dsa5", "playerCanEditSpellMacro")
         mergeObject(data, {
+            canOnUseEffect: game.user.isGM || await game.settings.get("dsa5", "playerCanEditSpellMacro"),
             ammunitiongroups: DSA5.ammunitiongroups,
             combatskills: await DSA5_Utility.allCombatSkillsList("range"),
             domains: this.prepareDomains(),
@@ -748,11 +748,13 @@ class BlessingSheetDSA5 extends ItemSheetdsa5 {
 }
 
 class ItemCareerDSA5 extends ItemSheetdsa5 {
-    constructor(item, options) {
-        options.width = 700
-        options.height = 700
-        super(item, options);
-        this.mce = null;
+    static get defaultOptions() {
+        const options = super.defaultOptions;
+        mergeObject(options, {
+            width: 700,
+            height: 700,
+        });
+        return options;
     }
 
     async getData(options) {
@@ -766,12 +768,15 @@ class ItemCareerDSA5 extends ItemSheetdsa5 {
     }
 }
 
-class ConsumableSheetDSA5 extends ItemSheetdsa5 {
-    constructor(item, options) {
-        options.width = 480
-        super(item, options);
-        this.mce = null;
+class ConsumableSheetDSA5 extends ItemSheetObfuscation(ItemSheetdsa5) {
+    static get defaultOptions() {
+        const options = super.defaultOptions;
+        mergeObject(options, {
+            width: 480
+        });
+        return options;
     }
+
     _getHeaderButtons() {
         let buttons = super._getHeaderButtons();
         if (this.item.isOwned) {
@@ -783,6 +788,7 @@ class ConsumableSheetDSA5 extends ItemSheetdsa5 {
         }
         return buttons
     }
+    
     async getData(options) {
         const data = await super.getData(options)
         data["calculatedPrice"] = (data.system.price.value * data.system.QL) || 0
@@ -798,11 +804,13 @@ class ConsumableSheetDSA5 extends ItemSheetdsa5 {
 }
 
 class ItemCultureDSA5 extends ItemSheetdsa5 {
-    constructor(item, options) {
-        options.width = 700
-        options.height = 700
-        super(item, options);
-        this.mce = null;
+    static get defaultOptions() {
+        const options = super.defaultOptions;
+        mergeObject(options, {
+            width: 700,
+            height: 700,
+        });
+        return options;
     }
 
     async getData(options) {
@@ -863,7 +871,6 @@ class MagictrickSheetDSA5 extends ItemSheetdsa5 {
 class MeleeweaponSheetDSA5 extends ItemSheetObfuscation(Enchantable) {
     constructor(item, options) {
         super(item, options);
-        this.mce = null;
         this.isPoisonable = true
     }
 
@@ -927,7 +934,7 @@ class MeleeweaponSheetDSA5 extends ItemSheetObfuscation(Enchantable) {
     }
 }
 
-class PoisonSheetDSA5 extends ItemSheetdsa5 {
+class PoisonSheetDSA5 extends ItemSheetObfuscation(ItemSheetdsa5) {
     _getHeaderButtons() {
         let buttons = super._getHeaderButtons();
         buttons.unshift({
@@ -982,26 +989,32 @@ class SpecialAbilitySheetDSA5 extends ItemSheetdsa5 {
 
     async getData(options) {
         const data = await super.getData(options);
-        data['categories'] = DSA5.specialAbilityCategories;
-        data['subCategories'] = DSA5.combatSkillSubCategories
-        data.traditionArtifacts = DSA5.traditionArtifacts
-        data.canOnUseEffect = game.user.isGM || await game.settings.get("dsa5", "playerCanEditSpellMacro")
+        mergeObject(data, {
+            categories: DSA5.specialAbilityCategories,
+            subCategories: DSA5.combatSkillSubCategories,
+            traditionArtifacts: DSA5.traditionArtifacts,
+            canOnUseEffect: game.user.isGM || await game.settings.get("dsa5", "playerCanEditSpellMacro")
+        })
         return data
     }
 
 }
 
 class ItemSpeciesDSA5 extends ItemSheetdsa5 {
-    constructor(item, options) {
-        options.width = 530
-        options.height = 570
-        super(item, options);
-        this.mce = null;
+    static get defaultOptions() {
+        const options = super.defaultOptions;
+        mergeObject(options, {
+            width: 530,
+            height: 570,
+        });
+        return options;
     }
 
     async getData(options) {
         const data = await super.getData(options);
-        data['hasLocalization'] = game.i18n.has(`Racedescr.${this.item.name}`)
+        mergeObject(data, {
+            hasLocalization: game.i18n.has(`Racedescr.${this.item.name}`)
+        })
         return data
     }
 }
@@ -1039,7 +1052,7 @@ class SpellSheetDSA5 extends ItemSheetdsa5 {
         let message = game.i18n.format("DIALOG.DeleteItemDetail", { item: item.name })
         renderTemplate('systems/dsa5/templates/dialog/delete-item-dialog.html', { message }).then(html => {
             new Dialog({
-                title: game.i18n.localize("Delete Confirmation"),
+                title: game.i18n.localize("deleteConfirmation"),
                 content: html,
                 buttons: {
                     Yes: {

@@ -28,14 +28,19 @@ export default class ActorSheetDsa5 extends ActorSheet {
 
         let elem = $(this._element)
 
-        elem.find(".close").attr("data-tooltip", game.i18n.localize("SHEET.Close"));
-        elem.find(".configure-sheet").attr("data-tooltip", game.i18n.localize("SHEET.Configure"));
-        elem.find(".configure-token").attr("data-tooltip", game.i18n.localize("SHEET.Token"));
-        elem.find(".import").attr("data-tooltip", game.i18n.localize("SHEET.Import"));
-        elem.find(".locksheet").attr("data-tooltip", game.i18n.localize("SHEET.Lock"));
-        elem.find(".library").attr("data-tooltip", game.i18n.localize("SHEET.Library"));
-        elem.find(".playerview").attr("data-tooltip", game.i18n.localize("SHEET.switchLimited"));
-        elem.find(".actorConfig").attr("data-tooltip", game.i18n.localize("SHEET.actorConfig"));
+        const tooltips = {
+            ".close": "SHEET.Close",
+            ".configure-sheet": "SHEET.Configure",
+            ".configure-token": "SHEET.Token",
+            ".import": "SHEET.Import",
+            ".locksheet": "SHEET.Lock",
+            ".library": "SHEET.Library",
+            ".playerview": "SHEET.switchLimited",
+            ".actorConfig": "SHEET.actorConfig"
+        }
+        for(let key of Object.keys(tooltips)){
+            elem.find(key).attr("data-tooltip", game.i18n.localize(tooltips[key]));    
+        }
 
         if (this.currentFocus) {
             elem.find('[data-item-id="' + this.currentFocus + '"] input').focus().select();
@@ -143,13 +148,13 @@ export default class ActorSheetDsa5 extends ActorSheet {
                 "system.effect.value": ""
             })
         }
-        if (data.type == "aggregatedTest") {} else if (data.type == "spell" || data.type == "liturgy") {} else {
+        if(!["aggregatedTest", "spell", "liturgy", "ritual", "ceremony"].includes(data.type)){
             data["system.weight.value"] = 0
             data["system.quantity.value"] = 0
         }
 
         Itemdsa5.defaultIcon(data)
-        data["name"] = game.i18n.localize(data.type);
+        data["name"] = DSA5_Utility.categoryLocalization(data.type)
         this.actor.createEmbeddedDocuments("Item", [data]);
     }
 
@@ -267,7 +272,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
         let result = false
         switch (attr) {
             case "wounds":
-                result = newValue <= this.actor.system.characteristics["ko"].value
+                result = newValue <= this.actor.system.characteristics.ko.value
                 break
             case "astralenergy":
                 result = newValue <= (this.actor.system.characteristics[this.actor.system.guidevalue.magical] == undefined ? 0 : this.actor.system.characteristics[this.actor.system.guidevalue.magical].value * this.actor.system.energyfactor.magical)
@@ -407,15 +412,12 @@ export default class ActorSheetDsa5 extends ActorSheet {
 
         html.find('.roll-disease').click(ev => this.rollDisease(this._getItemId(ev)))
 
-        html.find('.schip').click(ev => {
+        html.find('.schipUpdate').click(ev => {
             ev.preventDefault()
             let val = Number(ev.currentTarget.getAttribute("data-val"))
-            let elem = $(this.form).parent().find('[name="system.status.fatePoints.value"]')
-
             if (val == 1 && $(this.form).find(".fullSchip").length == 1) val = 0
 
-            elem.val(val)
-            elem.trigger("change")
+            this.actor.update({"system.status.fatePoints.value": val})
         })
 
         html.find('.swapWeaponHand').click(ev => this.swapWeaponHand(ev))
@@ -707,6 +709,8 @@ export default class ActorSheetDsa5 extends ActorSheet {
         })
 
         html.find(".condition-toggle").mousedown(async(ev) => {
+            if (!this.isEditable) return
+            
             let condKey = $(ev.currentTarget).parents(".statusEffect").attr("data-id")
             let ef = this.actor.effects.get(condKey)
             await ef.update({ disabled: !ef.disabled })
@@ -816,7 +820,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
         let message = game.i18n.format("DIALOG.DeleteItemDetail", { item: item.name })
         renderTemplate('systems/dsa5/templates/dialog/delete-item-dialog.html', { message }).then(html => {
             new Dialog({
-                title: game.i18n.localize("Delete Confirmation"),
+                title: game.i18n.localize("deleteConfirmation"),
                 content: html,
                 buttons: {
                     Yes: {
@@ -1007,13 +1011,6 @@ export default class ActorSheetDsa5 extends ActorSheet {
         return await this._addUniqueItem(item)
     }
 
-    async _addSkill(item) {
-        item = duplicate(item)
-        let res = this.actor.items.find(i => i.type == item.type && i.name == item.name && i.system.description.value == item.system.description.value);
-        if (!res) await this.actor.createEmbeddedDocuments("Item", [item])
-    }
-
-
     async handleItemCopy(item, typeClass) {
         if (DSA5.equipmentCategories.includes(typeClass)) {
             item.name += " (Copy)"
@@ -1051,9 +1048,6 @@ export default class ActorSheetDsa5 extends ActorSheet {
             case "money":
                 await this._addMoney(item)
                 break;
-            case "skill":
-                await this._addSkill(item)
-                break
             case "ritual":
             case "ceremony":
             case "blessing":
@@ -1066,20 +1060,11 @@ export default class ActorSheetDsa5 extends ActorSheet {
             case "effectwrapper":
                 await this._handleEffectWrapper(item)
                 break
-            case "lookup":
-                await this._handleLookup(item)
-                break
-            case "fullpack":
-                await this._addFullPack(item)
-                break
             case "application":
                 await this._handleApplication(item)
                 break
             case "spellextension":
                 await this._handleSpellExtension(item)
-                break
-            case "condition":
-                await this.actor.addCondition(item.payload.id, 1, false, false)
                 break
             case "creature":
                 const shapeshift = game.dsa5.config.hooks.shapeshift
@@ -1088,6 +1073,7 @@ export default class ActorSheetDsa5 extends ActorSheet {
                     shapeshift.render(true)
                 }
                 break
+            case "skill":
             case "information":
                 await this._addUniqueItem(item)
                 break
@@ -1159,6 +1145,16 @@ export default class ActorSheetDsa5 extends ActorSheet {
         if(selfTarget) return
 
         return await this._manageDragItems(item, typeClass) 
+    }
+
+    async _onDropActiveEffect(event, data) {
+        const effect = await ActiveEffect.implementation.fromDropData(data);
+        if ( !this.actor.isOwner || !effect ) return false;
+        if ( this.actor.uuid === effect.parent?.uuid ) return false;
+
+        const ef = effect.toObject()
+        ef.origin = this.actor.uuid
+        return ActiveEffect.create(ef, {parent: this.actor});
     }
 
     async _onDropItem(event, data) {

@@ -71,6 +71,7 @@
         "AsPCost": "AsP",
         "KaPCost": "KaP",
         "fatePoints": "Schips",
+        "gfatePoints": "GSchips",
         "groupFatePoints": "Gruppen&nbsp;Schips",
         "FtP": "Schip",
         "maintainCost": "Aufr.",
@@ -96,6 +97,7 @@
     },
     "DIALOG": {
         "RollMode": "Würfelmodus",
+        "deleteConfirmation": "Löschen bestätigen",
         "DeleteItem": "Eintrag entfernen?",
         "SituationalModifiers": "Bedingte\nModifikatoren",
         "DeleteItemDetail": "Möchtest du <b>{item}</b> entfernen?",
@@ -174,6 +176,7 @@
     "AstoundingSuccess": "Spektakulärer Erfolg",
     "AstoundingFailure": "Schreckliches Missgeschick",
     "information": "Information",
+    "botchCritEffect": "Patzer/Krit",
     "confirm": "Bestätigen",
     "advantages": "Vorteile",
     "advantage": "Vorteil",
@@ -197,7 +200,6 @@
     "bullet": "Kugel",
     "blessing": "Segnung",
     "blessings": "Segnungen",
-    "Burden": "Belastung",
     "biography": "Hintergrundgeschichte",
     "Category": "Kategorie",
     "confirmationRoll": "Bestätigungswurf",
@@ -258,7 +260,6 @@
     "damageApplied": "Schaden wurde übertragen",
     "domains": "Domänen",
     "demonmark": "Dämonenmal",
-    "Delete Confirmation": "Löschen bestätigen",
     "dodge": "Ausweichen",
     "disease": "Krankheit",
     "Distinguishing_mark": "Charakteristika",
@@ -338,6 +339,7 @@
     "max": "Max",
     "aoewidth": "Breite",
     "magical": "magisch",
+    "blessed": "geweiht",
     "meleeweapon": "Nahkampfwaffe",
     "meleeweapons": "Nahkampfwaffen",
     "magicspecialtalents": "Magische Sonderfertigkeiten",
@@ -460,6 +462,7 @@
     "talisman": "Talisman",
     "searchTalents": "Talente durchsuchen",
     "gearSearch": "Ausrüstung durchsuchen",
+    "searchCompendium": "Kompendium suchen",
     "skillglobal": "Talent (global)",
     "spellextension": "Zauber/Liturgieerweiterung",
     "defense": "Verteidigung",
@@ -577,6 +580,7 @@
         "payText": "Silber von {heros} einziehen.",
         "xpMessage": "<b>{heros}</b> hat/haben <b>{number}</b> Abenteuerpunkte erhalten.",
         "doGroupCheck": "Modifikator für <b>{skill}</b> Gruppenprobe.",
+        "doRequestRoll": "Modifikator für <b>{skill}</b> Probenaufforderung.",
         "payTT": "Ausnehmen",
         "randomPlayer": "Zufälliges Opfer (Rechtsklick inklusive Pechmagnet)",
         "randomGen": "Zuchtgrube",
@@ -603,7 +607,7 @@
     },
     "WIZARD": {
         "addItem": "{item} hinzufügen",
-        "careerdescr": "Bitte wähle die passenden Optionen der Karriere <b>{career}</b> und bestätige, um sie für <b class=\"apCost\">{cost}</b> Abenteuerpunkte zu deinem Charakter hinzuzufügen.",
+        "careerdescr": "Bitte wähle die passenden Optionen der Profession <b>{career}</b> und bestätige, um sie für <b class=\"apCost\">{cost}</b> Abenteuerpunkte zu deinem Charakter hinzuzufügen.",
         "culturedescr": "Bitte wähle die passenden Optionen der Kultur <b>{culture}</b> und bestätige, um sie für <b class=\"apCost\">{cost}</b> Abenteuerpunkte zu deinem Charakter hinzuzufügen.",
         "speciesdescr": "Bitte wähle die passenden Optionen der Spezies <b>{species}</b> und bestätige, um sie für <b class=\"apCost\">{cost}</b> Abenteuerpunkte zu deinem Charakter hinzuzufügen.",
         "vantageDescription": "Wähle passende Vor- und Nachteile um deine Profession abzurunden.",
@@ -944,7 +948,8 @@
         "assignCharacter": "Charaktere können in der Spielerliste unten links per Rechtsclick zugewiesen werden.",
         "dragLink": "Drag & drop Akteur z.B. für Gestaltwandlung und Beschwörung",
         "onlyGM": "Nur für den Spielleiter sichtbar.",
-        "placeTemplate": "Flächeneffekt Template platzieren"
+        "placeTemplate": "Flächeneffekt Template platzieren",
+        "resizer": "Drag zum Verschieben<br/>Mausrad um zu verkleinern/vergrößern<br/>ggf. Rechte Maustaste Ausrichtung"
     },
     "HELP": {
         "showHelp": "Hilfe anzeigen",
@@ -979,7 +984,8 @@
         "silverPlated": "versilbert",
         "attributeWarning": "Dieser Gegenstand ist <b>{domain}</b> (und kann ggf. nicht beschädigt werden).",
         "vulnerableTo": "Empfindlich ({name})",
-        "resistantTo": "Resistent ({name})"
+        "resistantTo": "Resistent ({name})",
+        "dropped": "Der Gegenstand fliegt {distance} Schritt davon."
     },
     "SPELL": {
         "loading": "Konzentrationsstatus: {status}",
@@ -1062,6 +1068,7 @@
     "wrongGrip": {
         "oneHanded": "Einhändig geführt",
         "twoHanded": "Beidhändig geführt",
+        "wrongGripped": "Einhändig/Beidhändig geführt",
         "yieldTwo": "PA -1, TP +1, kann nur während deines Zuges einmal geändert werden",
         "yieldOnePolearms": "Waffenreichweite mittel, -1 TP, -1 PA",
         "yieldOneSwordBlunt": "Waffenreichweite mittel, 0.5 * TP, -3 PA",
@@ -1098,6 +1105,13 @@
         "big": "Groß [+4]",
         "giant": "Riesig [+8]"
     },
+    "MELEESIZE": {
+        "tiny": "Winzig [-4]",
+        "small": "Klein [-0]",
+        "average": "Mittel",
+        "big": "Groß [0]",
+        "giant": "Riesig [0]"
+    },
     "DSAREGEX": {
         "combatRounds": "( )?(in )?(Kampfrunde(n)?|KR(s)?)",
         "minutes": "( )?(in )?(minute(n)?|min)",
@@ -1121,6 +1135,7 @@
         "applySelf": "Effekt (Selbst)",
         "appliedEffect": "Effekt <b>{source}</b> wurde auf <b>{target}</b> übertragen.",
         "removedEffect": "Effekt <b>{source}</b> wurde von <b>{target}</b> entfernt.",
+        "apply": "Anwenden",
         "custom": "Sondereffekt",
         "creature": "Akteurlink (z.b. das5-core.corebestiary.Gotongi)",
         "resistRoll": "Widerstandsprobe",
@@ -1183,6 +1198,7 @@
         "keepAtDistance": "Auf Distanz halten",
         "drivingArcher": "Fahrender Schütze",
         "mightyAstralBody": "Machtvoller Astralleib",
+        "mightyKarmalBody": "Geweihter Karmalleib",
         "exceptionalSkill": "Herausragende Fertigkeit",
         "exceptionalCombatTechnique": "Herausragende Kampftechnik",
         "regenerationLeP": "Verbesserte Regeneration (Lebensenergie)",
@@ -1250,6 +1266,7 @@
         "nightBlind": "Nachtblind",
         "willpower": "Willenskraft",
         "traditionBoron": "Tradition (Boronkirche)",
+        "traditionMarbo": "Tradition (Marbokult)",
         "artisticAbility": "Malen & Zeichnen",
         "witchSense": "Hexensinn",
         "Shields": "Schilde",
@@ -1302,7 +1319,7 @@
         "AdvanceMaximumReached": "Maximale Steigerung bereits erreicht",
         "notFound": "{category} {name} nicht gefunden",
         "itemNotFound": "Dieser Eintrag wurde nicht in der Datenbank gefunden, bitte manuell anlegen",
-        "notUnderstood": "Folgende Einträge  konnten nicht umgesetzt bzw. in der Datenbank gefunden werden. Bitte manuell anpassen/hinzufügen.",
+        "notUnderstood": "Folgende Einträge konnten nicht umgesetzt bzw. in der Datenbank gefunden werden. Bitte manuell anpassen/hinzufügen.",
         "canNotBeAdded": "{item} der Kategory {category} kann nicht hinzugefügt werden. Dies ist keine unterstützte Kategorie.",
         "NoAmmo": "Nicht genug Munition.",
         "MissingChoices": "Noch nicht alle Optionen ausgefüllt.",
@@ -1332,7 +1349,9 @@
         "notOwner": "Du darfst diesen Charakter nicht modifizieren.",
         "shouldTimesUp": "Für automatische auslaufende Effekte wird das Modul Times-Up benötigt.",
         "requiresModule": "Diese Funktion benötigt das Modul {module}.",
-        "wrongLanguage": "Deine Spracheinstellung passt nicht zur vorgegebenen Einstellung ({lang}). Möchtest du die Sprache ändern?"
+        "wrongLanguage": "Deine Spracheinstellung passt nicht zur vorgegebenen Einstellung ({lang}). Möchtest du die Sprache ändern?",
+        "noVictim": "Kein Opfer im anvisiert, Selbsttreffer wird ausgewertet.",
+        "PreparationError": "Die Initialisierung es Akteurs {name} ist fehlgeschlagen."
     },
     "Shapeshift": {
         "title": "Gestaltwandlung",
@@ -1462,6 +1481,8 @@
         "noConfirmationRoll": "Kein Bestätigungswurf",
         "noConfirmationRollHint": "Bei Angriffen und Eigenschaftswürfen keinen Bestätigungswurf durchführen.",
         "clearTargets": "Ziel löschen nach Angriff",
+        "hideRegenerationToOwner": "Regeneration (KR) verstecken",
+        "hideRegenerationToOwnerHint": "Automatische Regeneration in Kampfrunden nur dem Besitzer des Tokens anzeigen",
         "clearTargetsHint": "Entfernt die Zielmarkierung nach einer Probe.",
         "allowPhysicalDice": "Wurf mit echten Würfeln",
         "allowPhysicalDiceHint": "Erlaube die Eingabe des Ergebnis von selbst gewürfelten Würfeln",
@@ -1601,6 +1622,8 @@
         "buyingFactor": "Kauffaktor",
         "sellingFactor": "Verkaufsfaktor",
         "typeMerchant": "Händler",
+        "hideMoney": "Geld verbergen",
+        "hideMoneyHint": "Dem Spieler wird die Kaufkraft des Händlers nicht mehr angezeigt",
         "typeEpic": "Garadan",
         "typeLoot": "Schatz",
         "typeNone": "Normale Person",

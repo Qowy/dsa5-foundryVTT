@@ -27,6 +27,9 @@ export default function() {
             return roman[a - 1]
         },
         isWEBM: (a) => /.webm$/.test(a),
+        itemCategory: (a) => {
+            return DSA5_Utility.categoryLocalization(a)
+        },
         joinStr: (a, b) => b.join(a),
         diceThingsUp: (a, b) => DSA5_Utility.replaceDies(a, false),
         replaceConditions: DSA5_Utility.replaceConditions,

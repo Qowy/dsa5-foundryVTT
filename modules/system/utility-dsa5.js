@@ -28,13 +28,9 @@ export default class DSA5_Utility {
         const pack = await game.packs.get(compendium)
         if (!pack) return ui.notifications.error("No content found")
 
-        let result = []
-        let items
-        await pack.getDocuments().then(content => items = content.filter(i => i.type == itemType));
-        for (let i of items) {
-            result.push(i.toObject())
-        }
-        return result;
+        let search = Array.isArray(itemType) ? itemType : [itemType]
+        let items = (await pack.getDocuments()).filter(i => search.includes(i.type));
+        return items.map(x => x.toObject());
     }
 
     static renderToggle(elem) {
@@ -136,7 +132,11 @@ export default class DSA5_Utility {
         }
     }
 
-    static chatDataSetup(content, modeOverride, forceWhisper) {
+    static categoryLocalization(a){
+        return game.i18n.localize(`ITEM.Type${a.slice(0,1).toUpperCase()}${a.slice(1).toLowerCase()}`)
+    }
+
+    static chatDataSetup(content, modeOverride, forceWhisper, forceWhisperIDs) {
         let chatData = {
             user: game.user.id,
             rollMode: modeOverride || game.settings.get("core", "rollMode"),
@@ -151,6 +151,10 @@ export default class DSA5_Utility {
             chatData["speaker"] = ChatMessage.getSpeaker();
             chatData["whisper"] = ChatMessage.getWhisperRecipients(forceWhisper);
         }
+        if (forceWhisperIDs) {
+            chatData["speaker"] = ChatMessage.getSpeaker();
+            chatData["whisper"] = forceWhisperIDs
+        }
 
         return chatData;
     }
@@ -164,7 +168,7 @@ export default class DSA5_Utility {
         if (!actor) {
             let scene = game.scenes.get(speaker.scene)
             try {
-                if (scene) actor = new Token(scene.getEmbeddedDocument("Token", speaker.token)).actor
+                if (scene) actor = new Token(scene.getEmbeddedDocument("Token", speaker.token))?.actor
             } catch (error) {}
         }
 

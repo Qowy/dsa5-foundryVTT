@@ -219,7 +219,7 @@ export default function() {
         name: "DSASETTINGS.enableDPS",
         hint: "DSASETTINGS.enableDPSHint",
         scope: "world",
-        config: false,
+        config: true,
         default: true,
         type: Boolean
     });
@@ -311,7 +311,7 @@ export default function() {
     });
 
     game.settings.register("dsa5", "iniTrackerPosition", {
-        name: "tokenhotbarPosition",
+        name: "iniTrackerPosition",
         scope: "client",
         config: false,
         default: {},
@@ -343,7 +343,7 @@ export default function() {
         restricted: false
     })
 
-    game.settings.register("dsa5", "breadcrumbs", {
+    game.settings.register("dsa5", `breadcrumbs_${game.world.id}`, {
         name: "DSASETTINGS.breadcrumbs",
         hint: "DSASETTINGS.breadcrumbsHint",
         scope: "client",
@@ -373,7 +373,6 @@ export default function() {
 
     game.settings.register("dsa5", "indexWorldItems", {
         name: "DSASETTINGS.indexWorldItems",
-        hint: "DSASETTINGS.indexWorldItemsHint",
         scope: "client",
         config: false,
         default: true,
@@ -444,9 +443,17 @@ export default function() {
         type: Boolean
     });
 
+    game.settings.register("dsa5", "hideRegenerationToOwner", {
+        name: "DSASETTINGS.hideRegenerationToOwner",
+        hint: "DSASETTINGS.hideRegenerationToOwnerHint",
+        scope: "world",
+        config: true,
+        default: true,
+        type: Boolean
+    });
+
     game.settings.register("dsa5", "indexDescription", {
         name: "DSASETTINGS.indexDescription",
-        hint: "DSASETTINGS.indexDescription",
         scope: "client",
         config: false,
         default: true,

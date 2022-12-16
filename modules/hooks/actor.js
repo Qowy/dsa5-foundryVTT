@@ -3,6 +3,8 @@ import DSA5_Utility from "../system/utility-dsa5.js";
 
 export default function() {
     Hooks.on("preDeleteActiveEffect", (effect, options, user_id) => {
+        if(options.noHook) return
+        
         const actor = effect.parent
         if (actor && actor.documentName == "Actor") {
             if(getProperty(effect, "flags.dsa5.maintain")){
@@ -42,7 +44,9 @@ export default function() {
         }
     })
 
-    Hooks.on("deleteActiveEffect", (effect) => {
+    Hooks.on("deleteActiveEffect", (effect, options) => {
+        if(options.noHook) return
+
         const actor = effect.parent
         if (actor && actor.documentName == "Actor") {
             const statusId = getProperty(effect, "flags.core.statusId")
@@ -61,6 +65,43 @@ export default function() {
         }
     })
 
+    Hooks.on("dropActorSheetData", (actor, sheet, data) => {
+        switch(data.data?.type){
+            case "condition":
+                actor.addCondition(data.data.payload.id, 1, false, false)
+                return false
+            case "lookup":
+                sheet._handleLookup(data.data)
+                return false
+            case "fullpack": 
+                sheet._addFullPack(data.data)
+                return false
+        }
+    }) 
+
+
+    Hooks.on("createActiveEffect", (effect, options, user) => {
+        checkIniChange(effect)
+    })
+
+    Hooks.on("deleteActiveEffect", (effect, options, user) => {
+        checkIniChange(effect)
+    })
+
+    Hooks.on("updateActiveEffect", (effect, options, user) => {
+        checkIniChange(effect)
+    })
+
+    function checkIniChange(effect){
+        if(!game.user.isGM) return
+
+        if(game.combat && effect.changes.some(x => /(system\.status\.initiative|system\.characteristics.mu|system\.characteristics\.ge)/.test(x.key))){
+            const actorId = effect.parent.id
+            const combatant = game.combat.combatants.find(x => x.actor.id == actorId)
+            if(combatant) combatant.recalcInitiative()
+        }
+    }
+
     const askForName = async (tokenObject, setting) => {
         const dialogConstructor = game.dsa5.apps.AskForNameDialog || AskForNameDialog
         dialogConstructor.getDialog(tokenObject, setting)
@@ -70,13 +111,14 @@ export default function() {
         if(!DSA5_Utility.isActiveGM()) return
 
         const actor = token.actor
+        if(actor.hasPlayerOwner) return
+
         const setting = Number(game.settings.get("dsa5", "obfuscateTokenNames"))
         if (setting == 0 || getProperty(actor, "merchant.merchantType") == "loot") return
 
         let sameActorTokens = canvas.scene.tokens.filter((x) => x.actor && x.actor.id === actor.id);
         let name = game.i18n.localize("unknown")
         if ([2,4].includes(setting)) {
-            //sameActorTokens = sameActorTokens.filter(x => x.name == actor.name)
             const tokenId = token.id || token._id
             if(!tokenId) return
             
@@ -117,6 +159,8 @@ export default function() {
     })
 
     Hooks.on('createToken', (token, options, id) => {
+        if(options.noHook) return
+        
         obfuscateName(token, {})
     })
 }
@@ -142,6 +186,15 @@ class AskForNameDialog extends Dialog{
                         }
                         const token = canvas.scene.tokens.get(tokenId)
                         await token.update({ name })
+                    }
+                },
+                unknown: {
+                    icon: '<i class="fa fa-question"></i>',
+                    label: game.i18n.localize("unknown"),
+                    callback: async(html) => {
+                        const tokenId = tokenObject.id || tokenObject._id
+                        const token = canvas.scene.tokens.get(tokenId)
+                        await token.update({ name: game.i18n.localize("unknown") })
                     }
                 },
                 cancel: {

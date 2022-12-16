@@ -55,7 +55,7 @@ export default class OpposedDsa5 {
             speaker: actor.flags.oppose.speaker,
             testResult: attackMessage.flags.data.postData,
             messageId: attackMessage.id,
-            img: DSA5_Utility.getSpeaker(actor.flags.oppose.speaker).img
+            img: DSA5_Utility.getSpeaker(actor.flags.oppose.speaker)?.img
         };
         attacker.testResult.source = attackMessage.flags.data.preData.source
         if (attacker.testResult.ammo) attacker.testResult.source.effects.push(...attacker.testResult.ammo.effects)
@@ -258,7 +258,8 @@ export default class OpposedDsa5 {
 
             const targets = [defenderToken]
             const hitTargets = opposedResult.winner == "attacker" ? targets : []
-            AutoAnimations.playAnimation(attackerToken, targets, item, { hitTargets, playOnMiss: true })
+
+            AutomatedAnimations.playAnimation(attackerToken, item, { targets, hitTargets, playOnMiss: true })
         }
     }
 
@@ -275,16 +276,15 @@ export default class OpposedDsa5 {
                 let targets = Array.from(game.user.targets)
                 const item = attackerToken.actor.items.get(msgData.preData.source._id)
                 if (!targets.length) targets = [attackerToken]
-                AutoAnimations.playAnimation(attackerToken, targets, item)
+                
+                AutomatedAnimations.playAnimation(attackerToken, item, { targets })
             }
         }
     }
 
     static async clearOpposed(actor) {
         if (game.user.isGM) {
-            await actor.update({
-                [`flags.-=oppose`]: null
-            })
+            await actor.update({ [`flags.-=oppose`]: null })
         } else {
             game.socket.emit("system.dsa5", {
                 type: "clearOpposed",

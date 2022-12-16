@@ -411,23 +411,26 @@ export default class Itemdsa5 extends Item {
         }
     }
 
+    static getTargetSizeAndModifier(actor, source, situationalModifiers){
+        let targetSize = "average"
+        game.user.targets.forEach((target) => {
+            if (target.actor) {
+                const size = getProperty(target.actor, "system.status.size.value")
+                if(size) targetSize = size
+
+                CreatureType.addCreatureTypeModifiers(target.actor, source, situationalModifiers, actor)
+            }
+        })
+        return targetSize
+    }
+
     static prepareRangeAttack(situationalModifiers, actor, data, source, tokenId, combatskills, currentAmmo = undefined) {
         situationalModifiers.push(
             ...AdvantageRulesDSA5.getVantageAsModifier(actor, game.i18n.localize("LocalizedIDs.restrictedSenseSight"), -2)
         )
         this.getCombatSkillModifier(actor, source, situationalModifiers)
 
-        let targetSize = "average"
-        if (game.user.targets.size) {
-            game.user.targets.forEach((target) => {
-                if (target.actor) {
-                    const tar = getProperty(target.actor, "system.status.size")
-                    if (tar) targetSize = tar.value
-
-                    CreatureType.addCreatureTypeModifiers(target.actor, source, situationalModifiers, actor)
-                }
-            })
-        }
+        const targetSize = this.getTargetSizeAndModifier(actor, source, situationalModifiers)
 
         const defenseMalus = Number(actor.system.rangeStats.defenseMalus) * -1
         if (defenseMalus != 0) {
@@ -463,21 +466,20 @@ export default class Itemdsa5 extends Item {
 
     static prepareMeleeAttack(situationalModifiers, actor, data, source, combatskills, wrongHandDisabled) {
         let targetWeaponSize = "short"
-        if (game.user.targets.size) {
-            game.user.targets.forEach((target) => {
-                if (target.actor) {
-                    const defWeapon = target.actor.items.filter((x) => {
-                        return (
-                            (x.type == "meleeweapon" && x.system.worn.value) ||
-                            (x.type == "trait" && x.system.traitType.value == "meleeAttack" && x.system.pa)
-                        )
-                    })
-                    if (defWeapon.length > 0) targetWeaponSize = defWeapon[0].system.reach.value
-
-                    CreatureType.addCreatureTypeModifiers(target.actor, source, situationalModifiers, actor)
-                }
-            })
-        }
+        
+        game.user.targets.forEach((target) => {
+            if (target.actor) {
+                const defWeapon = target.actor.items.filter((x) => {
+                    return (
+                        (x.type == "meleeweapon" && x.system.worn.value) ||
+                        (x.type == "trait" && x.system.traitType.value == "meleeAttack" && x.system.pa)
+                    )
+                })
+                if (defWeapon.length > 0) targetWeaponSize = defWeapon[0].system.reach.value
+            }
+        })
+        
+        const targetSize = this.getTargetSizeAndModifier(actor, source, situationalModifiers)
         this.getCombatSkillModifier(actor, source, situationalModifiers)
 
         const defenseMalus = Number(actor.system.meleeStats.defenseMalus) * -1
@@ -497,7 +499,8 @@ export default class Itemdsa5 extends Item {
             showAttack: true,
             targetWeaponSize,
             combatSpecAbs: combatskills,
-
+            meleeSizeOptions: DSA5.meleeSizeCategories,
+            targetSize,
             constricted: actor.hasCondition("constricted"),
             wrongHandDisabled,
             offHand: !wrongHandDisabled && getProperty(source, "system.worn.offHand"),
@@ -590,8 +593,7 @@ export default class Itemdsa5 extends Item {
     }
 
     static getSubClass(type) {
-        if (game.dsa5.config.ItemSubclasses[type]) return game.dsa5.config.ItemSubclasses[type]
-        else return Itemdsa5
+        return game.dsa5.config.ItemSubclasses[type] || Itemdsa5
     }
 
     async postItem() {
@@ -599,27 +601,32 @@ export default class Itemdsa5 extends Item {
     }
 
     static async _postItem(item) {
-            let chatData = duplicate(item)
-            const properties = Itemdsa5.getSubClass(item.type).chatData(duplicate(chatData.system), item.name)
+        let chatData = duplicate(item)
 
-            chatData["properties"] = properties
+        const detailsObfuscated = getProperty(chatData, "system.obfuscation.details")
+        const descriptionObfuscated = getProperty(chatData, "system.obfuscation.description")
+        
+        mergeObject(chatData, {
+            properties: detailsObfuscated ? [] : Itemdsa5.getSubClass(item.type).chatData(duplicate(chatData.system), item.name),
+            descriptionObfuscated
+        })
 
-            chatData.hasPrice = "price" in chatData.system
-            if (chatData.hasPrice) {
-                let price = chatData.system.price.value
-                if (chatData.system.QL) price *= chatData.system.QL
+        chatData.hasPrice = ("price" in chatData.system) && !detailsObfuscated
+        if (chatData.hasPrice) {
+            let price = chatData.system.price.value
+            if (chatData.system.QL) price *= chatData.system.QL
 
-                chatData.system.price.D = Math.floor(price / 10)
-                price -= chatData.system.price.D * 10
-                chatData.system.price.S = Math.floor(price)
-                price -= chatData.system.price.S
-                chatData.system.price.H = Math.floor(price / 0.1)
-                price -= chatData.system.price.H * 0.1
-                chatData.system.price.K = Math.round(price / 0.01)
+            chatData.system.price.D = Math.floor(price / 10)
+            price -= chatData.system.price.D * 10
+            chatData.system.price.S = Math.floor(price)
+            price -= chatData.system.price.S
+            chatData.system.price.H = Math.floor(price / 0.1)
+            price -= chatData.system.price.H * 0.1
+            chatData.system.price.K = Math.round(price / 0.01)
 
-                const prices = ["D", "S", "H", "K"].map(x =>
-                        `${chatData.system.price[x]} <div data-tooltip="${game.i18n.localize(`Money-${x}`)}" class="chatmoney money-${x}"></div>`).join(",")
-            properties.push(`<b>${game.i18n.localize("price")}</b>: ${prices}`)
+            const prices = ["D", "S", "H", "K"].map(x =>
+                    `${chatData.system.price[x]} <div data-tooltip="${game.i18n.localize(`Money-${x}`)}" class="chatmoney money-${x}"></div>`).join(",")
+            chatData.properties.push(`<b>${game.i18n.localize("price")}</b>: ${prices}`)
         }
 
         if (item.pack) chatData.itemLink = item.link
@@ -702,11 +709,7 @@ class AmmunitionItemDSA5 extends Itemdsa5 {
     }
 }
 
-class EffectWrapperItemDSA5 extends Itemdsa5 {
-    static chatData(data, name) {
-        return []
-    }
-}
+class EffectWrapperItemDSA5 extends Itemdsa5 { }
 
 class ArmorItemDSA5 extends Itemdsa5 {
     static chatData(data, name) {
@@ -1042,7 +1045,7 @@ class CombatskillDSA5 extends Itemdsa5 {
 
     static setupDialog(ev, options, item, actor, tokenId) {
         let mode = options.mode
-        let title = game.i18n.localize(item.name) + " " + game.i18n.localize(mode + "test")
+        let title = item.name + " " + game.i18n.localize(mode + "test")
 
         let testData = {
             opposable: true,
@@ -1129,8 +1132,9 @@ class ConsumableItemDSA extends Itemdsa5 {
             const { msg, resistRolls, effectNames } = await DSAActiveEffectConfig.applyAdvancedFunction(source.actor, effects, source, {
                 qualityStep: source.system.QL,
             }, source.actor)
+            
             const infoMsg = `${game.i18n.format("ActiveEffects.appliedEffect", {
-                target: source.actor.name,
+                target: source.actor.token?.name || source.actor.name,
                 source: effectNames.join(", ")
             })} ${msg || ""}`
             ChatMessage.create(DSA5_Utility.chatDataSetup(infoMsg))
@@ -1258,7 +1262,8 @@ class MeleeweaponDSA5 extends Itemdsa5 {
             this._chatLineHelper("damage", data.damage.value),
             this._chatLineHelper("atmod", data.atmod.value),
             this._chatLineHelper("pamod", data.pamod.value),
-            this._chatLineHelper("combatskill", data.combatskill.value),
+            this._chatLineHelper("reach", game.i18n.localize(`Range-${data.reach.value}`)),
+            this._chatLineHelper("ITEM.TypeCombatskill", data.combatskill.value),
         ]
         if (data.effect.value != "") res.push(this._chatLineHelper(DSA5_Utility.replaceConditions("effect", data.effect.value)))
 
@@ -1284,7 +1289,7 @@ class MeleeweaponDSA5 extends Itemdsa5 {
 
     static setupDialog(ev, options, item, actor, tokenId) {
         let mode = options.mode
-        let title = game.i18n.localize(item.name) + " " + game.i18n.localize(mode + "test")
+        let title = item.name + " " + game.i18n.localize(mode + "test")
 
         let testData = {
             opposable: true,
@@ -1296,10 +1301,7 @@ class MeleeweaponDSA5 extends Itemdsa5 {
                 speaker: Itemdsa5.buildSpeaker(actor, tokenId),
             },
         }
-        const multipleDefenseValue = RuleChaos.multipleDefenseValue(
-            actor,
-            typeof item.toObject === "function" ? item.toObject() : item
-        )
+        const multipleDefenseValue = RuleChaos.multipleDefenseValue(actor, DSA5_Utility.toObjectIfPossible(item))
         let data = {
             rollMode: options.rollMode,
             mode,
@@ -1412,7 +1414,7 @@ class RangeweaponItemDSA5 extends Itemdsa5 {
     static chatData(data, name) {
         let res = [
             this._chatLineHelper("damage", data.damage.value),
-            this._chatLineHelper("combatskill", data.combatskill.value),
+            this._chatLineHelper("ITEM.TypeCombatskill", data.combatskill.value),
             this._chatLineHelper("reach", data.reach.value),
         ]
         if (data.effect.value != "") res.push(this._chatLineHelper(DSA5_Utility.replaceConditions("effect", data.effect.value)))
@@ -1508,7 +1510,7 @@ class RangeweaponItemDSA5 extends Itemdsa5 {
 
     static async setupDialog(ev, options, item, actor, tokenId) {
         let mode = options.mode
-        let title = game.i18n.localize(item.name) + " " + game.i18n.localize(mode + "test")
+        let title = item.name + " " + game.i18n.localize(mode + "test")
 
         let testData = {
             opposable: true,
@@ -1731,7 +1733,7 @@ class TraitItemDSA5 extends Itemdsa5 {
 
     static setupDialog(ev, options, item, actor, tokenId) {
         let mode = options["mode"]
-        let title = game.i18n.localize(item.name) + " " + game.i18n.localize(mode + "test")
+        let title = item.name + " " + game.i18n.localize(mode + "test")
         let testData = {
             opposable: true,
             source: item,
@@ -1749,7 +1751,7 @@ class TraitItemDSA5 extends Itemdsa5 {
             defenseCountString: game.i18n.format("defenseCount", { malus: multipleDefenseValue }),
         }
 
-        const traitType = getProperty(item, "system.traitType.value") || getProperty(item.data, "system.traitType.value")
+        const traitType = getProperty(item, "system.traitType.value")
 
         let situationalModifiers = actor ? DSA5StatusEffects.getRollModifiers(actor, item, { mode }) : []
         this.getSituationalModifiers(situationalModifiers, actor, data, item, tokenId)
